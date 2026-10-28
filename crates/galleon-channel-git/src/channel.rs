@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_config::schema::GitConfig;
 
 use super::events::{self, EventFilter, GitEvent};
@@ -437,9 +437,9 @@ impl GitChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for GitChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Git)
+impl ::galleon_api::attribution::Attributable for GitChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Git)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -670,8 +670,8 @@ impl Channel for GitChannel {
 
     async fn forge_request(
         &self,
-        request: clawcrew_api::channel::ForgeApiRequest,
-    ) -> anyhow::Result<clawcrew_api::channel::ForgeApiResponse> {
+        request: galleon_api::channel::ForgeApiRequest,
+    ) -> anyhow::Result<galleon_api::channel::ForgeApiResponse> {
         let Some(method) = ForgeMethod::parse(&request.method) else {
             anyhow::bail!(
                 "invalid forge HTTP method `{}` (expected GET/POST/PATCH/PUT/DELETE)",
@@ -686,7 +686,7 @@ impl Channel for GitChannel {
                 body: request.body,
             })
             .await?;
-        Ok(clawcrew_api::channel::ForgeApiResponse {
+        Ok(galleon_api::channel::ForgeApiResponse {
             status: resp.status,
             body: resp.body,
         })

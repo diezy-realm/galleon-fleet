@@ -2,7 +2,7 @@
 //!
 //! Enforces the layered dependency direction rules defined in
 //! standard-docs/tech-standart/code-quality/rust-module-size-and-decomposition-standard.md §5:
-//! - clawcrew-api is a leaf: must not depend on higher-level workspace crates (runtime, gateway, channels, tools, providers).
+//! - galleon-api is a leaf: must not depend on higher-level workspace crates (runtime, gateway, channels, tools, providers).
 //! - galleon-plugins must not depend on clawcrew-runtime.
 //! - galleon-channel-* must not depend on clawcrew-runtime directly.
 
@@ -28,10 +28,10 @@ fn has_active_dependency(content: &str, dep_name: &str) -> bool {
 fn crate_dependency_direction_strictly_enforced() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
 
-    // 1. Check clawcrew-api is a leaf
-    let api_cargo = root.join("crates/clawcrew-api/Cargo.toml");
+    // 1. Check galleon-api is a leaf
+    let api_cargo = root.join("crates/galleon-api/Cargo.toml");
     if api_cargo.exists() {
-        let content = fs::read_to_string(&api_cargo).expect("clawcrew-api/Cargo.toml readable");
+        let content = fs::read_to_string(&api_cargo).expect("galleon-api/Cargo.toml readable");
         for forbidden in [
             "clawcrew-runtime",
             "galleon-gateway",
@@ -41,7 +41,7 @@ fn crate_dependency_direction_strictly_enforced() {
         ] {
             assert!(
                 !has_active_dependency(&content, forbidden),
-                "clawcrew-api is a leaf crate and must not depend on {forbidden}"
+                "galleon-api is a leaf crate and must not depend on {forbidden}"
             );
         }
     }

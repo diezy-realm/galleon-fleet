@@ -132,7 +132,7 @@ pub struct PromptContext<'a> {
     /// runtime (which omits the `Shell:` field and the dialect guidance).
     /// Resolved from `RuntimeAdapter::shell_profile` so the reported shell
     /// cannot drift from the executed one.
-    pub shell_profile: Option<clawcrew_api::runtime_traits::ShellProfile>,
+    pub shell_profile: Option<galleon_api::runtime_traits::ShellProfile>,
 }
 
 /// Model-facing Full-autonomy approval contract used by [`SafetySection`].
@@ -438,8 +438,8 @@ impl PromptSection for SafetySection {
         // recommending it to a PowerShell or `cmd.exe` session would name a
         // command that is not there.
         out.push_str(ctx.shell_profile.as_ref().map_or(
-            clawcrew_api::runtime_traits::POSIX_DELETION_GUIDANCE,
-            clawcrew_api::runtime_traits::ShellProfile::safe_deletion_guidance,
+            galleon_api::runtime_traits::POSIX_DELETION_GUIDANCE,
+            galleon_api::runtime_traits::ShellProfile::safe_deletion_guidance,
         ));
         match ctx.autonomy_level {
             AutonomyLevel::Full => out.push_str(&full_autonomy_safety_lines(always_ask)),
@@ -538,7 +538,7 @@ impl PromptSection for ShellSection {
         // Only when a registered tool takes a model-authored command: the
         // syntax list is dead weight otherwise. An empty string is dropped by
         // the builder, so this section costs nothing when skipped.
-        if !clawcrew_api::runtime_traits::needs_shell_dialect_guidance(
+        if !galleon_api::runtime_traits::needs_shell_dialect_guidance(
             ctx.tools.iter().map(|tool| tool.name()),
         ) {
             return Ok(String::new());
@@ -546,7 +546,7 @@ impl PromptSection for ShellSection {
         Ok(ctx
             .shell_profile
             .as_ref()
-            .map(clawcrew_api::runtime_traits::ShellProfile::prompt_section)
+            .map(galleon_api::runtime_traits::ShellProfile::prompt_section)
             .unwrap_or_default())
     }
 }
@@ -591,13 +591,13 @@ impl PromptSection for ChannelMediaSection {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use clawcrew_api::tool::Tool;
+    use galleon_api::tool::Tool;
 
-    clawcrew_api::mock_tool_attribution!(TestTool);
-    clawcrew_api::mock_tool_attribution!(ReadSkillTestTool);
-    clawcrew_api::mock_tool_attribution!(ShellTestTool);
-    clawcrew_api::mock_tool_attribution!(CronAddTestTool);
-    clawcrew_api::mock_tool_attribution!(SkillToolTestTool);
+    galleon_api::mock_tool_attribution!(TestTool);
+    galleon_api::mock_tool_attribution!(ReadSkillTestTool);
+    galleon_api::mock_tool_attribution!(ShellTestTool);
+    galleon_api::mock_tool_attribution!(CronAddTestTool);
+    galleon_api::mock_tool_attribution!(SkillToolTestTool);
 
     struct TestTool;
     struct ReadSkillTestTool;
@@ -1589,7 +1589,7 @@ mod tests {
     /// whether `ShellSection` fires; `shell_profile` is what it reports.
     fn shell_ctx<'a>(
         tools: &'a [Box<dyn Tool>],
-        shell_profile: Option<clawcrew_api::runtime_traits::ShellProfile>,
+        shell_profile: Option<galleon_api::runtime_traits::ShellProfile>,
     ) -> PromptContext<'a> {
         PromptContext {
             workspace_dir: Path::new("/tmp"),
@@ -1611,9 +1611,9 @@ mod tests {
 
     fn profile(
         name: &str,
-        dialect: clawcrew_api::runtime_traits::ShellDialect,
-    ) -> clawcrew_api::runtime_traits::ShellProfile {
-        clawcrew_api::runtime_traits::ShellProfile {
+        dialect: galleon_api::runtime_traits::ShellDialect,
+    ) -> galleon_api::runtime_traits::ShellProfile {
+        galleon_api::runtime_traits::ShellProfile {
             name: name.to_string(),
             dialect,
         }
@@ -1621,7 +1621,7 @@ mod tests {
 
     #[test]
     fn runtime_section_reports_the_configured_shell() {
-        use clawcrew_api::runtime_traits::ShellDialect;
+        use galleon_api::runtime_traits::ShellDialect;
         let tools: Vec<Box<dyn Tool>> = vec![];
         let ctx = shell_ctx(&tools, Some(profile("zsh", ShellDialect::Posix)));
         let output = RuntimeSection.build(&ctx).unwrap();
@@ -1647,7 +1647,7 @@ mod tests {
     #[test]
     fn shell_section_is_silent_without_the_shell_tool() {
         // No way to run a command means the syntax table is dead weight.
-        use clawcrew_api::runtime_traits::ShellDialect;
+        use galleon_api::runtime_traits::ShellDialect;
         let tools: Vec<Box<dyn Tool>> = vec![];
         let ctx = shell_ctx(&tools, Some(profile("pwsh", ShellDialect::PowerShell)));
         assert!(ShellSection.build(&ctx).unwrap().is_empty());
@@ -1657,7 +1657,7 @@ mod tests {
     fn shell_section_fires_for_a_cron_only_tool_surface() {
         // `cron_add` takes a model-authored `command` that runs through the
         // same interpreter, so the dialect matters even without `shell`.
-        use clawcrew_api::runtime_traits::ShellDialect;
+        use galleon_api::runtime_traits::ShellDialect;
         let tools: Vec<Box<dyn Tool>> = vec![Box::new(CronAddTestTool)];
         let ctx = shell_ctx(&tools, Some(profile("pwsh", ShellDialect::PowerShell)));
         let output = ShellSection.build(&ctx).unwrap();
@@ -1673,7 +1673,7 @@ mod tests {
 
     #[test]
     fn shell_section_corrects_dialect_when_the_shell_tool_is_registered() {
-        use clawcrew_api::runtime_traits::ShellDialect;
+        use galleon_api::runtime_traits::ShellDialect;
         let tools: Vec<Box<dyn Tool>> = vec![Box::new(ShellTestTool)];
 
         let ps = ShellSection
@@ -1709,7 +1709,7 @@ mod tests {
 
     #[test]
     fn safety_deletion_advice_names_a_command_the_dialect_has() {
-        use clawcrew_api::runtime_traits::ShellDialect;
+        use galleon_api::runtime_traits::ShellDialect;
         let tools: Vec<Box<dyn Tool>> = vec![];
 
         let posix = SafetySection

@@ -24,7 +24,7 @@
 //! unambiguously safe as an HTTP header value, and non-reversible.
 //!
 //! The digest is taken over the ambient conversation scope
-//! ([`clawcrew_api::TOOL_LOOP_SESSION_KEY`]) rather than over a cached random
+//! ([`galleon_api::TOOL_LOOP_SESSION_KEY`]) rather than over a cached random
 //! token, so the value is resolved from the canonical source at use time and
 //! this module holds no per-session lookup table.
 //!
@@ -189,7 +189,7 @@ pub fn session_token(base_url: &str) -> Option<String> {
     if !is_opencode_target(base_url) {
         return None;
     }
-    let scope = clawcrew_api::TOOL_LOOP_SESSION_KEY
+    let scope = galleon_api::TOOL_LOOP_SESSION_KEY
         .try_with(Clone::clone)
         .ok()
         .flatten()
@@ -286,7 +286,7 @@ mod tests {
     #[tokio::test]
     async fn token_is_stable_per_scope_and_distinct_across_scopes() {
         async fn token_for(session_key: &str) -> String {
-            clawcrew_api::TOOL_LOOP_SESSION_KEY
+            galleon_api::TOOL_LOOP_SESSION_KEY
                 .scope(Some(session_key.to_string()), async {
                     session_token("https://opencode.ai/zen/v1").expect("token")
                 })
@@ -308,7 +308,7 @@ mod tests {
     async fn token_never_contains_the_session_key() {
         // The identifiers inside a session key must not leave the process.
         let session_key = "whatsapp_123@g.us_alice";
-        let token = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let token = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some(session_key.to_string()), async {
                 session_token("https://opencode.ai/zen/v1").expect("token")
             })
@@ -320,7 +320,7 @@ mod tests {
 
     #[tokio::test]
     async fn blank_scope_falls_back_to_the_process_token() {
-        let blank = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let blank = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some("   ".to_string()), async {
                 session_token("https://opencode.ai/zen/v1").expect("token")
             })
@@ -339,7 +339,7 @@ mod tests {
             F: FnOnce() -> Fut,
             Fut: std::future::Future<Output = String>,
         {
-            clawcrew_api::TOOL_LOOP_SESSION_KEY
+            galleon_api::TOOL_LOOP_SESSION_KEY
                 .scope(Some("telegram_1001_alice".to_string()), f())
                 .await
         }

@@ -17,9 +17,9 @@ impl NoneMemory {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for NoneMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::None)
+impl ::galleon_api::attribution::Attributable for NoneMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::None)
     }
     fn alias(&self) -> &str {
         &self.alias

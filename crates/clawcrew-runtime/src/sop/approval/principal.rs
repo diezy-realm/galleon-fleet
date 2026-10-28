@@ -1,4 +1,4 @@
-pub use clawcrew_api::sop::{ApprovalPrincipal, ApprovalSource};
+pub use galleon_api::sop::{ApprovalPrincipal, ApprovalSource};
 
 
 

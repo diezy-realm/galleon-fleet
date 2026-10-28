@@ -12,7 +12,7 @@
     /// smarter content sniffing or human-authorship detection.
     #[test]
     fn autosave_decision_keys_on_origin_before_content() {
-        use clawcrew_api::ingress::TurnOrigin;
+        use galleon_api::ingress::TurnOrigin;
 
         let leaked_heartbeat_shape = "[Recent conversation history — use this for context \
              when composing your message] (last message ~5 minutes ago)\nUser: how was the \
@@ -68,7 +68,7 @@
     use std::collections::HashMap;
     use std::sync::Arc;
     use tempfile::tempdir;
-    use clawcrew_api::channel::{
+    use galleon_api::channel::{
         Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
     };
     use galleon_providers::{ChatMessage, ToolCall};
@@ -112,7 +112,7 @@
         })
     }
 
-    clawcrew_api::mock_tool_attribution!(
+    galleon_api::mock_tool_attribution!(
         CountingTool,
         CredentialOutputTool,
         EmptySuccessTool,
@@ -127,10 +127,10 @@
 
     struct SeedMockChannel;
 
-    impl ::clawcrew_api::attribution::Attributable for SeedMockChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Matrix,
+    impl ::galleon_api::attribution::Attributable for SeedMockChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Matrix,
             )
         }
 
@@ -807,7 +807,7 @@
     }
     use crate::observability::NoopObserver;
     use tempfile::TempDir;
-    use clawcrew_api::model_provider::{
+    use galleon_api::model_provider::{
         ProviderCapabilities, StreamChunk, StreamError, StreamEvent, StreamOptions,
     };
     use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
@@ -816,11 +816,11 @@
 
     macro_rules! impl_test_model_provider_attribution {
         ($ty:ty) => {
-            impl ::clawcrew_api::attribution::Attributable for $ty {
-                fn role(&self) -> ::clawcrew_api::attribution::Role {
-                    ::clawcrew_api::attribution::Role::Provider(
-                        ::clawcrew_api::attribution::ProviderKind::Model(
-                            ::clawcrew_api::attribution::ModelProviderKind::Custom,
+            impl ::galleon_api::attribution::Attributable for $ty {
+                fn role(&self) -> ::galleon_api::attribution::Role {
+                    ::galleon_api::attribution::Role::Provider(
+                        ::galleon_api::attribution::ProviderKind::Model(
+                            ::galleon_api::attribution::ModelProviderKind::Custom,
                         ),
                     )
                 }
@@ -835,7 +835,7 @@
     #[test]
     fn direct_cli_terminal_completion_projection_localizes_delivery() {
         let error =
-            anyhow::Error::new(clawcrew_api::model_provider::SemanticEmptyTerminalCompletion);
+            anyhow::Error::new(galleon_api::model_provider::SemanticEmptyTerminalCompletion);
         let diagnostic = error.to_string();
         let expected = crate::agent::semantic_empty_terminal_completion_message(None);
 
@@ -893,11 +893,11 @@
             Ok("ok".to_string())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for NonVisionModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for NonVisionModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -957,11 +957,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for VisionModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for VisionModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1062,11 +1062,11 @@
                 .ok_or_else(|| anyhow::Error::msg("scripted model_provider exhausted responses"))
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for ScriptedModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ScriptedModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1128,11 +1128,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for RecordingModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for RecordingModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1200,11 +1200,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for MutatingImageProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MutatingImageProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1288,11 +1288,11 @@
             ]))
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for StreamingScriptedModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamingScriptedModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1350,11 +1350,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for VisibleThenServerStreamFailureModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for VisibleThenServerStreamFailureModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1521,11 +1521,11 @@
             }
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for StreamingNativeToolEventModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamingNativeToolEventModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1603,11 +1603,11 @@
             ]))
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for RouteAwareStreamingModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for RouteAwareStreamingModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1676,10 +1676,10 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ApprovingChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::AcpChannel,
+    impl ::galleon_api::attribution::Attributable for ApprovingChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::AcpChannel,
             )
         }
 
@@ -1722,13 +1722,13 @@
     /// indistinguishable on the wire — both are `Some(Deny)` with no decider.
     /// Only [`ApprovalSource`] separates them.
     struct SourcedDenyChannel {
-        source: ::clawcrew_api::channel::ApprovalSource,
+        source: ::galleon_api::channel::ApprovalSource,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for SourcedDenyChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::AcpChannel,
+    impl ::galleon_api::attribution::Attributable for SourcedDenyChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::AcpChannel,
             )
         }
 
@@ -1758,9 +1758,9 @@
             &self,
             _recipient: &str,
             _request: &ChannelApprovalRequest,
-        ) -> anyhow::Result<Option<::clawcrew_api::channel::AttributedApprovalResponse>> {
+        ) -> anyhow::Result<Option<::galleon_api::channel::AttributedApprovalResponse>> {
             Ok(Some(
-                ::clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                ::galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
                     self.source,
                 ),
@@ -1771,7 +1771,7 @@
     /// Drive one denied tool call through the gate and return the
     /// `[Tool results]` text the MODEL would see.
     async fn tool_results_for_denying_channel(
-        source: ::clawcrew_api::channel::ApprovalSource,
+        source: ::galleon_api::channel::ApprovalSource,
     ) -> String {
         let turn_id = uuid::Uuid::new_v4().to_string();
         let write_call = r#"<tool_call>
@@ -1871,7 +1871,7 @@
     #[tokio::test]
     async fn operator_sourced_deny_is_still_reported_as_a_user_denial() {
         let content =
-            tool_results_for_denying_channel(::clawcrew_api::channel::ApprovalSource::Operator)
+            tool_results_for_denying_channel(::galleon_api::channel::ApprovalSource::Operator)
                 .await;
         assert!(
             content.contains("Denied by user."),
@@ -1885,9 +1885,9 @@
     #[tokio::test]
     async fn runtime_sourced_deny_is_not_reported_as_a_user_denial() {
         for source in [
-            ::clawcrew_api::channel::ApprovalSource::TimedOut,
-            ::clawcrew_api::channel::ApprovalSource::Unreachable,
-            ::clawcrew_api::channel::ApprovalSource::Unavailable,
+            ::galleon_api::channel::ApprovalSource::TimedOut,
+            ::galleon_api::channel::ApprovalSource::Unreachable,
+            ::galleon_api::channel::ApprovalSource::Unavailable,
         ] {
             let content = tool_results_for_denying_channel(source).await;
             assert!(
@@ -1912,7 +1912,7 @@
     #[tokio::test]
     async fn operator_deny_states_the_outcome_and_forbids_inventing_a_cause() {
         let content =
-            tool_results_for_denying_channel(::clawcrew_api::channel::ApprovalSource::Operator)
+            tool_results_for_denying_channel(::galleon_api::channel::ApprovalSource::Operator)
                 .await;
 
         assert!(
@@ -1936,7 +1936,7 @@
     #[tokio::test]
     async fn operator_deny_tells_the_model_not_to_retry_the_call() {
         let content =
-            tool_results_for_denying_channel(::clawcrew_api::channel::ApprovalSource::Operator)
+            tool_results_for_denying_channel(::galleon_api::channel::ApprovalSource::Operator)
                 .await;
         assert!(
             content.contains("Do not retry this call"),
@@ -1953,10 +1953,10 @@
     #[tokio::test]
     async fn no_denial_result_names_a_setting_that_would_permit_the_call() {
         for source in [
-            ::clawcrew_api::channel::ApprovalSource::Operator,
-            ::clawcrew_api::channel::ApprovalSource::TimedOut,
-            ::clawcrew_api::channel::ApprovalSource::Unreachable,
-            ::clawcrew_api::channel::ApprovalSource::Unavailable,
+            ::galleon_api::channel::ApprovalSource::Operator,
+            ::galleon_api::channel::ApprovalSource::TimedOut,
+            ::galleon_api::channel::ApprovalSource::Unreachable,
+            ::galleon_api::channel::ApprovalSource::Unavailable,
         ] {
             let content = tool_results_for_denying_channel(source).await;
             for forbidden in ["auto_approve", "level = \"full\"", "risk profile"] {
@@ -2966,14 +2966,14 @@
         let internal = run_with(IngressContext::sub_turn()).await;
         let external = run_with(IngressContext {
             message_id: Some("ghc_9001".to_string()),
-            source_class: clawcrew_api::ingress::SourceClass::External,
+            source_class: galleon_api::ingress::SourceClass::External,
             sender: Some("attacker".to_string()),
-            transport: clawcrew_api::ingress::Transport::Channel {
+            transport: galleon_api::ingress::Transport::Channel {
                 kind: "github".to_string(),
                 alias: "gh".to_string(),
             },
-            trust: clawcrew_api::ingress::TrustClass::Untrusted,
-            origin: clawcrew_api::ingress::TurnOrigin::Channel,
+            trust: galleon_api::ingress::TrustClass::Untrusted,
+            origin: galleon_api::ingress::TurnOrigin::Channel,
         })
         .await;
 
@@ -3076,10 +3076,10 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for StaticRecallMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for StaticRecallMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
         fn alias(&self) -> &str {
@@ -3091,7 +3091,7 @@
     async fn run_tool_call_loop_memory_injection_keys_on_origin() {
         async fn run_case(
             mem: &dyn galleon_memory::Memory,
-            origin: clawcrew_api::ingress::TurnOrigin,
+            origin: galleon_api::ingress::TurnOrigin,
         ) -> (String, Vec<(Option<String>, bool)>) {
             let model_provider = ScriptedModelProvider::from_text_responses(vec!["done"]);
             let mut history = vec![ChatMessage::user("what server?".to_string())];
@@ -3180,7 +3180,7 @@
         // User-facing origin: preamble injected, one successful recall event.
         let (msg, recalls) = run_case(
             &StaticRecallMemory,
-            clawcrew_api::ingress::TurnOrigin::Interactive,
+            galleon_api::ingress::TurnOrigin::Interactive,
         )
         .await;
         assert!(msg.starts_with(galleon_memory::MEMORY_CONTEXT_OPEN));
@@ -3192,7 +3192,7 @@
         // SubTurn origin: no injection, no recall, no event.
         let (msg, recalls) = run_case(
             &StaticRecallMemory,
-            clawcrew_api::ingress::TurnOrigin::SubTurn,
+            galleon_api::ingress::TurnOrigin::SubTurn,
         )
         .await;
         assert_eq!(msg, "what server?");
@@ -3201,7 +3201,7 @@
         // Failing backend: turn proceeds bare, one failure event.
         let (msg, recalls) = run_case(
             &FailingRecallMemory,
-            clawcrew_api::ingress::TurnOrigin::Interactive,
+            galleon_api::ingress::TurnOrigin::Interactive,
         )
         .await;
         assert_eq!(msg, "what server?");
@@ -4195,7 +4195,7 @@
         ];
         let observer = NoopObserver;
         let (event_tx, mut event_rx) =
-            tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(64);
+            tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(64);
 
         let _ = run_tool_call_loop(ToolLoop {
             parent_agent_alias: None,
@@ -4259,7 +4259,7 @@
         let mut results_by_id: std::collections::HashMap<String, Vec<String>> =
             std::collections::HashMap::new();
         while let Ok(event) = event_rx.try_recv() {
-            if let clawcrew_api::agent::TurnEvent::ToolResult { id, output, .. } = event {
+            if let galleon_api::agent::TurnEvent::ToolResult { id, output, .. } = event {
                 results_by_id.entry(id).or_default().push(output);
             }
         }
@@ -6286,7 +6286,7 @@
         }
         assert_eq!(events.len(), 1, "only the visible delta should be emitted");
         match &events[0] {
-            clawcrew_api::agent::TurnEvent::Chunk { delta } => assert_eq!(delta, "visible"),
+            galleon_api::agent::TurnEvent::Chunk { delta } => assert_eq!(delta, "visible"),
             other => panic!("expected visible Chunk event, got {other:?}"),
         }
 
@@ -8025,7 +8025,7 @@ This is an example, not an invocation."#;
             new_messages_out: None,
             image_cache: None,
             memory: None,
-            ingress: clawcrew_api::ingress::IngressContext::sub_turn(),
+            ingress: galleon_api::ingress::IngressContext::sub_turn(),
             agent_alias: None,
             turn_id: &turn_id,
         })
@@ -10096,7 +10096,7 @@ This is an example, not an invocation."#;
             }
         }
 
-        fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {}
+        fn record_metric(&self, _metric: &galleon_api::observability_traits::ObserverMetric) {}
 
         fn name(&self) -> &str {
             "recall-counting-observer"
@@ -10183,10 +10183,10 @@ This is an example, not an invocation."#;
             self.recall(query, limit, session_id, since, until).await
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for FailingRecallMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for FailingRecallMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
         fn alias(&self) -> &str {
@@ -11488,11 +11488,11 @@ Let me check the result."#;
                 ]))
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for MultiChunkModelProvider {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for MultiChunkModelProvider {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -12347,7 +12347,7 @@ Let me check the result."#;
             TOOL_LOOP_COST_TRACKING_CONTEXT, ToolLoop, ToolLoopCostTrackingContext,
             run_tool_call_loop,
         };
-        use clawcrew_api::agent::TurnEvent;
+        use galleon_api::agent::TurnEvent;
         use galleon_providers::reliable::ReliableModelProvider;
 
         let rejected = ChatResponse {
@@ -12528,13 +12528,13 @@ Let me check the result."#;
             TOOL_LOOP_COST_TRACKING_CONTEXT, ToolLoop, ToolLoopCostTrackingContext,
             run_tool_call_loop,
         };
-        use clawcrew_api::agent::TurnEvent;
+        use galleon_api::agent::TurnEvent;
         use galleon_providers::reliable::ReliableModelProvider;
 
         struct ShellProbeTool;
-        clawcrew_api::tool_attribution!(
+        galleon_api::tool_attribution!(
             ShellProbeTool,
-            ::clawcrew_api::attribution::ToolKind::Plugin
+            ::galleon_api::attribution::ToolKind::Plugin
         );
         #[async_trait::async_trait]
         impl crate::tools::Tool for ShellProbeTool {
@@ -12813,7 +12813,7 @@ Let me check the result."#;
         use crate::cost::CostTracker;
         use crate::observability::noop::NoopObserver;
         use std::collections::HashMap;
-        use clawcrew_api::channel::ProgressEvent;
+        use galleon_api::channel::ProgressEvent;
 
         let turn_id = uuid::Uuid::new_v4().to_string();
         let model_provider =
@@ -13512,7 +13512,7 @@ Let me check the result."#;
         assert!(summary.session_cost_usd > 0.0);
     }
 
-    use clawcrew_api::tool::Tool as TestTool;
+    use galleon_api::tool::Tool as TestTool;
     use galleon_config::policy::SecurityPolicy as TestPolicy;
 
     struct NamedMockTool {
@@ -14407,7 +14407,7 @@ Let me check the result."#;
         fn record_event(&self, event: &ObserverEvent) {
             self.events.lock().push(event.clone());
         }
-        fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {}
+        fn record_metric(&self, _metric: &galleon_api::observability_traits::ObserverMetric) {}
         fn name(&self) -> &str {
             "capturing"
         }
@@ -14677,11 +14677,11 @@ Let me check the result."#;
                 })
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for PostHookReportingProvider {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for PostHookReportingProvider {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -14728,7 +14728,7 @@ Let me check the result."#;
             estimate_history_tokens(&[ChatMessage::assistant("z".repeat(3000).as_str())]);
         let budget = retained_estimate + hook_growth_estimate + 20;
         let (event_tx, mut event_rx) =
-            tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(64);
+            tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(64);
         let turn_id = uuid::Uuid::new_v4().to_string();
 
         run_tool_call_loop(ToolLoop {
@@ -14813,14 +14813,14 @@ Let me check the result."#;
         // inflated and `tokens_after` would not match.
         let mut trimmed_event = None;
         while let Ok(event) = event_rx.try_recv() {
-            if let clawcrew_api::agent::TurnEvent::HistoryTrimmed { .. } = event {
+            if let galleon_api::agent::TurnEvent::HistoryTrimmed { .. } = event {
                 trimmed_event = Some(event);
             }
         }
         let trimmed = trimmed_event
             .expect("the reported-budget enforcement must emit a HistoryTrimmed event");
         let tokens_after = match trimmed {
-            clawcrew_api::agent::TurnEvent::HistoryTrimmed { tokens_after, .. } => {
+            galleon_api::agent::TurnEvent::HistoryTrimmed { tokens_after, .. } => {
                 tokens_after.expect("reported-budget trim must carry token accounting")
             }
             other => panic!("expected HistoryTrimmed, got {other:?}"),
@@ -14882,11 +14882,11 @@ Let me check the result."#;
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for DispatchRecordingProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for DispatchRecordingProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -14939,7 +14939,7 @@ Let me check the result."#;
                 CountingTool::new("count_tool", Arc::clone(&tool_calls)),
             )]);
         let (event_tx, _event_rx) =
-            tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(64);
+            tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(64);
         let turn_id = uuid::Uuid::new_v4().to_string();
 
         run_tool_call_loop(ToolLoop {
@@ -15046,7 +15046,7 @@ Let me check the result."#;
         let observer = NoopObserver;
         let mut history = vec![ChatMessage::system("system"), ChatMessage::user("hello")];
         let (event_tx, _event_rx) =
-            tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(64);
+            tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(64);
         let turn_id = uuid::Uuid::new_v4().to_string();
 
         let result = run_tool_call_loop(ToolLoop {
@@ -15187,9 +15187,9 @@ Let me check the result."#;
                 })
             }
         }
-        impl clawcrew_api::attribution::Attributable for LargeSchemaTool {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+        impl galleon_api::attribution::Attributable for LargeSchemaTool {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
             }
             fn alias(&self) -> &str {
                 "budget_tool"
@@ -15273,9 +15273,9 @@ Let me check the result."#;
                 })
             }
         }
-        impl clawcrew_api::attribution::Attributable for ReportingProvider {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::System
+        impl galleon_api::attribution::Attributable for ReportingProvider {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::System
             }
             fn alias(&self) -> &str {
                 "budget-provider"
@@ -15357,7 +15357,7 @@ Let me check the result."#;
         };
         let mut crumb_present = false;
         let (event_tx, mut event_rx) =
-            tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(64);
+            tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(64);
         let turn_id = uuid::Uuid::new_v4().to_string();
         let result = scope_tool_protocol_prompts(
             Arc::new(ToolProtocolPrompts::new(native_prompt, text_prompt)),
@@ -15525,7 +15525,7 @@ Let me check the result."#;
         assert_eq!(crumb_present, !untrimmed);
         let mut trims = Vec::new();
         while let Ok(event) = event_rx.try_recv() {
-            if let clawcrew_api::agent::TurnEvent::HistoryTrimmed {
+            if let galleon_api::agent::TurnEvent::HistoryTrimmed {
                 tokens_after,
                 tokens_after_source,
                 unsatisfiable_floor,
@@ -15540,9 +15540,9 @@ Let me check the result."#;
             assert_eq!(*unsatisfiable, floor.then_some(true));
             assert_eq!(tokens_after.unwrap() > budget as u64, floor);
             let expected_source = if calibrated {
-                clawcrew_api::agent::TokenCountSource::Calibrated
+                galleon_api::agent::TokenCountSource::Calibrated
             } else {
-                clawcrew_api::agent::TokenCountSource::Estimated
+                galleon_api::agent::TokenCountSource::Estimated
             };
             assert_eq!(*source, Some(expected_source));
             if summary && !floor {
@@ -15664,11 +15664,11 @@ Let me check the result."#;
                 })
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for CapturingProvider {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for CapturingProvider {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -15695,7 +15695,7 @@ Let me check the result."#;
                 CountingTool::new("count_tool", Arc::clone(&tool_calls)),
             )]);
         let (event_tx, mut event_rx) =
-            tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(64);
+            tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(64);
         let turn_id = uuid::Uuid::new_v4().to_string();
         let prompts = Arc::new(ToolProtocolPrompts::new(
             "native prompt".to_string(),
@@ -15777,7 +15777,7 @@ Let me check the result."#;
 
         let mut saw_floor = false;
         while let Ok(event) = event_rx.try_recv() {
-            if let clawcrew_api::agent::TurnEvent::HistoryTrimmed {
+            if let galleon_api::agent::TurnEvent::HistoryTrimmed {
                 unsatisfiable_floor: Some(true),
                 token_budget: Some(2_000),
                 ..
@@ -15810,7 +15810,7 @@ Let me check the result."#;
         let mut crumb_present = false;
         let tools_registry = crate::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]);
         let (event_tx, mut event_rx) =
-            tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(64);
+            tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(64);
         let turn_id = uuid::Uuid::new_v4().to_string();
         let prompts = Arc::new(ToolProtocolPrompts::new(
             "native prompt".to_string(),
@@ -15885,7 +15885,7 @@ Let me check the result."#;
 
         let mut saw_floor = false;
         while let Ok(event) = event_rx.try_recv() {
-            if let clawcrew_api::agent::TurnEvent::HistoryTrimmed {
+            if let galleon_api::agent::TurnEvent::HistoryTrimmed {
                 unsatisfiable_floor: Some(true),
                 dropped_messages: 0,
                 ..
@@ -15959,11 +15959,11 @@ Let me check the result."#;
                 true
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for CapturingVisionProvider {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for CapturingVisionProvider {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -15999,7 +15999,7 @@ Let me check the result."#;
         let observer = NoopObserver;
         let tools_registry = crate::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]);
         let (event_tx, mut event_rx) =
-            tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(64);
+            tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(64);
         let turn_id = uuid::Uuid::new_v4().to_string();
         let prompts = Arc::new(ToolProtocolPrompts::new(
             "native prompt".to_string(),
@@ -16081,7 +16081,7 @@ Let me check the result."#;
         let mut saw_trim = false;
         let mut saw_false_floor = false;
         while let Ok(event) = event_rx.try_recv() {
-            if let clawcrew_api::agent::TurnEvent::HistoryTrimmed {
+            if let galleon_api::agent::TurnEvent::HistoryTrimmed {
                 unsatisfiable_floor,
                 dropped_messages,
                 ..

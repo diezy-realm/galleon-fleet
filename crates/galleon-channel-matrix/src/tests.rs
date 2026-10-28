@@ -8,7 +8,7 @@
 #[test]
 fn matrix_does_not_opt_into_turn_flush_narration() {
     use super::MatrixChannel;
-    use clawcrew_api::channel::Channel;
+    use galleon_api::channel::Channel;
     use galleon_config::schema::{MatrixConfig, MatrixStreamMode};
     use std::sync::Arc;
 
@@ -39,7 +39,7 @@ fn matrix_does_not_opt_into_turn_flush_narration() {
 mod voice_reply_delivery {
     use std::sync::Arc;
 
-    use clawcrew_api::channel::{Channel, SendMessage};
+    use galleon_api::channel::{Channel, SendMessage};
     use galleon_config::schema::{
         AliasedAgentConfig, Config, MatrixConfig, OpenAITtsProviderConfig, TtsProviderConfig,
     };
@@ -760,7 +760,7 @@ mod voice_reply_gate {
         MatrixChannel,
         allowlist::{voice_peer_matches, voice_peers_verdict},
     };
-    use clawcrew_api::channel::SendMessage;
+    use galleon_api::channel::SendMessage;
     use galleon_config::schema::MatrixConfig;
     use std::sync::Arc;
 
@@ -1245,7 +1245,7 @@ mod inbound_route {
     use std::sync::atomic::AtomicBool;
     use std::time::Duration;
 
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
     use galleon_config::schema::{MatrixConfig, TranscriptionConfig};
     use matrix_sdk::ruma::events::AnySyncTimelineEvent;
     use matrix_sdk::ruma::serde::Raw;
@@ -1270,8 +1270,8 @@ mod inbound_route {
     }
 
     async fn recv_forwarded(
-        rx: &mut mpsc::Receiver<clawcrew_api::channel::ChannelMessage>,
-    ) -> clawcrew_api::channel::ChannelMessage {
+        rx: &mut mpsc::Receiver<galleon_api::channel::ChannelMessage>,
+    ) -> galleon_api::channel::ChannelMessage {
         tokio::time::timeout(Duration::from_secs(15), rx.recv())
             .await
             .expect("inbound message must be forwarded before timeout")
@@ -1315,7 +1315,7 @@ mod inbound_route {
     fn handler_ctx_with_resolver(
         transcription: Option<super::super::TranscriptionResolver>,
         workspace: &std::path::Path,
-        tx: mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        tx: mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> HandlerCtx {
         HandlerCtx {
             config: Arc::new(MatrixConfig::default()),
@@ -1338,7 +1338,7 @@ mod inbound_route {
     fn handler_ctx(
         stt_url: &str,
         workspace: &std::path::Path,
-        tx: mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        tx: mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> HandlerCtx {
         handler_ctx_with_resolver(
             Some(super::super::legacy_transcription_resolver(
@@ -1882,7 +1882,7 @@ mod inbound_route {
     }
 
     fn mention_only_handler_ctx(
-        tx: mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        tx: mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> HandlerCtx {
         let mut ctx = handler_ctx(
             "http://127.0.0.1:9/v1/transcribe",
@@ -2263,7 +2263,7 @@ mod approval {
     use super::super::approval::{
         TOKEN_LEN, build_prompt_message, generate_token, generate_token_default, parse_reply,
     };
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
     use rand::SeedableRng;
     use rand::rngs::StdRng;
     use std::collections::HashSet;
@@ -2489,7 +2489,7 @@ mod approval {
 
 mod room_management {
     use super::super::room_management::{build_create_room_request, build_invite_user_request};
-    use clawcrew_api::channel::{RoomCreationOptions, RoomVisibility};
+    use galleon_api::channel::{RoomCreationOptions, RoomVisibility};
     use matrix_sdk::ruma::api::client::room::Visibility as MatrixVisibility;
     use serde_json::json;
 
@@ -2683,7 +2683,7 @@ mod allowlist {
 mod ack_reactions {
     use std::sync::Arc;
 
-    use clawcrew_api::channel::Channel;
+    use galleon_api::channel::Channel;
     use galleon_config::schema::MatrixConfig;
     use tempfile::TempDir;
 
@@ -2718,7 +2718,7 @@ mod user_boundary {
     use std::sync::Arc;
     use std::time::Duration;
 
-    use clawcrew_api::channel::Channel;
+    use galleon_api::channel::Channel;
     use galleon_config::schema::{Config, MatrixConfig, MatrixStreamMode};
     use matrix_sdk::config::SyncSettings;
     use matrix_sdk::event_handler::RawEvent;
@@ -2972,8 +2972,8 @@ mod streaming {
         single_retained_draft_action, single_visible_text_with_budget,
         single_visible_text_with_edit_budget,
     };
-    use clawcrew_api::channel::{Channel, DraftProgress, DraftProgressKind, SendMessage};
-    use clawcrew_api::channel::{
+    use galleon_api::channel::{Channel, DraftProgress, DraftProgressKind, SendMessage};
+    use galleon_api::channel::{
         DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, THINKING_STATUS_PREFIX, thinking_status_text,
     };
     use galleon_config::schema::{MatrixConfig, MatrixStreamMode};
@@ -4375,7 +4375,7 @@ mod live_smoke {
         time::{Duration, Instant, SystemTime, UNIX_EPOCH},
     };
 
-    use clawcrew_api::channel::{Channel, SendMessage};
+    use galleon_api::channel::{Channel, SendMessage};
     use galleon_config::schema::{MatrixConfig, MatrixStreamMode};
     use matrix_sdk::config::SyncSettings;
     use tempfile::TempDir;
@@ -6089,7 +6089,7 @@ mod outbound_send_outcome {
 
 mod outbound_attachment_info {
     use super::super::outbound::{AttachmentKind, attachment_config_for};
-    use clawcrew_api::media::MediaAttachment;
+    use galleon_api::media::MediaAttachment;
     use matrix_sdk::{attachment::AttachmentInfo, ruma::UInt};
 
     fn attachment(file_name: &str, mime_type: &str, len: usize) -> MediaAttachment {
@@ -6199,7 +6199,7 @@ mod outbound_attachment_info {
 mod outbound_voice_duration {
     use std::time::Duration;
 
-    use clawcrew_api::media::MediaAttachment;
+    use galleon_api::media::MediaAttachment;
     use matrix_sdk::attachment::AttachmentInfo;
     use matrix_sdk::ruma::{event_id, mxc_uri, room_id};
     use matrix_sdk::test_utils::mocks::MatrixMockServer;

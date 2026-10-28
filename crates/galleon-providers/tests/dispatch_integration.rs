@@ -6,8 +6,8 @@
 use std::sync::Arc;
 
 use futures_util::StreamExt;
-use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-use clawcrew_api::model_provider::{
+use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+use galleon_api::model_provider::{
     ChatMessage, ChatRequest, ChatResponse, ModelInfo, ModelProvider, StreamChunk, StreamEvent,
     StreamOptions, StreamResult,
 };

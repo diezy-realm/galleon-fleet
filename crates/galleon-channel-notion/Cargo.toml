@@ -10,7 +10,7 @@ homepage.workspace = true
 publish = true
 
 [dependencies]
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-config = { workspace = true, default-features = false }
 galleon-log.workspace = true
 async-trait = "0.1"

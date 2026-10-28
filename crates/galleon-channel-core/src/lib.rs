@@ -24,7 +24,7 @@
 //! [`approval::parse_approval_reply`], [`approval::new_approval_token`] and
 //! [`approval::build_yesno_prompt`] are the parts of the upstream
 //! `galleon-channels::util` approval helper that depend only on
-//! `clawcrew-api`. The upstream prompt localizes its heading/labels through
+//! `galleon-api`. The upstream prompt localizes its heading/labels through
 //! `clawcrew_runtime::i18n`; porting that would drag the runtime, so the prompt
 //! here is plain English of the IDENTICAL wire shape (`<token> yes|no|always`),
 //! and the reply parser is shared verbatim. Localization stays the documented
@@ -180,7 +180,7 @@ pub mod allowlist {
 /// Text-reply approval helper (i18n-free half of the upstream
 /// `galleon-channels::util` prompt). See crate docs.
 pub mod approval {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     pub const APPROVAL_REPLY_YES: &str = "yes";
     pub const APPROVAL_REPLY_YES_SHORT: &str = "y";
@@ -191,7 +191,7 @@ pub mod approval {
     pub const APPROVAL_REPLY_ALWAYS: &str = "always";
 
     /// Parse a `<token> <action>` approval reply. Depends only on
-    /// `clawcrew-api`; the wire shape is identical to upstream so prompts built
+    /// `galleon-api`; the wire shape is identical to upstream so prompts built
     /// by [`build_yesno_prompt`] round-trip through it.
     #[must_use]
     pub fn parse_approval_reply(text: &str) -> Option<(String, ChannelApprovalResponse)> {
@@ -252,7 +252,7 @@ pub mod approval {
     }
 
     pub struct PendingApproval {
-        pub sender: tokio::sync::oneshot::Sender<clawcrew_api::channel::ChannelApprovalResponse>,
+        pub sender: tokio::sync::oneshot::Sender<galleon_api::channel::ChannelApprovalResponse>,
         pub destination: String,
         pub tool_name: String,
     }
@@ -274,7 +274,7 @@ pub mod approval {
     pub async fn resolve_pending_approval(
         pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
         token: &str,
-        response: clawcrew_api::channel::ChannelApprovalResponse,
+        response: galleon_api::channel::ChannelApprovalResponse,
         responder_allowed: bool,
         destination: &str,
     ) -> PendingApprovalResolution {
@@ -292,7 +292,7 @@ pub mod approval {
     pub async fn resolve_pending_approval_with_tool(
         pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
         token: &str,
-        response: clawcrew_api::channel::ChannelApprovalResponse,
+        response: galleon_api::channel::ChannelApprovalResponse,
         responder_allowed: bool,
         destination: &str,
     ) -> (PendingApprovalResolution, Option<String>) {

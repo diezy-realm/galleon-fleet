@@ -12,16 +12,16 @@ const MEMORY: &str = include_str!("MEMORY.md");
 const AGENTS: &str = include_str!("AGENTS.md");
 const AGENTS_NO_MEMORY: &str = include_str!("AGENTS.no-memory.md");
 
-pub use clawcrew_api::personality::{PersonalityRunner, TemplateContext};
+pub use galleon_api::personality::{PersonalityRunner, TemplateContext};
 
 pub struct RuntimePersonalityRunner;
 
 #[async_trait::async_trait]
 impl PersonalityRunner for RuntimePersonalityRunner {
-    fn render_templates(&self, ctx: &TemplateContext) -> Vec<clawcrew_api::personality::TemplateFileEntry> {
+    fn render_templates(&self, ctx: &TemplateContext) -> Vec<galleon_api::personality::TemplateFileEntry> {
         render_preset_default(ctx)
             .into_iter()
-            .map(|(filename, content)| clawcrew_api::personality::TemplateFileEntry {
+            .map(|(filename, content)| galleon_api::personality::TemplateFileEntry {
                 filename: filename.to_string(),
                 content,
             })

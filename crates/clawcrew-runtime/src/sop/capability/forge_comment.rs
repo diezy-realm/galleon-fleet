@@ -31,7 +31,7 @@
 //! headlessly after an out-of-band approval, without a live agent turn.
 //!
 //! Layering mirrors `approval::channel_route`: this module needs only
-//! [`clawcrew_api::channel::Channel`], never `galleon-channels` — the daemon
+//! [`galleon_api::channel::Channel`], never `galleon-channels` — the daemon
 //! builds the concrete channel map and injects it, so there is no
 //! runtime -> channels inversion.
 
@@ -42,7 +42,7 @@ use std::time::Duration;
 use anyhow::Result;
 use serde_json::{Value, json};
 
-use clawcrew_api::channel::{Channel, SendMessage};
+use galleon_api::channel::{Channel, SendMessage};
 
 use super::types::{CapabilityContext, CapabilityInfo, CapabilityResult, SopCapability};
 
@@ -388,10 +388,10 @@ mod tests {
         delay: Duration,
     }
 
-    impl clawcrew_api::attribution::Attributable for SlowChannel {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Channel(
-                clawcrew_api::attribution::ChannelKind::Webhook,
+    impl galleon_api::attribution::Attributable for SlowChannel {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Channel(
+                galleon_api::attribution::ChannelKind::Webhook,
             )
         }
 
@@ -414,7 +414,7 @@ mod tests {
 
         async fn listen(
             &self,
-            _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+            _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
         ) -> anyhow::Result<()> {
             Ok(())
         }

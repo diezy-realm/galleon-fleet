@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::{Mutex, mpsc};
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 pub use galleon_config::scattered_types::GmailPushConfig;
 
@@ -530,10 +530,10 @@ impl GmailPushChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for GmailPushChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::GmailPush,
+impl ::galleon_api::attribution::Attributable for GmailPushChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::GmailPush,
         )
     }
     fn alias(&self) -> &str {

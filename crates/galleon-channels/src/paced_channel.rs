@@ -6,8 +6,8 @@ use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use async_trait::async_trait;
-use clawcrew_api::attribution::{Attributable, Role};
-use clawcrew_api::channel::{
+use galleon_api::attribution::{Attributable, Role};
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage,
     ChannelModelPickerRequest, DraftProgress, ProgressEvent, RoomCreationOptions, SendMessage,
 };
@@ -360,7 +360,7 @@ impl Channel for PacedChannel {
     /// supervisor reads "no signal" for a channel that does have one. Pacing is
     /// a delivery concern; it says nothing about whether the listener is
     /// reaching the service.
-    fn listener_health(&self) -> Option<clawcrew_api::channel::ListenerHealth> {
+    fn listener_health(&self) -> Option<galleon_api::channel::ListenerHealth> {
         self.inner.listener_health()
     }
 
@@ -522,7 +522,7 @@ impl Channel for PacedChannel {
     /// without this every channel wrapped here would report that it supplies no
     /// room context, no matter what the inner channel knows. Pacing concerns
     /// outbound sends only and has no opinion about a room's description.
-    fn room_context(&self, room_id: &str) -> Option<clawcrew_api::channel::ChannelRoomContext> {
+    fn room_context(&self, room_id: &str) -> Option<galleon_api::channel::ChannelRoomContext> {
         self.inner.room_context(room_id)
     }
 
@@ -541,7 +541,7 @@ impl Channel for PacedChannel {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         self.inner
             .request_approval_attributed(recipient, request)
             .await
@@ -577,7 +577,7 @@ impl Channel for PacedChannel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::channel::DraftProgressKind;
+    use galleon_api::channel::DraftProgressKind;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     /// Minimal `HasReplyPacing` for tests so we can construct pacing
@@ -605,7 +605,7 @@ mod tests {
     impl Attributable for CountingChannel {
         fn role(&self) -> Role {
             // Reuse an existing channel kind for testing only.
-            Role::Channel(clawcrew_api::attribution::ChannelKind::Cli)
+            Role::Channel(galleon_api::attribution::ChannelKind::Cli)
         }
         fn alias(&self) -> &str {
             "counting"
@@ -652,7 +652,7 @@ mod tests {
 
     impl Attributable for BatchProgressChannel {
         fn role(&self) -> Role {
-            Role::Channel(clawcrew_api::attribution::ChannelKind::Matrix)
+            Role::Channel(galleon_api::attribution::ChannelKind::Matrix)
         }
         fn alias(&self) -> &str {
             "batch-progress"
@@ -710,7 +710,7 @@ mod tests {
 
     impl Attributable for RoomManagementChannel {
         fn role(&self) -> Role {
-            Role::Channel(clawcrew_api::attribution::ChannelKind::Matrix)
+            Role::Channel(galleon_api::attribution::ChannelKind::Matrix)
         }
         fn alias(&self) -> &str {
             "room-management"
@@ -1098,7 +1098,7 @@ mod tests {
 
     impl Attributable for GatedChannel {
         fn role(&self) -> Role {
-            Role::Channel(clawcrew_api::attribution::ChannelKind::Cli)
+            Role::Channel(galleon_api::attribution::ChannelKind::Cli)
         }
         fn alias(&self) -> &str {
             "gated"
@@ -1188,13 +1188,13 @@ mod tests {
 mod forwarding_tests {
     use super::tests::PacingFixture;
     use super::*;
-    use clawcrew_api::channel::ChannelRoomContext;
+    use galleon_api::channel::ChannelRoomContext;
 
     struct ContextChannel;
 
     impl Attributable for ContextChannel {
         fn role(&self) -> Role {
-            Role::Channel(clawcrew_api::attribution::ChannelKind::Cli)
+            Role::Channel(galleon_api::attribution::ChannelKind::Cli)
         }
         fn alias(&self) -> &str {
             "context"

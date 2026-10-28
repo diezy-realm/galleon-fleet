@@ -56,11 +56,11 @@ impl ModelProvider for MockModelProvider {
         Ok(guard.remove(0))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for MockModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -121,11 +121,11 @@ impl ModelProvider for RecordingModelProvider {
         Ok(guard.remove(0))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for RecordingModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for RecordingModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -228,11 +228,11 @@ impl ModelProvider for TraceLlmModelProvider {
         }
     }
 }
-impl ::clawcrew_api::attribution::Attributable for TraceLlmModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for TraceLlmModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }

@@ -1919,7 +1919,7 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                 false,
                 None,
                 None,
-                clawcrew_api::ingress::TurnOrigin::Daemon,
+                galleon_api::ingress::TurnOrigin::Daemon,
                 crate::agent::loop_::AgentRunOverrides {
                     mcp_registry: shared_mcp_registry.as_ref().map(Arc::clone),
                     ..crate::agent::loop_::AgentRunOverrides::default()
@@ -2040,7 +2040,7 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                 false,
                 None,
                 None,
-                clawcrew_api::ingress::TurnOrigin::Daemon,
+                galleon_api::ingress::TurnOrigin::Daemon,
                 crate::agent::loop_::AgentRunOverrides {
                     mcp_registry: shared_mcp_registry.as_ref().map(Arc::clone),
                     ..crate::agent::loop_::AgentRunOverrides::default()

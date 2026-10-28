@@ -15,7 +15,7 @@ use futures_util::stream;
 use reqwest::Client;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use serde::{Deserialize, Serialize};
-use clawcrew_api::tool::ToolSpec;
+use galleon_api::tool::ToolSpec;
 
 /// OpenAI's public API endpoint.
 pub(crate) const BASE_URL: &str = "https://api.openai.com/v1";
@@ -75,9 +75,9 @@ impl ResponseMessage {
 /// reasoning-only result is therefore a typed terminal failure, not a valid
 /// string result for direct callers that do not use the structured chat API.
 fn require_terminal_text(content: String) -> anyhow::Result<String> {
-    if clawcrew_api::model_provider::strip_think_tags(&content).is_empty() {
+    if galleon_api::model_provider::strip_think_tags(&content).is_empty() {
         return Err(anyhow::Error::new(
-            clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+            galleon_api::model_provider::SemanticEmptyTerminalCompletion,
         ));
     }
     Ok(content)
@@ -735,11 +735,11 @@ impl ModelProvider for OpenAiModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for OpenAiModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::OpenAi,
+impl ::galleon_api::attribution::Attributable for OpenAiModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::OpenAi,
             ),
         )
     }
@@ -1456,11 +1456,11 @@ impl ModelProvider for OpenAiResponsesModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for OpenAiResponsesModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::OpenAi,
+impl ::galleon_api::attribution::Attributable for OpenAiResponsesModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::OpenAi,
             ),
         )
     }
@@ -2095,7 +2095,7 @@ mod tests {
             let error = require_terminal_text(text.to_string())
                 .expect_err("a string-only semantic-empty completion must fail");
             assert!(error.chain().any(|cause| {
-                cause.is::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>()
+                cause.is::<galleon_api::model_provider::SemanticEmptyTerminalCompletion>()
             }));
         }
     }
@@ -2384,7 +2384,7 @@ mod tests {
 
     #[test]
     fn convert_messages_round_trips_reasoning_content() {
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         let history_json = serde_json::json!({
             "content": "I will check",
@@ -2407,7 +2407,7 @@ mod tests {
 
     #[test]
     fn convert_messages_no_reasoning_content_when_absent() {
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         let history_json = serde_json::json!({
             "content": "I will check",
@@ -2429,7 +2429,7 @@ mod tests {
         // Pins that the openai `convert_messages` call site of
         // `sanitize_tool_arguments` is wired in. The helper contract itself is
         // covered in `compatible::tests::sanitize_tool_arguments_*`.
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         let messages = vec![ChatMessage::assistant(
             r#"{"content":"trying","tool_calls":[{"id":"call_bad","name":"shell","arguments":"{\"command\":\"rm -rf"}]}"#.to_string(),
@@ -2446,7 +2446,7 @@ mod tests {
     #[test]
     fn convert_messages_passes_through_valid_tool_arguments() {
         // Companion regression: valid JSON must round-trip byte-for-byte.
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         let messages = vec![ChatMessage::assistant(
             r#"{"content":"using","tool_calls":[{"id":"call_ok","name":"shell","arguments":"{\"command\":\"pwd\"}"}]}"#.to_string(),

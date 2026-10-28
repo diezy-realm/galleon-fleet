@@ -4,7 +4,7 @@
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 
-pub use clawcrew_api::personality::{EDITABLE_PERSONALITY_FILES, MAX_FILE_CHARS};
+pub use galleon_api::personality::{EDITABLE_PERSONALITY_FILES, MAX_FILE_CHARS};
 
 /// Well-known personality files loaded from the workspace root.
 pub const PERSONALITY_FILES: &[&str] = &[

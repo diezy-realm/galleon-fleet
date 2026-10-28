@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 
 use serde::Serialize;
-use clawcrew_api::app_manifest::{AppManifest, AppToolDefinition};
+use galleon_api::app_manifest::{AppManifest, AppToolDefinition};
 
 /// The running runtime/gateway version this matrix compares against.
 pub const RUNTIME_VERSION: &str = env!("CARGO_PKG_VERSION");

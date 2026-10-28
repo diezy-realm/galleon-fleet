@@ -17,7 +17,7 @@ use std::sync::OnceLock;
 use tokio::sync::Mutex;
 use wasmtime::Store;
 use wasmtime::component::Linker;
-use clawcrew_api::tool::ToolResult;
+use galleon_api::tool::ToolResult;
 
 /// Tool metadata read from a plugin's exported `tool` interface.
 #[derive(Debug)]

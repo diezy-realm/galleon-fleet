@@ -5,9 +5,9 @@ use serde_json::{Value, json};
 use std::fmt::Write as _;
 use std::fs;
 use std::time::Duration;
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
+use galleon_api::tool_attribution;
 
 tool_attribution!(GpioRpiWriteTool, ToolKind::Plugin);
 tool_attribution!(GpioRpiReadTool, ToolKind::Plugin);

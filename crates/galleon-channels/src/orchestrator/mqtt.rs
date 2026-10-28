@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS, Transport};
 
-use clawcrew_api::sop::{SopFanInDispatcher, SopTriggerSource};
+use galleon_api::sop::{SopFanInDispatcher, SopTriggerSource};
 use galleon_config::schema::MqttConfig;
 
 /// Run the MQTT SOP listener loop.

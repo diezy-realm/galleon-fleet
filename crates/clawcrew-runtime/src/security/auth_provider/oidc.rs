@@ -36,7 +36,7 @@ use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use parking_lot::{Mutex, RwLock};
 use serde::Deserialize;
-use clawcrew_api::principal::{
+use galleon_api::principal::{
     AuthMethod, AuthOutcome, AuthenticatedIdentity, DenyReason, IdentitySubject,
 };
 use galleon_config::schema::{OidcActorKind, OidcConfig, OidcValidation};
@@ -812,8 +812,8 @@ mod tests {
     use std::sync::Arc;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
-    use clawcrew_api::grants::{Resource, Verb};
-    use clawcrew_api::principal::ActorKind;
+    use galleon_api::grants::{Resource, Verb};
+    use galleon_api::principal::ActorKind;
 
     struct TestIdp {
         server: MockServer,
@@ -1682,7 +1682,7 @@ mod tests {
         service_client: &str,
     ) -> crate::security::principal_resolver::ResolverPolicy {
         use crate::security::principal_resolver::{OidcMapping, ResolverPolicy};
-        use clawcrew_api::grants::ResolvedGrants;
+        use galleon_api::grants::ResolvedGrants;
         let mut grants = ResolvedGrants::none();
         grants
             .resources
@@ -2405,7 +2405,7 @@ mod tests {
         // End to end across the contract: provider verifies the token into
         // an identity, the shared resolver maps its claims to grants.
         use crate::security::principal_resolver::{OidcMapping, PrincipalResolver, ResolverPolicy};
-        use clawcrew_api::grants::ResolvedGrants;
+        use galleon_api::grants::ResolvedGrants;
 
         let idp = start_idp().await;
         let provider = idp.provider(OidcValidation::Jwks);

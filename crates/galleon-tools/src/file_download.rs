@@ -5,7 +5,7 @@ use std::path::Path;
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::io::AsyncWriteExt;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::schema::FileDownloadConfig;
 

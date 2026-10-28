@@ -106,7 +106,7 @@ fn validate_audio(audio_data: &[u8], file_name: &str) -> Result<(String, &'stati
 
 /// Trait for speech-to-text transcription_provider implementations.
 #[async_trait]
-pub trait TranscriptionProvider: Send + Sync + ::clawcrew_api::attribution::Attributable {
+pub trait TranscriptionProvider: Send + Sync + ::galleon_api::attribution::Attributable {
     /// Human-readable transcription_provider name (e.g. "groq", "openai").
     fn name(&self) -> &str;
 
@@ -1423,11 +1423,11 @@ pub(crate) fn manager_from_snapshot(
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for GroqProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Transcription(
-                ::clawcrew_api::attribution::TranscriptionProviderKind::Groq,
+impl ::galleon_api::attribution::Attributable for GroqProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Transcription(
+                ::galleon_api::attribution::TranscriptionProviderKind::Groq,
             ),
         )
     }
@@ -1436,11 +1436,11 @@ impl ::clawcrew_api::attribution::Attributable for GroqProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for OpenAiWhisperProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Transcription(
-                ::clawcrew_api::attribution::TranscriptionProviderKind::OpenAi,
+impl ::galleon_api::attribution::Attributable for OpenAiWhisperProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Transcription(
+                ::galleon_api::attribution::TranscriptionProviderKind::OpenAi,
             ),
         )
     }
@@ -1449,11 +1449,11 @@ impl ::clawcrew_api::attribution::Attributable for OpenAiWhisperProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for DeepgramProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Transcription(
-                ::clawcrew_api::attribution::TranscriptionProviderKind::Deepgram,
+impl ::galleon_api::attribution::Attributable for DeepgramProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Transcription(
+                ::galleon_api::attribution::TranscriptionProviderKind::Deepgram,
             ),
         )
     }
@@ -1462,11 +1462,11 @@ impl ::clawcrew_api::attribution::Attributable for DeepgramProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for AssemblyAiProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Transcription(
-                ::clawcrew_api::attribution::TranscriptionProviderKind::AssemblyAi,
+impl ::galleon_api::attribution::Attributable for AssemblyAiProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Transcription(
+                ::galleon_api::attribution::TranscriptionProviderKind::AssemblyAi,
             ),
         )
     }
@@ -1475,11 +1475,11 @@ impl ::clawcrew_api::attribution::Attributable for AssemblyAiProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for GoogleSttProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Transcription(
-                ::clawcrew_api::attribution::TranscriptionProviderKind::Google,
+impl ::galleon_api::attribution::Attributable for GoogleSttProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Transcription(
+                ::galleon_api::attribution::TranscriptionProviderKind::Google,
             ),
         )
     }
@@ -1488,11 +1488,11 @@ impl ::clawcrew_api::attribution::Attributable for GoogleSttProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for LocalWhisperProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Transcription(
-                ::clawcrew_api::attribution::TranscriptionProviderKind::Whisper,
+impl ::galleon_api::attribution::Attributable for LocalWhisperProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Transcription(
+                ::galleon_api::attribution::TranscriptionProviderKind::Whisper,
             ),
         )
     }
@@ -1525,11 +1525,11 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for StaticTranscriptionProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Transcription(
-                    ::clawcrew_api::attribution::TranscriptionProviderKind::Groq,
+    impl ::galleon_api::attribution::Attributable for StaticTranscriptionProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Transcription(
+                    ::galleon_api::attribution::TranscriptionProviderKind::Groq,
                 ),
             )
         }

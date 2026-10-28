@@ -41,7 +41,7 @@ Ketiga crate memiliki batas tanggung jawab (cohesion) yang jelas, dependency gra
 
 ### 3.3 `galleon-tools`
 - **Fungsi:** Menampung implementasi native tools (filesystem, git, terminal, browser, dsb.).
-- **Ketergantungan:** Bergantung pada `clawcrew-api` dan interface runtime.
+- **Ketergantungan:** Bergantung pada `galleon-api` dan interface runtime.
 - **Risiko jika dipecah:** Tool dispatch dipanggil via satu registry terpadu. Memecah per tool hanya memperumit pendaftaran di `ToolDispatcher`.
 - **Rekomendasi:** Pertahankan sebagai satu crate tools.
 

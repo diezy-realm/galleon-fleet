@@ -3,8 +3,8 @@
 //! the tool's `name()` as its alias so log emissions can attribute
 //! tool activity with the same `<kind>.<alias>` composite the rest of
 
-use clawcrew_api::attribution::{ToolKind, ToolProvenance};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::{ToolKind, ToolProvenance};
+use galleon_api::tool_attribution;
 
 use crate::ask_user::AskUserTool;
 use crate::backup_tool::BackupTool;
@@ -148,7 +148,7 @@ mod tests {
     use std::sync::Arc;
 
     use crate::calculator::CalculatorTool;
-    use clawcrew_api::attribution::{Attributable, Role, ToolProvenance};
+    use galleon_api::attribution::{Attributable, Role, ToolProvenance};
 
     #[test]
     fn macro_sets_role_to_tool_kind() {

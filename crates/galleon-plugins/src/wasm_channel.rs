@@ -1,4 +1,4 @@
-//! Channel adapter: `WasmChannel` implements `clawcrew_api::channel::Channel`
+//! Channel adapter: `WasmChannel` implements `galleon_api::channel::Channel`
 //! backed by the `channel-plugin` component world.
 
 use crate::component::InboundQueue;
@@ -26,12 +26,12 @@ use tokio::sync::{Mutex, mpsc};
 use wasmtime::Store;
 use wasmtime::component::Component;
 use wasmtime::component::Linker;
-use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
-use clawcrew_api::channel::{
+use galleon_api::attribution::{Attributable, ChannelKind, Role};
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
-use clawcrew_api::media::MediaAttachment;
-use clawcrew_api::webhook::{
+use galleon_api::media::MediaAttachment;
+use galleon_api::webhook::{
     MAX_WEBHOOK_RESPONSE_BODY_BYTES, RawWebhook, WebhookIdempotency, WebhookOutcome, WebhookReject,
     WebhookReservation, WebhookReservationStatus, WebhookReservationToken,
 };
@@ -571,7 +571,7 @@ fn log_webhook_rejection(endpoint: &PluginChannelEndpoint, rejection: &WebhookRe
 async fn reserve_webhook_delivery(
     idempotency: Option<&WebhookIdempotency>,
     message_id: &str,
-    cancellation: &clawcrew_api::webhook::WebhookCancellation,
+    cancellation: &galleon_api::webhook::WebhookCancellation,
 ) -> Result<DeliveryReservation, WebhookReject> {
     let Some(idempotency) = idempotency else {
         return Ok(DeliveryReservation::Untracked);
@@ -621,7 +621,7 @@ async fn deliver_webhook_messages(
     tx: &mpsc::Sender<ChannelMessage>,
     authorizer: &SenderAuthorizer,
     endpoint: &PluginChannelEndpoint,
-    cancellation: &clawcrew_api::webhook::WebhookCancellation,
+    cancellation: &galleon_api::webhook::WebhookCancellation,
     idempotency: Option<&WebhookIdempotency>,
 ) -> Result<(), WebhookReject> {
     for message in messages {

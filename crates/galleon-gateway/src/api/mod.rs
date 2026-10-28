@@ -282,15 +282,15 @@ pub async fn handle_api_doctor(
 
     let ok_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Ok)
+        .filter(|r| r.severity == galleon_api::doctor::Severity::Ok)
         .count();
     let warn_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Warn)
+        .filter(|r| r.severity == galleon_api::doctor::Severity::Warn)
         .count();
     let error_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Error)
+        .filter(|r| r.severity == galleon_api::doctor::Severity::Error)
         .count();
 
     Json(serde_json::json!({

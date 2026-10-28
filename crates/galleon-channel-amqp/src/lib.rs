@@ -14,8 +14,8 @@ use lapin::{
     tcp::{OwnedIdentity, OwnedTLSConfig},
     types::FieldTable,
 };
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_api::sop::{SopFanInDispatcher, SopTriggerSource};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::sop::{SopFanInDispatcher, SopTriggerSource};
 use galleon_config::schema::SopDispatch;
 
 static MSG_SEQ: AtomicU64 = AtomicU64::new(0);
@@ -406,9 +406,9 @@ fn pem_to_pkcs12_der(cert_pem: &[u8], key_pem: &[u8], alias: &str) -> anyhow::Re
     })
 }
 
-impl ::clawcrew_api::attribution::Attributable for AmqpChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Amqp)
+impl ::galleon_api::attribution::Attributable for AmqpChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Amqp)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -763,7 +763,7 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             _payload: Option<&str>,
             _target_sop: Option<&str>,
             dedup: Option<(String, bool)>,
-        ) -> clawcrew_api::sop::SopFanInResult {
+        ) -> galleon_api::sop::SopFanInResult {
             let mut runs = self.runs.lock().unwrap();
             match dedup {
                 Some((key, true)) => {
@@ -779,7 +779,7 @@ tr7J6RKtO4OsZS/2KoYL8M+o
                     runs.push(next);
                 }
             }
-            clawcrew_api::sop::SopFanInResult {
+            galleon_api::sop::SopFanInResult {
                 needs_redelivery: self.needs_redelivery,
             }
         }

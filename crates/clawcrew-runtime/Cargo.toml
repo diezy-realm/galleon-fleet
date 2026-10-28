@@ -10,7 +10,7 @@ homepage.workspace = true
 publish = true
 
 [dependencies]
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-spawn.workspace = true
 galleon-infra = { workspace = true, features = ["schema-export"] }
 galleon-config.workspace = true

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
 use regex::Regex;
@@ -107,7 +107,7 @@ async fn run_approval_lifecycle<F, Fut>(
     token: String,
     approval_timeout_secs: u64,
     send: F,
-) -> anyhow::Result<clawcrew_api::channel::AttributedApprovalResponse>
+) -> anyhow::Result<galleon_api::channel::AttributedApprovalResponse>
 where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = anyhow::Result<()>>,
@@ -135,20 +135,20 @@ where
             // Nothing awaits between here and the disarm, so there is no
             // cancellation window to cover.
             guard.disarm();
-            clawcrew_api::channel::AttributedApprovalResponse::operator(response)
+            galleon_api::channel::AttributedApprovalResponse::operator(response)
         }
         Ok(Err(_)) => {
             remove_pending_and_disarm(&token, &mut guard).await;
-            clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+            galleon_api::channel::AttributedApprovalResponse::from_runtime(
                 ChannelApprovalResponse::Deny,
-                clawcrew_api::channel::ApprovalSource::Unreachable,
+                galleon_api::channel::ApprovalSource::Unreachable,
             )
         }
         Err(_) => {
             remove_pending_and_disarm(&token, &mut guard).await;
-            clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+            galleon_api::channel::AttributedApprovalResponse::from_runtime(
                 ChannelApprovalResponse::Deny,
-                clawcrew_api::channel::ApprovalSource::TimedOut,
+                galleon_api::channel::ApprovalSource::TimedOut,
             )
         }
     };
@@ -829,10 +829,10 @@ fn location_message_body(to: &str, loc: &crate::util::WhatsAppLocation) -> serde
     })
 }
 
-impl ::clawcrew_api::attribution::Attributable for WhatsAppChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::WhatsappBusiness,
+impl ::galleon_api::attribution::Attributable for WhatsAppChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::WhatsappBusiness,
         )
     }
     fn alias(&self) -> &str {
@@ -998,7 +998,7 @@ impl Channel for WhatsAppChannel {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let token = galleon_channel_core::approval::new_approval_token();
         let text = crate::util::build_yesno_approval_prompt(
             &token,
@@ -3193,7 +3193,7 @@ mod tests {
         assert_eq!(attributed.response, ChannelApprovalResponse::Approve);
         assert_eq!(
             attributed.source,
-            clawcrew_api::channel::ApprovalSource::Operator,
+            galleon_api::channel::ApprovalSource::Operator,
             "a human answered, so this must not be reported as a runtime fail-closed"
         );
         assert!(
@@ -3277,7 +3277,7 @@ mod tests {
         assert_eq!(attributed.response, ChannelApprovalResponse::Deny);
         assert_eq!(
             attributed.source,
-            clawcrew_api::channel::ApprovalSource::Unreachable
+            galleon_api::channel::ApprovalSource::Unreachable
         );
         assert_token_cleared(token).await;
     }
@@ -3295,7 +3295,7 @@ mod tests {
         assert_eq!(attributed.response, ChannelApprovalResponse::Deny);
         assert_eq!(
             attributed.source,
-            clawcrew_api::channel::ApprovalSource::TimedOut
+            galleon_api::channel::ApprovalSource::TimedOut
         );
         assert_token_cleared(token).await;
     }

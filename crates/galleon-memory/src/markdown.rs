@@ -116,7 +116,7 @@ impl MarkdownMemory {
                 let trimmed = line.trim();
                 let clean = trimmed.strip_prefix("- ").unwrap_or(trimmed);
                 MemoryEntry {
-                    scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                    scope: galleon_api::memory_traits::MemoryScope::Workspace,
                     id: format!("{filename}:{i}"),
                     key: format!("{filename}:{i}"),
                     content: clean.to_string(),
@@ -352,9 +352,9 @@ impl Memory for MarkdownMemory {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MarkdownMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::Markdown)
+impl ::galleon_api::attribution::Attributable for MarkdownMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::Markdown)
     }
     fn alias(&self) -> &str {
         &self.alias

@@ -10,7 +10,7 @@ use crate::policy_gate;
 use crate::traits::{
     Memory, MemoryCategory, MemoryEntry, MemoryKind, SemanticSubtype, StoreOptions,
 };
-use clawcrew_api::model_provider::ModelProvider;
+use galleon_api::model_provider::ModelProvider;
 use galleon_config::schema::MemoryConfig;
 use galleon_providers::ProviderDispatch;
 use galleon_providers::multimodal::strip_media_markers;
@@ -415,7 +415,7 @@ fn fact_overlaps_primary_update(
     }
 
     let candidate = MemoryEntry {
-        scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+        scope: galleon_api::memory_traits::MemoryScope::Workspace,
         id: "primary_update_candidate".into(),
         key: "primary_update_candidate".into(),
         content: primary.to_string(),
@@ -527,7 +527,7 @@ mod tests {
     use async_trait::async_trait;
     use parking_lot::Mutex;
     use std::sync::Arc;
-    use clawcrew_api::model_provider::ChatMessage;
+    use galleon_api::model_provider::ChatMessage;
     use galleon_config::schema::{MemoryDedupAction, MemoryPolicyConfig, MemoryTypesConfig};
 
     #[derive(Debug, Clone)]
@@ -668,10 +668,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for RecordingMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for RecordingMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
         fn alias(&self) -> &str {
@@ -718,11 +718,11 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ScriptedProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ScriptedProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1020,7 +1020,7 @@ mod tests {
         let provider = ScriptedProvider::new(FACT_RESPONSE);
         let memory = RecordingMemory::default();
         memory.recall_entries.lock().push(MemoryEntry {
-            scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+            scope: galleon_api::memory_traits::MemoryScope::Workspace,
             id: "survivor".into(),
             key: "core_survivor".into(),
             content: "Use staged rollout".into(),
@@ -1184,7 +1184,7 @@ mod tests {
         let provider = ScriptedProvider::new(TYPED_RESPONSE);
         let memory = RecordingMemory::default();
         memory.recall_entries.lock().push(MemoryEntry {
-            scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+            scope: galleon_api::memory_traits::MemoryScope::Workspace,
             id: "existing".into(),
             key: "core_existing".into(),
             // Exact duplicate of TYPED_RESPONSE's memory_update.
@@ -1274,7 +1274,7 @@ mod consolidate_turn_tests {
     use std::path::Path;
     use std::sync::Mutex;
     use tempfile::TempDir;
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
     use galleon_config::schema::MemoryDedupAction;
 
     /// Scripted model: returns a canned consolidation reply (or fails) and

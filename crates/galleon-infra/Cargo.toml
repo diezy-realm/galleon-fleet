@@ -11,7 +11,7 @@ publish = true
 
 [dependencies]
 galleon-log.workspace = true
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-spawn.workspace = true
 anyhow = "1.0"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }

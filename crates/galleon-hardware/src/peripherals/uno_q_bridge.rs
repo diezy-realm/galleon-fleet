@@ -7,9 +7,9 @@ use serde_json::{Value, json};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
+use galleon_api::tool_attribution;
 
 tool_attribution!(UnoQGpioReadTool, ToolKind::Plugin);
 tool_attribution!(UnoQGpioWriteTool, ToolKind::Plugin);
@@ -205,7 +205,7 @@ impl Tool for UnoQGpioWriteTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::tool::Tool;
+    use galleon_api::tool::Tool;
 
     // ── UnoQGpioReadTool ────────────────────────────────────────────────
 

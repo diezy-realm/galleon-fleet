@@ -1,4 +1,4 @@
-use clawcrew_api::attribution::{Attributable, Role};
+use galleon_api::attribution::{Attributable, Role};
 
 pub struct FixtureAttributable;
 

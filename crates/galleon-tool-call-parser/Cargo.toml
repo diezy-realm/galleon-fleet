@@ -10,7 +10,7 @@ homepage.workspace = true
 publish = true
 
 [dependencies]
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-log.workspace = true
 regex = "1.10"
 serde = { version = "1.0", default-features = false, features = ["derive"] }

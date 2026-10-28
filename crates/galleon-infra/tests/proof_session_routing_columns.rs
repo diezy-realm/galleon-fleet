@@ -6,7 +6,7 @@
 use std::path::PathBuf;
 
 use rusqlite::Connection;
-use clawcrew_api::model_provider::ChatMessage;
+use galleon_api::model_provider::ChatMessage;
 use galleon_infra::session_backend::{SessionBackend, SessionContext};
 use galleon_infra::session_sqlite::SqliteSessionBackend;
 

@@ -6,7 +6,7 @@ use serde_json::json;
 use std::sync::{Arc, Mutex};
 use clawcrew::tools::{Tool, ToolOutput, ToolResult};
 
-clawcrew_api::mock_tool_attribution!(EchoTool, CountingTool, FailingTool, RecordingTool);
+galleon_api::mock_tool_attribution!(EchoTool, CountingTool, FailingTool, RecordingTool);
 
 /// Simple tool that echoes its input argument.
 pub struct EchoTool;

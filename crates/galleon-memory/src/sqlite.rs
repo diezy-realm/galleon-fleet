@@ -17,7 +17,7 @@ use std::sync::{Mutex as StdMutex, MutexGuard};
 use std::thread;
 use std::time::Duration;
 use uuid::Uuid;
-use clawcrew_api::session_keys::sanitize_session_key;
+use galleon_api::session_keys::sanitize_session_key;
 use galleon_config::schema::SearchMode;
 
 /// Maximum allowed open timeout (seconds) to avoid unreasonable waits.
@@ -485,13 +485,13 @@ impl SqliteMemory {
         }
     }
 
-    fn str_to_scope(s: &str) -> clawcrew_api::memory_traits::MemoryScope {
+    fn str_to_scope(s: &str) -> galleon_api::memory_traits::MemoryScope {
         match s {
-            "user" => clawcrew_api::memory_traits::MemoryScope::User,
-            "agent" => clawcrew_api::memory_traits::MemoryScope::Agent,
-            "project" => clawcrew_api::memory_traits::MemoryScope::Project,
-            "workspace" => clawcrew_api::memory_traits::MemoryScope::Workspace,
-            _ => clawcrew_api::memory_traits::MemoryScope::Workspace,
+            "user" => galleon_api::memory_traits::MemoryScope::User,
+            "agent" => galleon_api::memory_traits::MemoryScope::Agent,
+            "project" => galleon_api::memory_traits::MemoryScope::Project,
+            "workspace" => galleon_api::memory_traits::MemoryScope::Workspace,
+            _ => galleon_api::memory_traits::MemoryScope::Workspace,
         }
     }
 
@@ -1281,7 +1281,7 @@ impl SqliteMemory {
                             pinned,
                             tenant_id: tenant,
                             agent_alias: alias,
-                            agent_id: aid, scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                            agent_id: aid, scope: galleon_api::memory_traits::MemoryScope::Workspace,
                         };
                         // Session filter for the hybrid stage. With a live
                         // vector stage, durable global rows are exempt so
@@ -2278,9 +2278,9 @@ impl Memory for SqliteMemory {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for SqliteMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::Sqlite)
+impl ::galleon_api::attribution::Attributable for SqliteMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::Sqlite)
     }
     fn alias(&self) -> &str {
         &self.alias

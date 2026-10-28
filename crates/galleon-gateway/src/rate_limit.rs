@@ -130,7 +130,7 @@ struct IdempotencyEntries {
 #[derive(Debug)]
 struct PendingIdempotencyReservation {
     generation: u64,
-    status: tokio::sync::watch::Sender<clawcrew_api::webhook::WebhookReservationStatus>,
+    status: tokio::sync::watch::Sender<galleon_api::webhook::WebhookReservationStatus>,
 }
 
 impl IdempotencyStore {

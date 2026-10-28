@@ -95,7 +95,7 @@ pub mod wrappers;
 pub use wrappers::ArcToolRef;
 
 pub type DelegateParentToolsHandle =
-    std::sync::Arc<parking_lot::RwLock<Vec<std::sync::Arc<dyn clawcrew_api::tool::Tool>>>>;
+    std::sync::Arc<parking_lot::RwLock<Vec<std::sync::Arc<dyn galleon_api::tool::Tool>>>>;
 
 #[cfg(all(test, unix))]
 mod coding_agent_budget_tests;
@@ -150,7 +150,7 @@ pub(crate) mod test_support {
 #[cfg(test)]
 mod memory_tool_names_guard {
     use super::*;
-    use clawcrew_api::tool::Tool;
+    use galleon_api::tool::Tool;
     use galleon_config::policy::SecurityPolicy;
     use galleon_memory::NoneMemory;
     use std::collections::BTreeSet;

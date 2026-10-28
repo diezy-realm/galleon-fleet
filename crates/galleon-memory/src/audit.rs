@@ -43,8 +43,8 @@ pub struct AuditedMemory<M: Memory> {
     audit_conn: Arc<Mutex<Connection>>,
 }
 
-impl<M: Memory> ::clawcrew_api::attribution::Attributable for AuditedMemory<M> {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
+impl<M: Memory> ::galleon_api::attribution::Attributable for AuditedMemory<M> {
+    fn role(&self) -> ::galleon_api::attribution::Role {
         self.inner.role()
     }
     fn alias(&self) -> &str {
@@ -714,7 +714,7 @@ mod tests {
     async fn audited_ops_emit_memory_audit_events_via_bridge() {
         use std::any::Any;
         use std::sync::{Arc as StdArc, Mutex as StdMutex};
-        use clawcrew_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
+        use galleon_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
 
         let _writer_guard = galleon_log::__private_test_writer_lock();
         let _hook_guard = galleon_log::__private_test_hook_lock();

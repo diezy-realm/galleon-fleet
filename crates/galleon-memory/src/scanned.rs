@@ -63,8 +63,8 @@ pub struct ScannedMemory<M: Memory> {
     policy: MemoryPolicyConfig,
 }
 
-impl<M: Memory> ::clawcrew_api::attribution::Attributable for ScannedMemory<M> {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
+impl<M: Memory> ::galleon_api::attribution::Attributable for ScannedMemory<M> {
+    fn role(&self) -> ::galleon_api::attribution::Role {
         self.inner.role()
     }
 
@@ -849,10 +849,10 @@ mod tests {
         limits: Arc<Mutex<Vec<usize>>>,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for OrderedMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for OrderedMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
 

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_config::pairing::PairingGuard;
 use galleon_config::schema::{Config, LineDmPolicy, LineGroupPolicy};
 use galleon_i18n as i18n;
@@ -1190,9 +1190,9 @@ impl LineChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for LineChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Line)
+impl ::galleon_api::attribution::Attributable for LineChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Line)
     }
     fn alias(&self) -> &str {
         &self.alias

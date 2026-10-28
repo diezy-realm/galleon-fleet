@@ -5,7 +5,7 @@ use serde_json::json;
 
 use crate::sop::types::{SopRunAction, SopStepResult, SopStepStatus};
 use crate::sop::{SopAuditLogger, SopEngine, SopMetricsCollector};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Report a step result and advance an SOP run to the next step.
 pub struct SopAdvanceTool {

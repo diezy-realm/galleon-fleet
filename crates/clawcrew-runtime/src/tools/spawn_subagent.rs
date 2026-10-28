@@ -11,7 +11,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::Config;
 use galleon_log::scope;
 
@@ -252,7 +252,7 @@ impl Tool for SpawnSubagentTool {
                 false,
                 Some(session_path),
                 None,
-                clawcrew_api::ingress::TurnOrigin::SubTurn,
+                galleon_api::ingress::TurnOrigin::SubTurn,
                 run_overrides,
             )
         ))
@@ -664,7 +664,7 @@ mod tests {
 
     #[test]
     fn spawn_subagent_dyn_tool_implements_attributable() {
-        use clawcrew_api::attribution::{Attributable, Role, ToolKind};
+        use galleon_api::attribution::{Attributable, Role, ToolKind};
 
         let tool: Box<dyn Tool> = Box::new(SpawnSubagentTool::new(
             Arc::new(config_with_agent("alpha")),

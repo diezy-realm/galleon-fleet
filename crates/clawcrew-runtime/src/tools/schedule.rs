@@ -5,8 +5,8 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde_json::json;
 use std::sync::Arc;
-use clawcrew_api::runtime_traits::RuntimeAdapter;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::runtime_traits::RuntimeAdapter;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::Config;
 
 /// Tool that lets the agent manage recurring and one-shot scheduled tasks.

@@ -10,9 +10,9 @@ pub const CURRENT_SCHEMA_VERSION: u32 = 3;
 
 pub(crate) struct ConfigLoadAttribution;
 
-impl clawcrew_api::attribution::Attributable for ConfigLoadAttribution {
-    fn role(&self) -> clawcrew_api::attribution::Role {
-        clawcrew_api::attribution::Role::System
+impl galleon_api::attribution::Attributable for ConfigLoadAttribution {
+    fn role(&self) -> galleon_api::attribution::Role {
+        galleon_api::attribution::Role::System
     }
     fn alias(&self) -> &str {
         "config"

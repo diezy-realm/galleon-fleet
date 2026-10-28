@@ -33,10 +33,10 @@ use galleon_config::schema::{ObservabilityBackend, ObservabilityConfig};
 /// Drop-safe lifecycle bracket for one logical agent turn.
 ///
 /// Construction emits exactly one [`ObserverEvent::AgentStart`]. Calling
-pub use clawcrew_api::observability_traits::AgentTurnGuard;
+pub use galleon_api::observability_traits::AgentTurnGuard;
 
-/// Re-export process-wide broadcast hook and TeeObserver from the leaf SSOT (`clawcrew_api::observability_traits`).
-pub use clawcrew_api::observability_traits::{
+/// Re-export process-wide broadcast hook and TeeObserver from the leaf SSOT (`galleon_api::observability_traits`).
+pub use galleon_api::observability_traits::{
     BroadcastHookGuard, TeeObserver, clear_broadcast_hook, current_broadcast_hook,
     set_broadcast_hook, set_scoped_broadcast_hook,
 };

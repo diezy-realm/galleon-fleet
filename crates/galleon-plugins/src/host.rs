@@ -121,13 +121,13 @@ impl PluginHost {
             let span = ::galleon_log::__private::tracing::info_span!(
                 target: "clawcrew_log_internal_attribution",
                 "clawcrew_attribution",
-                zc_role_family = %::clawcrew_api::attribution::Role::System.family_str(),
+                zc_role_family = %::galleon_api::attribution::Role::System.family_str(),
                 zc_role_type = "",
-                zc_attribution_field = %::clawcrew_api::attribution::Role::System
+                zc_attribution_field = %::galleon_api::attribution::Role::System
                     .attribution_field()
                     .unwrap_or(""),
                 zc_composite_prefix = "",
-                zc_default_category = %::clawcrew_api::attribution::Role::System.default_category(),
+                zc_default_category = %::galleon_api::attribution::Role::System.default_category(),
                 zc_alias = "plugins",
             );
             span.in_scope(|| {

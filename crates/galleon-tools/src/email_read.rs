@@ -4,14 +4,14 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use futures_util::TryStreamExt;
 use mail_parser::{MessageParser, MimeHeaders};
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
 use galleon_config::scattered_types::EmailConfig;
 
 use crate::email_imap::imap_connect;
 use crate::email_search::{format_address, resolve_channel};
 
-clawcrew_api::tool_attribution!(EmailReadTool, ToolKind::Plugin);
+galleon_api::tool_attribution!(EmailReadTool, ToolKind::Plugin);
 
 /// Fetch the full body of a specific email by UID. Never sets \Seen.
 pub struct EmailReadTool {

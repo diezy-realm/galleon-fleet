@@ -285,11 +285,11 @@ impl ModelProvider for GeminiCliModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for GeminiCliModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::GeminiCli,
+impl ::galleon_api::attribution::Attributable for GeminiCliModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::GeminiCli,
             ),
         )
     }

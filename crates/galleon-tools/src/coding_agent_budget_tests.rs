@@ -10,7 +10,7 @@ use serde_json::json;
 use std::path::Path;
 use std::process::{ExitStatus, Output};
 use std::sync::Arc;
-use clawcrew_api::tool::Tool;
+use galleon_api::tool::Tool;
 use galleon_config::autonomy::AutonomyLevel;
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::schema::{

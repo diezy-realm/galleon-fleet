@@ -2,7 +2,7 @@ use aes::Aes256;
 use async_trait::async_trait;
 use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_config::pairing::constant_time_eq;
 use galleon_config::schema::StreamMode;
 use futures_util::{SinkExt, StreamExt};
@@ -382,9 +382,9 @@ fn build_approval_card(
 fn build_resolved_approval_card(
     tool_name: &str,
     arguments_summary: &str,
-    decision: clawcrew_api::channel::ChannelApprovalResponse,
+    decision: galleon_api::channel::ChannelApprovalResponse,
 ) -> serde_json::Value {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     let (banner_emoji, banner_text, header_template) = match decision {
         ChannelApprovalResponse::Approve => ("✅", "Approved", "green"),
@@ -779,7 +779,7 @@ async fn build_lark_file_upload_form(
 /// Used to (a) wake the awaiting future via `sender` and (b) re-render
 /// the card after the click so the buttons disappear.
 struct PendingApproval {
-    sender: tokio::sync::oneshot::Sender<clawcrew_api::channel::ChannelApprovalResponse>,
+    sender: tokio::sync::oneshot::Sender<galleon_api::channel::ChannelApprovalResponse>,
     destination: String,
     /// `data.message_id` returned by the send-card POST. Empty string is a
     /// sentinel meaning "card was sent but message_id was missing from the
@@ -2949,9 +2949,9 @@ impl LarkChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for LarkChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Lark)
+impl ::galleon_api::attribution::Attributable for LarkChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Lark)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -3246,8 +3246,8 @@ impl Channel for LarkChannel {
     async fn request_approval(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::ChannelApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::ChannelApprovalResponse>> {
         Ok(self
             .request_approval_attributed(recipient, request)
             .await?
@@ -3257,8 +3257,8 @@ impl Channel for LarkChannel {
     async fn request_approval_attributed(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let approval_id = Uuid::new_v4().to_string();
         let card = build_approval_card(
             &approval_id,
@@ -3604,10 +3604,10 @@ impl LarkChannel {
     /// deny, so the caller does not report an operator refusal nobody made.
     async fn wait_for_decision(
         &self,
-        rx: tokio::sync::oneshot::Receiver<clawcrew_api::channel::ChannelApprovalResponse>,
+        rx: tokio::sync::oneshot::Receiver<galleon_api::channel::ChannelApprovalResponse>,
         approval_id: &str,
-    ) -> clawcrew_api::channel::AttributedApprovalResponse {
-        use clawcrew_api::channel::{
+    ) -> galleon_api::channel::AttributedApprovalResponse {
+        use galleon_api::channel::{
             ApprovalSource, AttributedApprovalResponse, ChannelApprovalResponse,
         };
         match tokio::time::timeout(Duration::from_secs(self.approval_timeout_secs), rx).await {
@@ -3638,7 +3638,7 @@ impl LarkChannel {
         message_id: &str,
         tool_name: &str,
         arguments_summary: &str,
-        decision: clawcrew_api::channel::ChannelApprovalResponse,
+        decision: galleon_api::channel::ChannelApprovalResponse,
     ) {
         let card = build_resolved_approval_card(tool_name, arguments_summary, decision.clone());
         let url = self.patch_message_url(message_id);
@@ -3817,7 +3817,7 @@ impl LarkChannel {
         &self,
         event_payload: &serde_json::Value,
     ) -> anyhow::Result<()> {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         ::galleon_log::record!(
             DEBUG,
@@ -6286,7 +6286,7 @@ mod tests {
 
     #[test]
     fn build_approval_card_and_resolved_card_share_schema_version() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let send_card = build_approval_card("id", "shell", "args", None);
         let patch_card =
@@ -6306,7 +6306,7 @@ mod tests {
 
     #[test]
     fn build_resolved_approval_card_uses_decision_specific_banner() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         for (decision, expected_template, expected_text_fragment) in [
             (ChannelApprovalResponse::Approve, "green", "Approved"),
@@ -6470,7 +6470,7 @@ mod tests {
 
     #[tokio::test]
     async fn handle_card_action_event_routes_committed_fixtures() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let fixtures = [
             (
@@ -6535,7 +6535,7 @@ mod tests {
 
     #[tokio::test]
     async fn handle_card_action_event_parses_card_v2_behaviors_value_payload() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         // Card 2.0 button click events MAY round-trip via
         // event.action.behaviors[0].value instead of event.action.value.
@@ -6574,7 +6574,7 @@ mod tests {
 
     #[tokio::test]
     async fn card_action_ingress_suppresses_rejected_approval_envelopes() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let ch = make_channel();
         let (approved_tx, approved_rx) = tokio::sync::oneshot::channel();
@@ -6676,7 +6676,7 @@ mod tests {
             extract::State,
             http::{HeaderMap, HeaderValue, StatusCode},
         };
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         fn signed_headers(body: &[u8], encrypt_key: &str) -> HeaderMap {
             let timestamp = "1720000000";
@@ -6957,7 +6957,7 @@ mod tests {
     }
     #[tokio::test]
     async fn pending_approval_requires_allowed_user_and_origin_chat() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let ch = make_channel();
         let approval_id = "approval-test".to_string();
@@ -7031,7 +7031,7 @@ mod tests {
 
     #[tokio::test]
     async fn request_approval_registers_before_send_so_early_callback_resolves() {
-        use clawcrew_api::channel::{
+        use galleon_api::channel::{
             ApprovalSource, ChannelApprovalRequest, ChannelApprovalResponse,
         };
         use std::time::Duration;
@@ -7596,7 +7596,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_caches_id_from_add_and_deletes() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7658,7 +7658,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_silent_on_cache_miss() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7692,7 +7692,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_tolerates_server_stale_codes() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7752,7 +7752,7 @@ mod tests {
 
     #[tokio::test]
     async fn add_reaction_caches_glance_under_unicode_key() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7810,7 +7810,7 @@ mod tests {
 
     #[tokio::test]
     async fn lark_inbound_ack_lifecycle_swaps_glance_to_done_with_no_orphan() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7926,7 +7926,7 @@ mod tests {
 
     #[tokio::test]
     async fn lark_fast_ack_and_generic_path_dedupe_on_cache_hit() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 

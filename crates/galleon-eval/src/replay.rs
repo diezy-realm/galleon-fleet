@@ -5,8 +5,8 @@
 use async_trait::async_trait;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, MutexGuard};
-use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-use clawcrew_api::model_provider::{
+use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+use galleon_api::model_provider::{
     ChatRequest, ChatResponse, ModelProvider, TokenUsage, ToolCall,
 };
 

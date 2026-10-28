@@ -3,8 +3,8 @@
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use clawcrew_api::agent::{AgentRunner, AgentSession, AgentTurnError, AgentTurnSuccess, TurnEvent};
-use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+use galleon_api::agent::{AgentRunner, AgentSession, AgentTurnError, AgentTurnSuccess, TurnEvent};
+use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 use std::any::Any;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -161,7 +161,7 @@ impl AgentRunner for StranglerAgentRunner {
         agent_alias: &str,
         message: &str,
         session_id: Option<&str>,
-        _origin: clawcrew_api::ingress::TurnOrigin,
+        _origin: galleon_api::ingress::TurnOrigin,
     ) -> Result<String> {
         let mut client = self.connect().await?;
         // Point 1: StranglerAgentRunner::process_message is a stateless runner call without
@@ -207,7 +207,7 @@ pub fn install_strangler_agent_runner(endpoint: Option<String>) {
         Some(ep) => StranglerAgentRunner::new(ep),
         None => StranglerAgentRunner::default(),
     };
-    clawcrew_api::agent::set_agent_runner(Arc::new(runner));
+    galleon_api::agent::set_agent_runner(Arc::new(runner));
 }
 
 /// Stateful gRPC session proxying turns to Go `AgentEngine`.
@@ -263,7 +263,7 @@ impl AgentSession for StranglerAgentSession {
         None
     }
 
-    fn register_channel(&self, name: &str, channel: Arc<dyn clawcrew_api::channel::Channel>) {
+    fn register_channel(&self, name: &str, channel: Arc<dyn galleon_api::channel::Channel>) {
         self.channel_handles.register_channel(name, channel);
     }
 
@@ -766,7 +766,7 @@ mod tests {
                 "test-agent",
                 "Hi engine",
                 Some("sess-1"),
-                clawcrew_api::ingress::TurnOrigin::Interactive,
+                galleon_api::ingress::TurnOrigin::Interactive,
             )
             .await
             .unwrap();

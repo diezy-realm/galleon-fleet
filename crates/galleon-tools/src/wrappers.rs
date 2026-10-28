@@ -1,8 +1,8 @@
 //! Generic tool wrappers for crosscutting concerns.
 
 use async_trait::async_trait;
-use clawcrew_api::attribution::{Attributable, Role, ToolProvenance};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::attribution::{Attributable, Role, ToolProvenance};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 use std::sync::Arc;
 
@@ -52,7 +52,7 @@ impl<T: Tool> Tool for RateLimitedTool<T> {
         self.inner.output_schema()
     }
 
-    fn param_domains(&self) -> Vec<(&'static str, clawcrew_api::tool::OptionDomain)> {
+    fn param_domains(&self) -> Vec<(&'static str, galleon_api::tool::OptionDomain)> {
         self.inner.param_domains()
     }
 
@@ -153,7 +153,7 @@ impl<T: Tool> Tool for PathGuardedTool<T> {
         self.inner.output_schema()
     }
 
-    fn param_domains(&self) -> Vec<(&'static str, clawcrew_api::tool::OptionDomain)> {
+    fn param_domains(&self) -> Vec<(&'static str, galleon_api::tool::OptionDomain)> {
         self.inner.param_domains()
     }
 
@@ -200,7 +200,7 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
     use tokio::sync::Notify;
 
-    clawcrew_api::mock_tool_attribution!(CountingTool);
+    galleon_api::mock_tool_attribution!(CountingTool);
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -310,7 +310,7 @@ mod tests {
         release: Arc<Notify>,
     }
 
-    clawcrew_api::mock_tool_attribution!(BlockingTool);
+    galleon_api::mock_tool_attribution!(BlockingTool);
 
     #[async_trait]
     impl Tool for BlockingTool {
@@ -451,10 +451,10 @@ mod tests {
         // Inner tool that always reports failure (e.g. validation error).
         // Its reservation must be released so a later successful call can run.
         struct AlwaysFails;
-        impl ::clawcrew_api::attribution::Attributable for AlwaysFails {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Tool(
-                    ::clawcrew_api::attribution::ToolKind::Plugin,
+        impl ::galleon_api::attribution::Attributable for AlwaysFails {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Tool(
+                    ::galleon_api::attribution::ToolKind::Plugin,
                 )
             }
             fn alias(&self) -> &str {
@@ -508,7 +508,7 @@ mod tests {
     #[tokio::test]
     async fn rate_limited_releases_budget_on_inner_error() {
         struct AlwaysErrors;
-        clawcrew_api::mock_tool_attribution!(AlwaysErrors);
+        galleon_api::mock_tool_attribution!(AlwaysErrors);
 
         #[async_trait]
         impl Tool for AlwaysErrors {
@@ -583,7 +583,7 @@ mod tests {
     #[tokio::test]
     async fn rate_limited_releases_budget_when_inner_panics() {
         struct PanickingTool;
-        clawcrew_api::mock_tool_attribution!(PanickingTool);
+        galleon_api::mock_tool_attribution!(PanickingTool);
 
         #[async_trait]
         impl Tool for PanickingTool {
@@ -682,10 +682,10 @@ impl Tool for ArcToolRef {
     fn output_schema(&self) -> Option<serde_json::Value> {
         self.0.output_schema()
     }
-    fn param_domains(&self) -> Vec<(&'static str, clawcrew_api::tool::OptionDomain)> {
+    fn param_domains(&self) -> Vec<(&'static str, galleon_api::tool::OptionDomain)> {
         self.0.param_domains()
     }
-    fn spec(&self) -> clawcrew_api::tool::ToolSpec {
+    fn spec(&self) -> galleon_api::tool::ToolSpec {
         self.0.spec()
     }
     fn invocation_triggers(&self) -> Vec<String> {

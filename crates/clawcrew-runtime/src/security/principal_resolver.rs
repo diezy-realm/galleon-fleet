@@ -22,8 +22,8 @@ use std::sync::Arc;
 
 use parking_lot::RwLock;
 
-use clawcrew_api::grants::ResolvedGrants;
-use clawcrew_api::principal::{AuthenticatedIdentity, DenyReason, IdentitySubject, Principal};
+use galleon_api::grants::ResolvedGrants;
+use galleon_api::principal::{AuthenticatedIdentity, DenyReason, IdentitySubject, Principal};
 use galleon_config::schema::Config;
 
 /// One identity's resolution at a specific policy generation.
@@ -362,8 +362,8 @@ impl PrincipalResolver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::grants::{Resource, Verb, WILDCARD};
-    use clawcrew_api::principal::{ActorKind, AuthMethod, PrincipalId};
+    use galleon_api::grants::{Resource, Verb, WILDCARD};
+    use galleon_api::principal::{ActorKind, AuthMethod, PrincipalId};
 
     fn grants_for(resource: Resource, verbs: &[Verb]) -> ResolvedGrants {
         let mut g = ResolvedGrants::none();

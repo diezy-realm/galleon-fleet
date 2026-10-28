@@ -3,7 +3,7 @@
     use crate::router::{Route, RouterModelProvider};
     use futures_util::StreamExt;
     use std::sync::Arc;
-    use clawcrew_api::tool::ToolSpec;
+    use galleon_api::tool::ToolSpec;
 
     fn drain_captured_events(
         rx: &mut tokio::sync::broadcast::Receiver<serde_json::Value>,
@@ -85,11 +85,11 @@
             Ok(self.response.to_string())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MockModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -163,11 +163,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for MarkerErrorProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MarkerErrorProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -224,11 +224,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for RefusalThenFailureStub {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for RefusalThenFailureStub {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -383,11 +383,11 @@
             anyhow::bail!("503 service unavailable")
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for UnavailableStub {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for UnavailableStub {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -441,11 +441,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for ServerFallbackStub {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ServerFallbackStub {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -573,11 +573,11 @@
             Ok(self.response.to_string())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for ModelAwareMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ModelAwareMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1262,11 +1262,11 @@
             }
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for EmptyThenTextMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for EmptyThenTextMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1329,11 +1329,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for UsageEmptyThenTextMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for UsageEmptyThenTextMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1397,11 +1397,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for UsagePersistentEmptyMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for UsagePersistentEmptyMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1484,11 +1484,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for TerminalUsageErrorMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for TerminalUsageErrorMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1498,11 +1498,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ContextWindowErrorMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ContextWindowErrorMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1530,11 +1530,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ThinkOnlyThenTextMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ThinkOnlyThenTextMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -4785,11 +4785,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for NativeToolMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for NativeToolMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -5119,11 +5119,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for NativeModelAwareMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for NativeModelAwareMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -5507,11 +5507,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for NativeContextOverflowMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for NativeContextOverflowMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -5634,11 +5634,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for ContextOverflowMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ContextOverflowMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -6002,11 +6002,11 @@
             .boxed()
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for StreamingToolEventMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamingToolEventMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -6056,11 +6056,11 @@
 
     struct StreamThenChatErrorMock;
 
-    impl ::clawcrew_api::attribution::Attributable for StreamThenChatErrorMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamThenChatErrorMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -6171,11 +6171,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for StreamErrorNoChatReplayMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamErrorNoChatReplayMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -6185,11 +6185,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for StreamRefusalNoChatReplayMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamRefusalNoChatReplayMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -6199,11 +6199,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for SemanticEmptyNoChatReplayMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for SemanticEmptyNoChatReplayMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -6470,11 +6470,11 @@
             .boxed()
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for StreamingRecordMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamingRecordMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -7894,11 +7894,11 @@
             .boxed()
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for StreamingHistoryMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamingHistoryMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -8313,11 +8313,11 @@
                 self.0
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for VisionMock {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for VisionMock {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -8410,11 +8410,11 @@
                 self.0
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for VisionMock {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for VisionMock {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -8546,11 +8546,11 @@
                 Ok("fallback".to_string())
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for VisionDispatchMock {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for VisionDispatchMock {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -8625,11 +8625,11 @@
                 Ok(String::new())
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for PlainMock {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for PlainMock {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -8660,7 +8660,7 @@
     async fn reliable_wrapper_exposes_inner_provider_attribution() {
         use crate::ProviderDispatch;
         use std::sync::Arc;
-        use clawcrew_api::attribution::Attributable;
+        use galleon_api::attribution::Attributable;
 
         let inner_mock = MockModelProvider {
             calls: Arc::new(AtomicUsize::new(0)),

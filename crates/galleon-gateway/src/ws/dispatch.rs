@@ -4,8 +4,8 @@ use super::*;
 use crate::ws_approval::PendingApprovals;
 use crate::{gateway_cancel_key, register_cancel_token, remove_cancel_token_if_current};
 use axum::extract::ws::{Message, WebSocket};
-use clawcrew_api::channel::ChannelApprovalResponse;
-use clawcrew_api::sop::{
+use galleon_api::channel::ChannelApprovalResponse;
+use galleon_api::sop::{
     ApprovalDecision as SopApprovalDecision, ApprovalPrincipal as SopApprovalPrincipal,
 };
 use futures_util::SinkExt;
@@ -257,8 +257,8 @@ pub(crate) struct UsageFold {
 }
 
 impl UsageFold {
-    pub(crate) fn apply(&mut self, event: clawcrew_api::agent::TurnEvent) {
-        let clawcrew_api::agent::TurnEvent::Usage {
+    pub(crate) fn apply(&mut self, event: galleon_api::agent::TurnEvent) {
+        let galleon_api::agent::TurnEvent::Usage {
             input_tokens,
             cached_input_tokens,
             output_tokens,
@@ -412,10 +412,10 @@ pub(crate) fn build_done_frame_json(
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn process_chat_message(
     state: &AppState,
-    agent: &mut (dyn clawcrew_api::agent::AgentSession + '_),
+    agent: &mut (dyn galleon_api::agent::AgentSession + '_),
     sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
     receiver: &mut futures_util::stream::SplitStream<WebSocket>,
-    approval_event_rx: &mut tokio::sync::mpsc::Receiver<clawcrew_api::agent::TurnEvent>,
+    approval_event_rx: &mut tokio::sync::mpsc::Receiver<galleon_api::agent::TurnEvent>,
     pending_approvals: &PendingApprovals,
     ping_interval: &mut Option<tokio::time::Interval>,
     ws_memory: &Option<Arc<dyn galleon_memory::Memory>>,
@@ -426,7 +426,7 @@ pub(crate) async fn process_chat_message(
     // mid-turn SOP approval frame carries the same identity as the top-level path.
     auth_subject: Option<&str>,
 ) {
-    use clawcrew_api::agent::TurnEvent;
+    use galleon_api::agent::TurnEvent;
     use futures_util::StreamExt as _;
 
     let (turn_alias, turn_provider, turn_model) = agent.attribution_fields();
@@ -489,7 +489,7 @@ pub(crate) async fn process_chat_message(
             model = %turn_model,
             channel = WS_CHANNEL_KEY,
         );
-        clawcrew_api::scope_session_key(
+        galleon_api::scope_session_key(
             Some(session_key_owned.clone()),
             galleon_config::cost::TOOL_LOOP_TURN_USAGE.scope(
                 turn_usage.clone(),
@@ -737,7 +737,7 @@ pub(crate) async fn process_chat_message(
     // Check if this turn was cancelled. `turn_streamed` propagates
     // `ToolLoopCancelled` through anyhow, so we detect it here.
     let was_cancelled = match &result {
-        Err(e) => clawcrew_api::agent::is_tool_loop_cancelled(&e.error),
+        Err(e) => galleon_api::agent::is_tool_loop_cancelled(&e.error),
         Ok(_) => false,
     };
 
@@ -955,13 +955,13 @@ pub(crate) async fn process_chat_message(
             let safeguard_notice = outcome.safeguard_fallback.as_ref().map(|s| {
                 galleon_providers::SafeguardFallbackNotice {
                     kind: match s.kind {
-                        clawcrew_api::agent::AgentSafeguardKind::ServerSide => {
+                        galleon_api::agent::AgentSafeguardKind::ServerSide => {
                             galleon_providers::SafeguardFallbackKind::ServerSide
                         }
-                        clawcrew_api::agent::AgentSafeguardKind::ClientSide => {
+                        galleon_api::agent::AgentSafeguardKind::ClientSide => {
                             galleon_providers::SafeguardFallbackKind::ClientSide
                         }
-                        clawcrew_api::agent::AgentSafeguardKind::ClientAndServer => {
+                        galleon_api::agent::AgentSafeguardKind::ClientAndServer => {
                             galleon_providers::SafeguardFallbackKind::ClientAndServer
                         }
                     },

@@ -24,7 +24,7 @@ const FFMPEG_TRANSCODE_TIMEOUT: std::time::Duration = std::time::Duration::from_
 
 /// Trait for pluggable TTS backends.
 #[async_trait::async_trait]
-pub trait TtsProvider: Send + Sync + ::clawcrew_api::attribution::Attributable {
+pub trait TtsProvider: Send + Sync + ::galleon_api::attribution::Attributable {
     /// ModelProvider identifier (e.g. `"openai"`, `"elevenlabs"`).
     fn name(&self) -> &str;
 
@@ -1313,10 +1313,10 @@ impl TtsManager {
 
 // ── Tests ────────────────────────────────────────────────────────
 
-impl ::clawcrew_api::attribution::Attributable for OpenAiTtsProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(::clawcrew_api::attribution::ProviderKind::Tts(
-            ::clawcrew_api::attribution::TtsProviderKind::OpenAi,
+impl ::galleon_api::attribution::Attributable for OpenAiTtsProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Tts(
+            ::galleon_api::attribution::TtsProviderKind::OpenAi,
         ))
     }
     fn alias(&self) -> &str {
@@ -1324,10 +1324,10 @@ impl ::clawcrew_api::attribution::Attributable for OpenAiTtsProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ElevenLabsTtsProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(::clawcrew_api::attribution::ProviderKind::Tts(
-            ::clawcrew_api::attribution::TtsProviderKind::ElevenLabs,
+impl ::galleon_api::attribution::Attributable for ElevenLabsTtsProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Tts(
+            ::galleon_api::attribution::TtsProviderKind::ElevenLabs,
         ))
     }
     fn alias(&self) -> &str {
@@ -1335,10 +1335,10 @@ impl ::clawcrew_api::attribution::Attributable for ElevenLabsTtsProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for GoogleTtsProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(::clawcrew_api::attribution::ProviderKind::Tts(
-            ::clawcrew_api::attribution::TtsProviderKind::Google,
+impl ::galleon_api::attribution::Attributable for GoogleTtsProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Tts(
+            ::galleon_api::attribution::TtsProviderKind::Google,
         ))
     }
     fn alias(&self) -> &str {
@@ -1346,10 +1346,10 @@ impl ::clawcrew_api::attribution::Attributable for GoogleTtsProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for EdgeTtsProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(::clawcrew_api::attribution::ProviderKind::Tts(
-            ::clawcrew_api::attribution::TtsProviderKind::Edge,
+impl ::galleon_api::attribution::Attributable for EdgeTtsProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Tts(
+            ::galleon_api::attribution::TtsProviderKind::Edge,
         ))
     }
     fn alias(&self) -> &str {
@@ -1357,10 +1357,10 @@ impl ::clawcrew_api::attribution::Attributable for EdgeTtsProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for PiperTtsProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(::clawcrew_api::attribution::ProviderKind::Tts(
-            ::clawcrew_api::attribution::TtsProviderKind::Piper,
+impl ::galleon_api::attribution::Attributable for PiperTtsProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Tts(
+            ::galleon_api::attribution::TtsProviderKind::Piper,
         ))
     }
     fn alias(&self) -> &str {

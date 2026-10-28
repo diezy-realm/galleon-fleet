@@ -199,7 +199,7 @@ const CHANNEL_COMPILE_SPECS: &[ChannelCompileSpec] = &[
     ChannelCompileSpec {
         schema_name: Some("Plugin"),
         type_keys: &["plugin"],
-        compiled: clawcrew_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED,
+        compiled: galleon_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED,
     },
     ChannelCompileSpec {
         schema_name: None,
@@ -313,7 +313,7 @@ mod tests {
         );
         assert_eq!(
             is_channel_type_compiled("plugin"),
-            clawcrew_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED
+            galleon_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED
         );
     }
 
@@ -372,7 +372,7 @@ mod tests {
         assert_eq!(names.contains("Slack"), !cfg!(feature = "channel-slack"));
         assert_eq!(
             names.contains("Plugin"),
-            !clawcrew_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED,
+            !galleon_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED,
             "a configured plugin channel must be reported when this build \
              cannot execute WASM plugins"
         );

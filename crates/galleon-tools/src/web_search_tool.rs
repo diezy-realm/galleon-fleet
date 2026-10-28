@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::tool::{Tool, ToolResult};
 
 // AnySearch skill protocol identifier. Keep this synchronized with the
 // upstream anysearch-ai/anysearch-skill CLIENT_HEADER value.

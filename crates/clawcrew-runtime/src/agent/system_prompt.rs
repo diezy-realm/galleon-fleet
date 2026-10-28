@@ -6,11 +6,11 @@ use crate::agent::prompt::{TIMESTAMP_ORIENTATION, append_timestamp_orientation};
 use crate::identity;
 use crate::security::AutonomyLevel;
 use crate::skills::Skill;
-use clawcrew_api::runtime_traits::{POSIX_DELETION_GUIDANCE, ShellProfile};
+use galleon_api::runtime_traits::{POSIX_DELETION_GUIDANCE, ShellProfile};
 
 /// Maximum characters per injected workspace file (matches `OpenClaw` default).
 pub const BOOTSTRAP_MAX_CHARS: usize = 20_000;
-pub use clawcrew_api::agent::{NATIVE_TOOLS_TASK_FRAMING, NO_TOOLS_TASK_FRAMING};
+pub use galleon_api::agent::{NATIVE_TOOLS_TASK_FRAMING, NO_TOOLS_TASK_FRAMING};
 
 /// Model-facing `always_ask` exception under Full autonomy.
 fn full_autonomy_always_ask_prompt_lines(always_ask: &[String]) -> String {
@@ -441,7 +441,7 @@ pub fn build_system_prompt_with_mode_and_effective_tools(
     // reason the tool catalog is trimmed there. The `## Runtime` line still
     // names the shell in both cases.
     if !compact_context
-        && clawcrew_api::runtime_traits::needs_shell_dialect_guidance(
+        && galleon_api::runtime_traits::needs_shell_dialect_guidance(
             tools.iter().map(|(name, _)| *name),
         )
         && let Some(profile) = shell_profile
@@ -760,7 +760,7 @@ mod tests {
     /// tool, named by `tool_name` so a caller can pick which command-taking
     /// tool the surface holds.
     fn build_with_shell(
-        shell_profile: Option<&clawcrew_api::runtime_traits::ShellProfile>,
+        shell_profile: Option<&galleon_api::runtime_traits::ShellProfile>,
         tool_name: &str,
     ) -> String {
         let workspace = tempfile::TempDir::new().expect("tempdir");
@@ -792,9 +792,9 @@ mod tests {
 
     #[test]
     fn ac1_runtime_line_includes_shell_field_when_profile_is_present() {
-        let profile = clawcrew_api::runtime_traits::ShellProfile {
+        let profile = galleon_api::runtime_traits::ShellProfile {
             name: "bash".to_string(),
-            dialect: clawcrew_api::runtime_traits::ShellDialect::Posix,
+            dialect: galleon_api::runtime_traits::ShellDialect::Posix,
         };
         let prompt = build_with_shell(Some(&profile), "shell");
         let runtime_line = prompt
@@ -823,9 +823,9 @@ mod tests {
     #[test]
     fn ac2_posix_reports_configured_shell_name() {
         for (configured, expected) in [("bash", "bash"), ("zsh", "zsh"), ("sh", "sh")] {
-            let profile = clawcrew_api::runtime_traits::ShellProfile {
+            let profile = galleon_api::runtime_traits::ShellProfile {
                 name: configured.to_string(),
-                dialect: clawcrew_api::runtime_traits::ShellDialect::Posix,
+                dialect: galleon_api::runtime_traits::ShellDialect::Posix,
             };
             let prompt = build_with_shell(Some(&profile), "shell");
             let runtime_line = prompt
@@ -844,18 +844,18 @@ mod tests {
         for (name, dialect) in [
             (
                 "cmd",
-                clawcrew_api::runtime_traits::ShellDialect::WindowsCmd,
+                galleon_api::runtime_traits::ShellDialect::WindowsCmd,
             ),
             (
                 "powershell",
-                clawcrew_api::runtime_traits::ShellDialect::PowerShell,
+                galleon_api::runtime_traits::ShellDialect::PowerShell,
             ),
             (
                 "pwsh",
-                clawcrew_api::runtime_traits::ShellDialect::PowerShell,
+                galleon_api::runtime_traits::ShellDialect::PowerShell,
             ),
         ] {
-            let profile = clawcrew_api::runtime_traits::ShellProfile {
+            let profile = galleon_api::runtime_traits::ShellProfile {
                 name: name.to_string(),
                 dialect,
             };
@@ -876,9 +876,9 @@ mod tests {
         // `cron_add`/`cron_update`/`schedule` take a model-authored `command`
         // that runs through the same interpreter as `shell`, so an agent
         // holding only those is exactly as exposed to a dialect mismatch.
-        let profile = clawcrew_api::runtime_traits::ShellProfile {
+        let profile = galleon_api::runtime_traits::ShellProfile {
             name: "pwsh".to_string(),
-            dialect: clawcrew_api::runtime_traits::ShellDialect::PowerShell,
+            dialect: galleon_api::runtime_traits::ShellDialect::PowerShell,
         };
         for tool in ["cron_add", "cron_update", "schedule"] {
             let prompt = build_with_shell(Some(&profile), tool);
@@ -895,9 +895,9 @@ mod tests {
         // The dialect guidance is dead weight when no registered tool takes a
         // model-authored command.
         let workspace = tempfile::TempDir::new().expect("tempdir");
-        let profile = clawcrew_api::runtime_traits::ShellProfile {
+        let profile = galleon_api::runtime_traits::ShellProfile {
             name: "powershell".to_string(),
-            dialect: clawcrew_api::runtime_traits::ShellDialect::PowerShell,
+            dialect: galleon_api::runtime_traits::ShellDialect::PowerShell,
         };
         let prompt = build_system_prompt_with_mode_and_autonomy(
             workspace.path(),
@@ -926,9 +926,9 @@ mod tests {
 
     #[test]
     fn shell_section_present_and_correct_for_powershell() {
-        let profile = clawcrew_api::runtime_traits::ShellProfile {
+        let profile = galleon_api::runtime_traits::ShellProfile {
             name: "powershell".to_string(),
-            dialect: clawcrew_api::runtime_traits::ShellDialect::PowerShell,
+            dialect: galleon_api::runtime_traits::ShellDialect::PowerShell,
         };
         let prompt = build_with_shell(Some(&profile), "shell");
         assert!(prompt.contains("## Shell"), "Shell section missing");
@@ -945,9 +945,9 @@ mod tests {
 
     #[test]
     fn shell_section_present_and_correct_for_pwsh() {
-        let profile = clawcrew_api::runtime_traits::ShellProfile {
+        let profile = galleon_api::runtime_traits::ShellProfile {
             name: "pwsh".to_string(),
-            dialect: clawcrew_api::runtime_traits::ShellDialect::PowerShell,
+            dialect: galleon_api::runtime_traits::ShellDialect::PowerShell,
         };
         let prompt = build_with_shell(Some(&profile), "shell");
         assert!(
@@ -958,8 +958,8 @@ mod tests {
 
     #[test]
     fn shell_section_present_and_correct_for_cmd() {
-        let profile = clawcrew_api::runtime_traits::ShellProfile::from_dialect(
-            clawcrew_api::runtime_traits::ShellDialect::WindowsCmd,
+        let profile = galleon_api::runtime_traits::ShellProfile::from_dialect(
+            galleon_api::runtime_traits::ShellDialect::WindowsCmd,
         )
         .unwrap();
         let prompt = build_with_shell(Some(&profile), "shell");
@@ -974,9 +974,9 @@ mod tests {
     #[test]
     fn posix_shell_section_has_no_syntax_table() {
         // POSIX tool names don't need correction; emitting a table wastes tokens.
-        let profile = clawcrew_api::runtime_traits::ShellProfile {
+        let profile = galleon_api::runtime_traits::ShellProfile {
             name: "bash".to_string(),
-            dialect: clawcrew_api::runtime_traits::ShellDialect::Posix,
+            dialect: galleon_api::runtime_traits::ShellDialect::Posix,
         };
         let prompt = build_with_shell(Some(&profile), "shell");
         // The ## Shell section heading is still emitted (name is useful).
@@ -992,18 +992,18 @@ mod tests {
     fn deletion_guidance_follows_dialect_not_hardcoded() {
         // `trash` is only POSIX. PowerShell and cmd must get their own advice.
         let posix_prompt = build_with_shell(
-            Some(&clawcrew_api::runtime_traits::ShellProfile {
+            Some(&galleon_api::runtime_traits::ShellProfile {
                 name: "bash".to_string(),
-                dialect: clawcrew_api::runtime_traits::ShellDialect::Posix,
+                dialect: galleon_api::runtime_traits::ShellDialect::Posix,
             }),
             "shell",
         );
         assert!(posix_prompt.contains("trash"), "POSIX must mention trash");
 
         let ps_prompt = build_with_shell(
-            Some(&clawcrew_api::runtime_traits::ShellProfile {
+            Some(&galleon_api::runtime_traits::ShellProfile {
                 name: "powershell".to_string(),
-                dialect: clawcrew_api::runtime_traits::ShellDialect::PowerShell,
+                dialect: galleon_api::runtime_traits::ShellDialect::PowerShell,
             }),
             "shell",
         );
@@ -1012,8 +1012,8 @@ mod tests {
 
         let cmd_prompt = build_with_shell(
             Some(
-                &clawcrew_api::runtime_traits::ShellProfile::from_dialect(
-                    clawcrew_api::runtime_traits::ShellDialect::WindowsCmd,
+                &galleon_api::runtime_traits::ShellProfile::from_dialect(
+                    galleon_api::runtime_traits::ShellDialect::WindowsCmd,
                 )
                 .unwrap(),
             ),

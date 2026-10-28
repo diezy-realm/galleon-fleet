@@ -1,6 +1,6 @@
 //! The artifact produced by running one eval case — what graders score.
 
-use clawcrew_api::model_provider::ConversationMessage;
+use galleon_api::model_provider::ConversationMessage;
 
 use crate::observer::RecordedCall;
 

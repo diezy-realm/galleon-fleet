@@ -8,8 +8,8 @@ use crate::runtime;
 use crate::services::PluginHostServices;
 use async_trait::async_trait;
 use serde_json::Value;
-use clawcrew_api::attribution::{Attributable, Role, ToolKind, ToolProvenance};
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::attribution::{Attributable, Role, ToolKind, ToolProvenance};
+use galleon_api::tool::{Tool, ToolResult};
 
 /// A tool backed by a WASM plugin function.
 pub struct WasmTool {
@@ -186,7 +186,7 @@ mod tests {
         Arc,
         atomic::{AtomicBool, Ordering},
     };
-    use clawcrew_api::attribution::{Attributable, Role, ToolKind};
+    use galleon_api::attribution::{Attributable, Role, ToolKind};
 
     fn tool_scope() -> PluginInstanceScope {
         crate::instance::test_scope(PluginCapability::Tool, "redaction-primary", [])

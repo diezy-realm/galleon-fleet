@@ -21,7 +21,7 @@ use axum::response::IntoResponse;
 use serde::Deserialize;
 
 use crate::{AdminReloadGate, AppState, admin_reload_gate};
-use clawcrew_api::sop::{
+use galleon_api::sop::{
     ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome, SopRunStatus,
 };
 
@@ -282,7 +282,7 @@ pub(crate) mod tests {
     }
 
     #[async_trait::async_trait]
-    impl clawcrew_api::sop::SopRunner for MockPoliciedSopRunner {
+    impl galleon_api::sop::SopRunner for MockPoliciedSopRunner {
         fn list_sops(&self) -> anyhow::Result<Vec<serde_json::Value>> {
             Ok(Vec::new())
         }
@@ -295,11 +295,11 @@ pub(crate) mod tests {
         fn list_runs(
             &self,
             _sop_name: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_api::sop::SopRunSummary>> {
+        ) -> anyhow::Result<Vec<galleon_api::sop::SopRunSummary>> {
             let guard = self.runs.lock().unwrap();
             let runs = guard
                 .iter()
-                .map(|(id, status)| clawcrew_api::sop::SopRunSummary {
+                .map(|(id, status)| galleon_api::sop::SopRunSummary {
                     run_id: id.clone(),
                     sop_name: "deploy".into(),
                     status: *status,
@@ -354,8 +354,8 @@ pub(crate) mod tests {
         fn subscribe_run_changes(
             &self,
         ) -> anyhow::Result<(
-            Vec<clawcrew_api::sop::SopRunSummary>,
-            Option<tokio::sync::broadcast::Receiver<clawcrew_api::sop::SopRunSummary>>,
+            Vec<galleon_api::sop::SopRunSummary>,
+            Option<tokio::sync::broadcast::Receiver<galleon_api::sop::SopRunSummary>>,
         )> {
             Ok((Vec::new(), None))
         }
@@ -416,13 +416,13 @@ pub(crate) mod tests {
                 serde_json::json!({ "run_id": run_id, "sop_name": name, "status": "cancelled", "outcome": "cancelled" }),
             ))
         }
-        fn get_sop(&self, _name: &str) -> anyhow::Result<Option<clawcrew_api::sop::Sop>> {
+        fn get_sop(&self, _name: &str) -> anyhow::Result<Option<galleon_api::sop::Sop>> {
             Ok(None)
         }
-        fn create_sop(&self, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<()> {
+        fn create_sop(&self, _sop: &galleon_api::sop::Sop) -> anyhow::Result<()> {
             Ok(())
         }
-        fn save_sop(&self, _name: &str, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<()> {
+        fn save_sop(&self, _name: &str, _sop: &galleon_api::sop::Sop) -> anyhow::Result<()> {
             Ok(())
         }
         fn delete_sop(&self, _name: &str) -> anyhow::Result<()> {
@@ -430,12 +430,12 @@ pub(crate) mod tests {
         }
         fn wire_draft(
             &self,
-            _sop: &clawcrew_api::sop::Sop,
+            _sop: &galleon_api::sop::Sop,
             _edit: &serde_json::Value,
         ) -> anyhow::Result<serde_json::Value> {
             Ok(serde_json::json!({}))
         }
-        fn graph_draft(&self, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<serde_json::Value> {
+        fn graph_draft(&self, _sop: &galleon_api::sop::Sop) -> anyhow::Result<serde_json::Value> {
             Ok(serde_json::json!({}))
         }
         fn has_matching_webhook_sop(&self, _path: &str) -> anyhow::Result<bool> {
@@ -445,8 +445,8 @@ pub(crate) mod tests {
             &self,
             _path: &str,
             _payload: Option<&str>,
-        ) -> anyhow::Result<Option<clawcrew_api::sop::WebhookDispatchResult>> {
-            Ok(Some(clawcrew_api::sop::WebhookDispatchResult {
+        ) -> anyhow::Result<Option<galleon_api::sop::WebhookDispatchResult>> {
+            Ok(Some(galleon_api::sop::WebhookDispatchResult {
                 blocked_only: false,
                 results: vec![],
             }))

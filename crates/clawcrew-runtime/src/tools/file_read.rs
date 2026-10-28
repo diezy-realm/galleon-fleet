@@ -2,7 +2,7 @@ use crate::security::SecurityPolicy;
 use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
 
 const MAX_FILE_SIZE_BYTES: u64 = 10 * 1024 * 1024;
 
@@ -1235,11 +1235,11 @@ mod tests {
                 Ok(guard.remove(0))
             }
         }
-        impl ::clawcrew_api::attribution::Attributable for RecordingModelProvider {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for RecordingModelProvider {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }

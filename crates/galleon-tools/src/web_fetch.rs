@@ -6,7 +6,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 use std::time::Duration;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::schema::{FirecrawlConfig, ProxyConfig, ProxyScope};
 

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use std::sync::Arc;
 use uuid::Uuid;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 pub struct LinqChannel {
     api_token: String,
@@ -278,9 +278,9 @@ impl LinqChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for LinqChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Linq)
+impl ::galleon_api::attribution::Attributable for LinqChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Linq)
     }
     fn alias(&self) -> &str {
         &self.alias

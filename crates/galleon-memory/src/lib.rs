@@ -273,8 +273,8 @@ pub fn is_user_autosave_key(key: &str) -> bool {
 ///
 /// Exhaustive match on purpose: a new origin variant must decide its
 /// autosave posture here explicitly.
-pub fn should_autosave_origin(origin: clawcrew_api::ingress::TurnOrigin) -> bool {
-    use clawcrew_api::ingress::TurnOrigin;
+pub fn should_autosave_origin(origin: galleon_api::ingress::TurnOrigin) -> bool {
+    use galleon_api::ingress::TurnOrigin;
     match origin {
         TurnOrigin::Interactive | TurnOrigin::Channel | TurnOrigin::AgentDirect => true,
         TurnOrigin::Cron | TurnOrigin::Daemon | TurnOrigin::SubTurn => false,
@@ -1862,7 +1862,7 @@ mod tests {
     /// origins do not qualify.
     #[test]
     fn autosave_origin_allows_user_facing_and_external_capable_turns() {
-        use clawcrew_api::ingress::TurnOrigin;
+        use galleon_api::ingress::TurnOrigin;
 
         assert!(should_autosave_origin(TurnOrigin::Interactive));
         assert!(should_autosave_origin(TurnOrigin::Channel));
@@ -1882,7 +1882,7 @@ mod tests {
     /// backstop, and the origin gate is what actually stops this shape.
     #[test]
     fn heartbeat_session_context_shape_defeats_the_content_filter_but_not_the_origin_gate() {
-        use clawcrew_api::ingress::TurnOrigin;
+        use galleon_api::ingress::TurnOrigin;
 
         let leaked = "[Recent conversation history — use this for context when composing                       your message] (last message ~5 minutes ago)
 User: how was the deploy?

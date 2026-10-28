@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 use tokio::sync::Semaphore;
-use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
 use galleon_config::schema::{HailoOllamaEndpoint, ModelEndpoint};
 
 use crate::multimodal;
@@ -935,7 +935,7 @@ impl HailoOllamaModelProvider {
     fn with_prompt_guided_tool_instructions(
         &self,
         messages: &[ChatMessage],
-        tools: Option<&[clawcrew_api::tool::ToolSpec]>,
+        tools: Option<&[galleon_api::tool::ToolSpec]>,
     ) -> anyhow::Result<Vec<ChatMessage>> {
         let Some(tools) = tools.filter(|items| !items.is_empty()) else {
             return Ok(messages.to_vec());

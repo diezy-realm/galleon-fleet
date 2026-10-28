@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::collections::HashMap;
 use std::fmt::Write as _;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Project intelligence tool for consulting project management.
 /// All actions are read-only analysis/generation; nothing is modified externally.

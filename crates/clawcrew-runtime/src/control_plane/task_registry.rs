@@ -1,6 +1,6 @@
 //! The durable task/run registry contract — EPIC A's stable seam.
 
-pub use clawcrew_api::control_plane::*;
+pub use galleon_api::control_plane::*;
 
 #[cfg(test)]
 mod tests {

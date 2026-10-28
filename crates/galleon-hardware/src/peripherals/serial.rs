@@ -11,9 +11,9 @@ use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::sync::Mutex;
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
+use galleon_api::tool_attribution;
 use galleon_config::schema::PeripheralBoardConfig;
 
 tool_attribution!(GpioReadTool, ToolKind::Plugin);

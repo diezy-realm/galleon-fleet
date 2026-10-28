@@ -10,7 +10,7 @@ use axum::{
 };
 use serde_json::{Value, json};
 use tokio::io::AsyncReadExt;
-use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
 use galleon_config::schema::{Config, HailoOllamaModelProviderConfig, ModelProviderConfig};
 use galleon_providers::hailo_ollama::HailoOllamaModelProvider;
 use galleon_providers::ollama::{OllamaModelProvider, OllamaTuning};
@@ -718,10 +718,10 @@ async fn native_hailo_rejects_call_level_thinking_before_http() {
     let messages = [ChatMessage::user("hello")];
     let error = provider
         .chat(
-            clawcrew_api::model_provider::ChatRequest {
+            galleon_api::model_provider::ChatRequest {
                 messages: &messages,
                 tools: None,
-                thinking: Some(clawcrew_api::model_provider::NativeThinkingParams {
+                thinking: Some(galleon_api::model_provider::NativeThinkingParams {
                     budget_tokens: 1024,
                     display: None,
                 }),
@@ -1188,7 +1188,7 @@ async fn native_hailo_emits_ascii_only_json_for_wire_compatibility() {
     ];
     provider
         .chat(
-            clawcrew_api::model_provider::ChatRequest {
+            galleon_api::model_provider::ChatRequest {
                 messages: &messages,
                 tools: None,
                 thinking: None,
@@ -1309,7 +1309,7 @@ async fn standard_ollama_keeps_default_non_ascii_json_serialization() {
     let messages = [ChatMessage::user("näyttö ja testi 🧪")];
     provider
         .chat(
-            clawcrew_api::model_provider::ChatRequest {
+            galleon_api::model_provider::ChatRequest {
                 messages: &messages,
                 tools: None,
                 thinking: None,
@@ -1362,7 +1362,7 @@ async fn native_hailo_omits_temperature_when_caller_does_not_set_it() {
     let messages = [ChatMessage::user("hello")];
     provider
         .chat(
-            clawcrew_api::model_provider::ChatRequest {
+            galleon_api::model_provider::ChatRequest {
                 messages: &messages,
                 tools: None,
                 thinking: None,
@@ -1458,7 +1458,7 @@ async fn native_hailo_preserves_fitting_tool_protocol_and_user_text() {
 
     provider
         .chat(
-            clawcrew_api::model_provider::ChatRequest {
+            galleon_api::model_provider::ChatRequest {
                 messages: &messages,
                 tools: None,
                 thinking: None,
@@ -1521,7 +1521,7 @@ async fn native_hailo_preserves_large_prompt_guided_tool_protocol() {
 
     provider
         .chat(
-            clawcrew_api::model_provider::ChatRequest {
+            galleon_api::model_provider::ChatRequest {
                 messages: &messages,
                 tools: None,
                 thinking: None,

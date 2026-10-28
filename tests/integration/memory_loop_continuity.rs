@@ -238,9 +238,9 @@ async fn agent_survives_large_tool_output() {
     /// Tool that returns a very large output.
     struct LargeOutputTool;
 
-    impl ::clawcrew_api::attribution::Attributable for LargeOutputTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+    impl ::galleon_api::attribution::Attributable for LargeOutputTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             <Self as Tool>::name(self)

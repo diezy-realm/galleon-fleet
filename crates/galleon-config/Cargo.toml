@@ -11,7 +11,7 @@ publish = true
 
 [dependencies]
 galleon-log.workspace = true
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-macros.workspace = true
 # `plugins.entries[].egress_hosts` validates against the one shared egress
 # grammar in `clawcrew_infra::net_guard`. Reimplementing the grammar here would
@@ -69,7 +69,7 @@ scopeguard = "1.2"
 # schema-export and clap are the only defaults. All channel schema types
 # compile unconditionally; channel feature flags live in galleon-channels only.
 default = ["schema-export", "clap"]
-schema-export = ["dep:schemars", "clawcrew-api/schema-export"]
+schema-export = ["dep:schemars", "galleon-api/schema-export"]
 clap = ["dep:clap"]
 memory-postgres = ["dep:postgres"]
 ws-transport = [

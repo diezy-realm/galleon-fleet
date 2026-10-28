@@ -8,7 +8,7 @@
 
 use std::collections::BTreeSet;
 
-use clawcrew_api::tool::{OptionDomain, OptionEntry, Tool};
+use galleon_api::tool::{OptionDomain, OptionEntry, Tool};
 use galleon_config::peers::resolve_peer_set;
 use galleon_config::schema::Config;
 

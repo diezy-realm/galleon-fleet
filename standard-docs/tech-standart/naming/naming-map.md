@@ -21,7 +21,7 @@ Aturan: `clawcrew-X` → `galleon-X`. Crate yang sudah `galleon-*` tetap. Urutan
 
 | Lama | Baru | Catatan |
 |---|---|---|
-| `clawcrew-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | rename langsung |
+| `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | rename langsung |
 | `galleon-config` `-memory` `-providers` `-tools` `-tool-call-parser` `-routing` `-eval` `-sop-graph` | `galleon-*` | `sop-graph` & `eval` menunggu hasil R-00 (mungkin dihapus/dipindah) |
 | `galleon-channels` | `galleon-channels` | lalu dipecah per channel (R-15) menjadi `galleon-channel-<nama>` |
 | `clawcrew-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |

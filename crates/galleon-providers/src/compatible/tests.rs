@@ -1159,7 +1159,7 @@
         // Clean schema (shared as-is) and dirty schema (rewritten by the
         // OpenAI strategy's strategy-independent passes).
         let tools = vec![
-            clawcrew_api::tool::ToolSpec::new(
+            galleon_api::tool::ToolSpec::new(
                 "get_weather",
                 "Fetch the weather",
                 serde_json::json!({
@@ -1167,7 +1167,7 @@
                     "properties": { "city": { "type": "string" } }
                 }),
             ),
-            clawcrew_api::tool::ToolSpec::new(
+            galleon_api::tool::ToolSpec::new(
                 "set_mode",
                 "Set the mode",
                 serde_json::json!({
@@ -1205,7 +1205,7 @@
     fn convert_tool_specs_shares_clean_schema_and_memoizes_dirty_schema() {
         let p = make_model_provider("vllm", "http://localhost:8000/v1", None);
         let tools = vec![
-            clawcrew_api::tool::ToolSpec::new(
+            galleon_api::tool::ToolSpec::new(
                 "clean_tool",
                 "already clean",
                 serde_json::json!({
@@ -1213,7 +1213,7 @@
                     "properties": { "path": { "type": "string" } }
                 }),
             ),
-            clawcrew_api::tool::ToolSpec::new(
+            galleon_api::tool::ToolSpec::new(
                 "dirty_tool",
                 "needs cleaning",
                 serde_json::json!({ "type": "string", "const": "x" }),
@@ -1240,7 +1240,7 @@
     fn streaming_native_tool_request_serializes_tools_and_guards_tool_choice() {
         let p = make_model_provider("vllm", "http://localhost:8000/v1", None);
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Fetch the weather",
             serde_json::json!({ "type": "object", "properties": {} }),
@@ -1303,7 +1303,7 @@
         // cold-cache cleaning on the streaming path with identical wire
         // bytes, so pin the sharing directly.
         let p = make_model_provider("vllm", "http://localhost:8000/v1", None);
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "dirty_tool",
             "needs cleaning",
             serde_json::json!({ "type": "string", "const": "x" }),
@@ -1585,7 +1585,7 @@
             .reasoning_effort(Some("high".to_string()))
             .build();
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1630,7 +1630,7 @@
             .extra_body(serde_json::json!({"reasoning_effort": "xhigh"}))
             .build();
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1684,7 +1684,7 @@
             .reasoning_effort(Some("high".to_string()))
             .build();
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1794,7 +1794,7 @@
             .reasoning_effort(None)
             .build();
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1846,7 +1846,7 @@
             .reasoning_effort(None)
             .build();
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1971,7 +1971,7 @@
             .reasoning_effort(Some("high".to_string()))
             .build();
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -2048,7 +2048,7 @@
             .reasoning_effort(Some("NONE".to_string()))
             .build();
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -2601,7 +2601,7 @@
         for (case, response_body, expected_text) in non_streaming_response_cases() {
             let (provider, captured, server) = mock_non_streaming_response(response_body).await;
             let messages = vec![ChatMessage::user("hello")];
-            let tools = vec![clawcrew_api::tool::ToolSpec::new(
+            let tools = vec![galleon_api::tool::ToolSpec::new(
                 "echo",
                 "Echo a value",
                 serde_json::json!({
@@ -4377,7 +4377,7 @@
     #[test]
     fn prompt_guided_tool_fallback_injects_system_instruction() {
         let input = vec![ChatMessage::user("check status")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "shell_exec",
             "Execute shell command",
             serde_json::json!({
@@ -7235,7 +7235,7 @@
         });
 
         let provider = make_model_provider("vllm", &format!("http://{addr}"), Some("key"));
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Fetch the weather",
             serde_json::json!({ "type": "object", "properties": {} }),

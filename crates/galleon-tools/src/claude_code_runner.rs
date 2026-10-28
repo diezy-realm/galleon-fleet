@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 use std::sync::Arc;
 use tokio::process::Command;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::policy::ToolOperation;
 use galleon_config::schema::ClaudeCodeRunnerConfig;

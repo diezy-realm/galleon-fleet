@@ -90,9 +90,9 @@ mod tests {
     use async_trait::async_trait;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::{Arc, Mutex};
-    use clawcrew_api::attribution::Role;
-    use clawcrew_api::model_provider::{ModelProvider, ProviderCapabilities};
-    use clawcrew_api::tool::Tool;
+    use galleon_api::attribution::Role;
+    use galleon_api::model_provider::{ModelProvider, ProviderCapabilities};
+    use galleon_api::tool::Tool;
 
     struct NativeToolsProvider;
 
@@ -116,7 +116,7 @@ mod tests {
         }
     }
 
-    impl clawcrew_api::attribution::Attributable for NativeToolsProvider {
+    impl galleon_api::attribution::Attributable for NativeToolsProvider {
         fn role(&self) -> Role {
             Role::System
         }
@@ -148,7 +148,7 @@ mod tests {
         }
     }
 
-    impl clawcrew_api::attribution::Attributable for PromptToolsProvider {
+    impl galleon_api::attribution::Attributable for PromptToolsProvider {
         fn role(&self) -> Role {
             Role::System
         }
@@ -204,9 +204,9 @@ mod tests {
         }
     }
 
-    impl clawcrew_api::attribution::Attributable for CountingTool {
+    impl galleon_api::attribution::Attributable for CountingTool {
         fn role(&self) -> Role {
-            Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+            Role::Tool(galleon_api::attribution::ToolKind::Plugin)
         }
 
         fn alias(&self) -> &str {

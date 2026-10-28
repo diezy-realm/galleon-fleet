@@ -121,7 +121,7 @@ async fn scheduled_run_does_not_leak_conversation_memory_into_provider_request()
         false,
         None,
         None,
-        clawcrew_api::ingress::TurnOrigin::Daemon,
+        galleon_api::ingress::TurnOrigin::Daemon,
         clawcrew_runtime::agent::loop_::AgentRunOverrides::default(),
     )
     .await;

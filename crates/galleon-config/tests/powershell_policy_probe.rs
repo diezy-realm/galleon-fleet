@@ -1,4 +1,4 @@
-use clawcrew_api::runtime_traits::ShellDialect;
+use galleon_api::runtime_traits::ShellDialect;
 use galleon_config::policy::{CommandRiskLevel, SecurityPolicy};
 
 fn powershell_policy() -> SecurityPolicy {

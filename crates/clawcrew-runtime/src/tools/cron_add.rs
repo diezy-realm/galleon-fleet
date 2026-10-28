@@ -7,8 +7,8 @@ use async_trait::async_trait;
 use chrono::{Duration as ChronoDuration, Utc};
 use serde_json::{Value, json};
 use std::sync::Arc;
-use clawcrew_api::runtime_traits::RuntimeAdapter;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::runtime_traits::RuntimeAdapter;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::Config;
 
 pub struct CronAddTool {

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde_json::{Value, json};
-use clawcrew_api::plan::{PlanEntry, PlanPriority, PlanStatus};
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::plan::{PlanEntry, PlanPriority, PlanStatus};
+use galleon_api::tool::{Tool, ToolResult};
 
 /// Live task tracker tool. Models call this with the COMPLETE current
 /// todo list on every invocation (whole-list replace). The tool only
@@ -134,14 +134,14 @@ impl Tool for TodoWriteTool {
     }
 }
 
-clawcrew_api::tool_attribution!(TodoWriteTool, clawcrew_api::attribution::ToolKind::Plugin);
+galleon_api::tool_attribution!(TodoWriteTool, galleon_api::attribution::ToolKind::Plugin);
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
-    use clawcrew_api::plan::{PlanPriority, PlanStatus};
-    use clawcrew_api::tool::Tool;
+    use galleon_api::plan::{PlanPriority, PlanStatus};
+    use galleon_api::tool::Tool;
 
     #[test]
     fn parses_valid_entries_with_all_fields() {

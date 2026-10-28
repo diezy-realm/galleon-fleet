@@ -125,9 +125,9 @@ pub use galleon_tools::web_fetch::WebFetchTool;
 pub use galleon_tools::web_search_tool::WebSearchTool;
 pub use galleon_tools::wrappers::{PathGuardedTool, RateLimitedTool};
 
-// Traits from clawcrew-api
-pub use clawcrew_api::schema::{CleaningStrategy, SchemaCleanr};
-pub use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, ToolSpec};
+// Traits from galleon-api
+pub use galleon_api::schema::{CleaningStrategy, SchemaCleanr};
+pub use galleon_api::tool::{Tool, ToolOutput, ToolResult, ToolSpec};
 
 // Local tool re-exports (tools with root deps, kept in misc)
 pub use cron_add::CronAddTool;
@@ -177,7 +177,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 pub type PerToolChannelHandle =
-    Arc<RwLock<HashMap<String, Arc<dyn clawcrew_api::channel::Channel>>>>;
+    Arc<RwLock<HashMap<String, Arc<dyn galleon_api::channel::Channel>>>>;
 
 pub use galleon_tools::{ArcToolRef, DelegateParentToolsHandle};
 
@@ -213,14 +213,14 @@ impl ArcDelegatingTool {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ArcDelegatingTool {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
+impl ::galleon_api::attribution::Attributable for ArcDelegatingTool {
+    fn role(&self) -> ::galleon_api::attribution::Role {
         self.inner.role()
     }
     fn alias(&self) -> &str {
         self.inner.alias()
     }
-    fn tool_provenance(&self) -> ::clawcrew_api::attribution::ToolProvenance {
+    fn tool_provenance(&self) -> ::galleon_api::attribution::ToolProvenance {
         self.inner.tool_provenance()
     }
 }
@@ -243,14 +243,14 @@ impl Tool for ArcDelegatingTool {
         self.inner.output_schema()
     }
 
-    fn param_domains(&self) -> Vec<(&'static str, ::clawcrew_api::tool::OptionDomain)> {
+    fn param_domains(&self) -> Vec<(&'static str, ::galleon_api::tool::OptionDomain)> {
         self.inner.param_domains()
     }
 
     // Forward `spec()` so inner overrides keep their `Arc`-shared parameter
     // schemas; the trait default would rebuild the spec from
     // `parameters_schema()`, deep-cloning MCP schemas every loop iteration.
-    fn spec(&self) -> clawcrew_api::tool::ToolSpec {
+    fn spec(&self) -> galleon_api::tool::ToolSpec {
         self.inner.spec()
     }
 
@@ -5263,7 +5263,7 @@ permissions = ["http_client"]
 mod todo_registration_tests {
     #[test]
     fn todo_write_tool_name_is_stable() {
-        use clawcrew_api::tool::Tool;
+        use galleon_api::tool::Tool;
         assert_eq!(super::todo_write::TodoWriteTool::new().name(), "TodoWrite");
     }
 }
@@ -5272,7 +5272,7 @@ mod todo_registration_tests {
 mod wrapper_spec_forwarding_tests {
     use super::*;
     use async_trait::async_trait;
-    use clawcrew_api::tool::ToolSpec;
+    use galleon_api::tool::ToolSpec;
 
     /// Stand-in for `McpToolWrapper`: stores its schema once and overrides
     /// `spec()` to hand out `Arc::clone`, so tests can assert wrappers
@@ -5293,9 +5293,9 @@ mod wrapper_spec_forwarding_tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ArcSchemaTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+    impl ::galleon_api::attribution::Attributable for ArcSchemaTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             "arc-schema-tool"

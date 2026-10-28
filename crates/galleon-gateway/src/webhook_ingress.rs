@@ -62,7 +62,7 @@ use axum::response::Json;
     feature = "channel-nextcloud",
     feature = "channel-whatsapp-cloud"
 ))]
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 #[cfg(any(
     feature = "channel-linq",
     feature = "channel-nextcloud",
@@ -600,7 +600,7 @@ async fn process_verified_message(
         #[cfg(feature = "channel-linq")]
         SessionKeyPolicy::AliasSenderSanitized => {
             let channel_ref = format!("{}.{}", spec.channel, alias);
-            clawcrew_api::session_keys::sanitize_session_key(&sender_session_id(&channel_ref, msg))
+            galleon_api::session_keys::sanitize_session_key(&sender_session_id(&channel_ref, msg))
         }
     };
 

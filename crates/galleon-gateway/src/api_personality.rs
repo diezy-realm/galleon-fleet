@@ -8,7 +8,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
-use clawcrew_api::personality::{
+use galleon_api::personality::{
     EDITABLE_PERSONALITY_FILES, MAX_FILE_CHARS, PersonalityFileEntry, PersonalityGetResult,
     PersonalityListResult, PersonalityPutResult, PersonalityTemplatesResult, TemplateContext,
 };

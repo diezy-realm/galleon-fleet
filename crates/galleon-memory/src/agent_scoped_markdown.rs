@@ -284,10 +284,10 @@ impl Memory for AgentScopedMarkdownMemory {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for AgentScopedMarkdownMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(
-            ::clawcrew_api::attribution::MemoryKind::AgentScopedMarkdown,
+impl ::galleon_api::attribution::Attributable for AgentScopedMarkdownMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(
+            ::galleon_api::attribution::MemoryKind::AgentScopedMarkdown,
         )
     }
     fn alias(&self) -> &str {
@@ -313,10 +313,10 @@ mod tests {
         entries: Vec<MemoryEntry>,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for NamespacedTestMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for NamespacedTestMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
 

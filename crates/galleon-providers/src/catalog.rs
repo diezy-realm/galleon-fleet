@@ -227,7 +227,7 @@ pub async fn model_catalog_with_config(
     model_provider: &str,
 ) -> (
     Vec<String>,
-    Option<std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing>>,
+    Option<std::collections::HashMap<String, galleon_api::model_provider::ModelPricing>>,
     bool,
 ) {
     let resolved = config.and_then(|cfg| cfg.providers.models.find_by_name(model_provider));
@@ -269,7 +269,7 @@ pub async fn model_catalog_with_config(
     {
         let raw_pricing: std::collections::HashMap<
             String,
-            clawcrew_api::model_provider::ModelPricing,
+            galleon_api::model_provider::ModelPricing,
         > = models
             .iter()
             .filter_map(|m| m.pricing.as_ref().map(|p| (m.id.clone(), p.clone())))
@@ -279,7 +279,7 @@ pub async fn model_catalog_with_config(
         else {
             return (Vec::new(), None, false);
         };
-        let pricing: std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing> =
+        let pricing: std::collections::HashMap<String, galleon_api::model_provider::ModelPricing> =
             ids.iter()
                 .filter_map(|id| raw_pricing.get(id).map(|p| (id.clone(), p.clone())))
                 .collect();

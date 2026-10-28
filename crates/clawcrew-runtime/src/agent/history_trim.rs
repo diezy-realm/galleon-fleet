@@ -2,7 +2,7 @@
 //! that fit the token budget, drop the rest, never cut a turn in half.
 
 use crate::agent::history::estimate_history_tokens;
-use clawcrew_api::model_provider::ConversationMessage;
+use galleon_api::model_provider::ConversationMessage;
 use galleon_providers::ChatMessage;
 
 /// Prefix the tool loop puts on the user-role message that carries prompt-mode

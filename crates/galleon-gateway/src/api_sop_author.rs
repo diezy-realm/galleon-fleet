@@ -1,7 +1,7 @@
 //! SOP authoring surface for the web node editor.
 //!
 //! SOP authoring HTTP endpoints, backed by the decoupled
-//! `clawcrew_api::sop::SopRunner` interface. All routes require gateway
+//! `galleon_api::sop::SopRunner` interface. All routes require gateway
 //! auth. Draft endpoints (`wire-draft`, `graph-draft`) are pure: they
 //! transform the submitted SOP and never touch disk.
 
@@ -15,7 +15,7 @@ use axum::response::{IntoResponse, Response};
 
 use super::AppState;
 use super::api::require_auth;
-use clawcrew_api::sop::{ApprovalDecision, ApprovalPrincipal, Sop, SopRunStatus, SopRunSummary};
+use galleon_api::sop::{ApprovalDecision, ApprovalPrincipal, Sop, SopRunStatus, SopRunSummary};
 
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct RunsQuery {
@@ -74,7 +74,7 @@ pub async fn handle_sop_trigger_sources(
 /// a channel) can filter.
 #[derive(serde::Deserialize)]
 pub struct ParamOptionsBody {
-    pub domain: clawcrew_api::tool::OptionDomain,
+    pub domain: galleon_api::tool::OptionDomain,
     #[serde(default)]
     pub agent: Option<String>,
     #[serde(default)]
@@ -636,7 +636,7 @@ mod tests {
 
     use axum::extract::{Path, State};
     use axum::http::{HeaderValue, header};
-    use clawcrew_api::sop::{BrokerOutcome, ResolveOutcome, SopRunner};
+    use galleon_api::sop::{BrokerOutcome, ResolveOutcome, SopRunner};
     use galleon_config::pairing::PairingGuard;
     use http_body_util::BodyExt;
 
@@ -879,8 +879,8 @@ mod tests {
             &self,
             _path: &str,
             _payload: Option<&str>,
-        ) -> anyhow::Result<Option<clawcrew_api::sop::WebhookDispatchResult>> {
-            Ok(Some(clawcrew_api::sop::WebhookDispatchResult {
+        ) -> anyhow::Result<Option<galleon_api::sop::WebhookDispatchResult>> {
+            Ok(Some(galleon_api::sop::WebhookDispatchResult {
                 blocked_only: false,
                 results: vec![],
             }))

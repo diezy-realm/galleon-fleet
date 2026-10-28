@@ -221,9 +221,9 @@ impl clawcrew::memory::Memory for StaticRecallMemory {
     }
 }
 
-impl clawcrew_api::attribution::Attributable for StaticRecallMemory {
-    fn role(&self) -> clawcrew_api::attribution::Role {
-        clawcrew_api::attribution::Role::Memory(clawcrew_api::attribution::MemoryKind::InMemory)
+impl galleon_api::attribution::Attributable for StaticRecallMemory {
+    fn role(&self) -> galleon_api::attribution::Role {
+        galleon_api::attribution::Role::Memory(galleon_api::attribution::MemoryKind::InMemory)
     }
     fn alias(&self) -> &str {
         "StaticRecallMemory"

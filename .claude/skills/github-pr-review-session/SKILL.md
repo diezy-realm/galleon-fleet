@@ -113,7 +113,7 @@ The architecture review never speaks for you and never gates the PR: it is
 advisory input you have personally vetted. If the file does not exist, do not
 auto-invoke `pr-architecture-check`.
 
-> **Tip:** If the PR touches core crates (`clawcrew-api`, `clawcrew-runtime`,
+> **Tip:** If the PR touches core crates (`galleon-api`, `clawcrew-runtime`,
 > `galleon-gateway`, `galleon-plugins`), consider running `arch-check #<N>`
 > first to get an architecture analysis before starting your review.
 

@@ -40,7 +40,7 @@ where
     MODEL_SWITCH_REQUEST.scope(state, future).await
 }
 
-pub use clawcrew_api::agent::{ToolLoopCancelled, is_tool_loop_cancelled};
+pub use galleon_api::agent::{ToolLoopCancelled, is_tool_loop_cancelled};
 
 #[derive(Debug)]
 pub(crate) struct StreamInterruptedAfterOutput {
@@ -69,7 +69,7 @@ impl std::error::Error for StreamInterruptedAfterOutput {
 pub(crate) struct StreamErrorWithUsage {
     pub(crate) message: String,
     pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
-    pub(crate) source: clawcrew_api::model_provider::StreamError,
+    pub(crate) source: galleon_api::model_provider::StreamError,
 }
 
 impl std::fmt::Display for StreamErrorWithUsage {
@@ -252,7 +252,7 @@ impl std::error::Error for StreamCancelledWithUsage {
     }
 }
 
-pub use clawcrew_api::agent::{ModelSwitchRequested, is_model_switch_requested};
+pub use galleon_api::agent::{ModelSwitchRequested, is_model_switch_requested};
 
 #[cfg(test)]
 mod tests {
@@ -278,7 +278,7 @@ mod tests {
 
     #[test]
     fn terminal_completion_diagnostics_are_stable_english() {
-        let direct = clawcrew_api::model_provider::SemanticEmptyTerminalCompletion;
+        let direct = galleon_api::model_provider::SemanticEmptyTerminalCompletion;
         let stream = StreamSemanticEmptyCompletion { usage: None };
         let provider_tools = StreamPreExecutedToolsWithoutFinalResponse { usage: None };
 
@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn semantic_empty_cause_uses_the_fluent_delivery_projection() {
         let error =
-            anyhow::Error::new(clawcrew_api::model_provider::SemanticEmptyTerminalCompletion);
+            anyhow::Error::new(galleon_api::model_provider::SemanticEmptyTerminalCompletion);
         assert!(is_semantic_empty_terminal_completion(&error));
         assert_eq!(
             terminal_completion_error_message_in_english(&error, None),
@@ -487,7 +487,7 @@ mod tests {
     #[test]
     fn disk_catalog_override_changes_delivery_not_the_diagnostic() {
         let error =
-            anyhow::Error::new(clawcrew_api::model_provider::SemanticEmptyTerminalCompletion);
+            anyhow::Error::new(galleon_api::model_provider::SemanticEmptyTerminalCompletion);
         let disk_override =
             "cli-agent-error-invalid-semantic-completion = Réponse terminale invalide.\n";
         let delivered = crate::i18n::get_disk_override_cli_string_for_test(
@@ -532,8 +532,8 @@ mod tests {
                                     or configure fallback_models on the provider to auto-switch \
                                     models.";
 
-    fn private_refusal() -> clawcrew_api::model_provider::ModelRefusalError {
-        clawcrew_api::model_provider::ModelRefusalError {
+    fn private_refusal() -> galleon_api::model_provider::ModelRefusalError {
+        galleon_api::model_provider::ModelRefusalError {
             requested_model: "claude-primary".into(),
             category: Some("private-category".into()),
             usage: None,
@@ -594,7 +594,7 @@ mod tests {
         let error = anyhow::Error::new(StreamErrorWithUsage {
             message: "model_provider stream error: refusal".to_string(),
             usage: None,
-            source: clawcrew_api::model_provider::StreamError::ModelRefusal(Box::new(
+            source: galleon_api::model_provider::StreamError::ModelRefusal(Box::new(
                 private_refusal(),
             )),
         });

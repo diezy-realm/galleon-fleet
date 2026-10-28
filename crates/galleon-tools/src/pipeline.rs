@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::PipelineConfig;
 
 use crate::tool_search::ToolAccessPolicy;
@@ -840,7 +840,7 @@ mod tests {
         output: String,
     }
 
-    clawcrew_api::mock_tool_attribution!(EchoTool);
+    galleon_api::mock_tool_attribution!(EchoTool);
 
     #[async_trait::async_trait]
     impl Tool for EchoTool {

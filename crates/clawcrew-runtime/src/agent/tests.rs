@@ -11,11 +11,11 @@ use crate::tools::{Tool, ToolOutput, ToolResult};
 use anyhow::Result;
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
-use clawcrew_api::agent::TurnEvent;
+use galleon_api::agent::TurnEvent;
 use galleon_config::schema::{AliasedAgentConfig, MemoryConfig, RiskProfileConfig};
 use galleon_memory::{self, Memory};
 
-clawcrew_api::mock_tool_attribution!(CountingTool, EchoTool, FailingTool, PanickingTool);
+galleon_api::mock_tool_attribution!(CountingTool, EchoTool, FailingTool, PanickingTool);
 use galleon_providers::{
     ChatMessage, ChatRequest, ChatResponse, ConversationMessage, ModelProvider, ToolCall,
     ToolResultMessage,
@@ -69,11 +69,11 @@ impl ModelProvider for ScriptedModelProvider {
         Ok(guard.remove(0))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for ScriptedModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ScriptedModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -106,11 +106,11 @@ impl ModelProvider for FailingModelProvider {
         anyhow::bail!("model_provider error")
     }
 }
-impl ::clawcrew_api::attribution::Attributable for FailingModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for FailingModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -296,11 +296,11 @@ impl ModelProvider for ToolSpecCaptureModelProvider {
         true
     }
 }
-impl ::clawcrew_api::attribution::Attributable for ToolSpecCaptureModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ToolSpecCaptureModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -1155,7 +1155,7 @@ impl Tool for RecordingShellTool {
     }
 }
 
-clawcrew_api::mock_tool_attribution!(RecordingShellTool);
+galleon_api::mock_tool_attribution!(RecordingShellTool);
 
 /// Extract the system prompt the agent actually injected into history.
 fn system_prompt_of(agent: &Agent) -> String {

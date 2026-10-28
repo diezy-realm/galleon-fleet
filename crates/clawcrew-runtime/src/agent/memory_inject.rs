@@ -25,7 +25,7 @@ use std::collections::HashSet;
 use std::fmt::Write as _;
 use std::time::Instant;
 
-use clawcrew_api::ingress::TurnOrigin;
+use galleon_api::ingress::TurnOrigin;
 use galleon_memory::{
     self, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN, Memory, MemoryCategory, MemoryEntry, decay,
     rerank,
@@ -567,10 +567,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for FixtureMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for FixtureMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
         fn alias(&self) -> &str {
@@ -598,7 +598,7 @@ mod tests {
             }
         }
 
-        fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {}
+        fn record_metric(&self, _metric: &galleon_api::observability_traits::ObserverMetric) {}
 
         fn name(&self) -> &str {
             "recording"

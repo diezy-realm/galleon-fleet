@@ -15,12 +15,12 @@ fn format_tokens(n: u64) -> String {
 
 /// CLI channel factory, injected by the binary. Returns a `Box<dyn Channel>` for interactive mode.
 pub static CLI_CHANNEL_FN: std::sync::OnceLock<
-    Box<dyn Fn() -> Box<dyn clawcrew_api::channel::Channel> + Send + Sync>,
+    Box<dyn Fn() -> Box<dyn galleon_api::channel::Channel> + Send + Sync>,
 > = std::sync::OnceLock::new();
 
 /// Register the CLI channel factory. Called once at startup by the binary.
 pub fn register_cli_channel_fn(
-    f: Box<dyn Fn() -> Box<dyn clawcrew_api::channel::Channel> + Send + Sync>,
+    f: Box<dyn Fn() -> Box<dyn galleon_api::channel::Channel> + Send + Sync>,
 ) {
     let _ = CLI_CHANNEL_FN.set(f);
 }
@@ -61,7 +61,7 @@ pub async fn load_peripheral_tools(
 /// `galleon-channels`.
 type ChannelMapFn = Box<
     dyn Fn()
-            -> std::collections::HashMap<String, std::sync::Arc<dyn clawcrew_api::channel::Channel>>
+            -> std::collections::HashMap<String, std::sync::Arc<dyn galleon_api::channel::Channel>>
         + Send
         + Sync,
 >;
@@ -125,8 +125,8 @@ use crate::tools::scoped;
 use crate::tools::{self, Tool};
 use crate::util::truncate_with_ellipsis;
 use anyhow::{Context, Result};
-use clawcrew_api::channel::Channel;
-use clawcrew_api::ingress::{IngressContext, TurnOrigin};
+use galleon_api::channel::Channel;
+use galleon_api::ingress::{IngressContext, TurnOrigin};
 use galleon_config::schema::Config;
 use galleon_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
@@ -177,7 +177,7 @@ fn interactive_context_recovery_budget(
 /// histories).
 fn should_autosave_user_message(
     auto_save: bool,
-    origin: clawcrew_api::ingress::TurnOrigin,
+    origin: galleon_api::ingress::TurnOrigin,
     content: &str,
 ) -> bool {
     auto_save
@@ -423,8 +423,8 @@ pub fn filter_by_allowed_tools(
 }
 
 // Re-export from clawcrew-types for backwards compatibility.
-pub use clawcrew_api::TOOL_LOOP_SESSION_KEY;
-pub use clawcrew_api::TOOL_LOOP_THREAD_ID;
+pub use galleon_api::TOOL_LOOP_SESSION_KEY;
+pub use galleon_api::TOOL_LOOP_THREAD_ID;
 
 // Re-export tool call parsing from the standalone parser crate.
 pub use galleon_tool_call_parser::{
@@ -446,7 +446,7 @@ where
     TOOL_LOOP_THREAD_ID.scope(thread_id, future).await
 }
 
-pub use clawcrew_api::scope_session_key;
+pub use galleon_api::scope_session_key;
 
 pub(crate) fn compute_excluded_mcp_tools(
     tools_registry: &[Box<dyn Tool>],
@@ -521,12 +521,12 @@ pub(crate) fn capture_llm_messages(
     messages: &[ChatMessage],
     output_text: Option<&str>,
     output_tool_calls: &[ToolCall],
-) -> Option<clawcrew_api::observability_traits::LlmMessageSnapshot> {
+) -> Option<galleon_api::observability_traits::LlmMessageSnapshot> {
     if !cfg!(feature = "observability-otel") {
         return None;
     }
 
-    use clawcrew_api::observability_traits::{
+    use galleon_api::observability_traits::{
         LlmMessageSnapshot, MessageSnapshot, ToolCallSnapshot,
     };
 
@@ -584,7 +584,7 @@ pub(crate) fn build_system_prompt_for_turn(
     inject_memory: bool,
     show_tool_calls: bool,
     thinking_prefix: Option<&str>,
-    shell_profile: Option<&clawcrew_api::runtime_traits::ShellProfile>,
+    shell_profile: Option<&galleon_api::runtime_traits::ShellProfile>,
 ) -> Result<String> {
     let native_tools = model_provider
         .capabilities_for_model(model_name)
@@ -658,7 +658,7 @@ pub fn make_query_summary(raw: &str) -> Option<String> {
     Some(truncate_with_ellipsis(&scrub_credentials(raw), 200))
 }
 
-pub use clawcrew_api::TOOL_CHOICE_OVERRIDE;
+pub use galleon_api::TOOL_CHOICE_OVERRIDE;
 
 #[cfg(test)]
 fn tools_to_openai_format(tools_registry: &[Box<dyn Tool>]) -> Vec<serde_json::Value> {
@@ -978,7 +978,7 @@ async fn agent_turn_with_sop_reassembly(
         .and_then(|ctx| {
             let usage = ctx.snapshot_turn_usage();
             (usage.input_tokens > 0 || usage.output_tokens > 0).then_some(
-                clawcrew_api::observability_traits::TurnTokenUsage {
+                galleon_api::observability_traits::TurnTokenUsage {
                     input_tokens: usage.input_tokens,
                     output_tokens: usage.output_tokens,
                 },
@@ -1731,7 +1731,7 @@ pub async fn run(
                 None
             } else {
                 // Match the sanitized form persisted by memory backend migrations.
-                Some(clawcrew_api::session_keys::sanitize_session_key(&format!(
+                Some(galleon_api::session_keys::sanitize_session_key(&format!(
                     "cli:{raw}"
                 )))
             }
@@ -1936,7 +1936,7 @@ pub async fn run(
                         runtime.shell_profile().as_ref(),
                     )?;
                 }
-                match clawcrew_api::NATIVE_THINKING_OVERRIDE
+                match galleon_api::NATIVE_THINKING_OVERRIDE
                     .scope(
                         thinking_params.native_thinking,
                         TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
@@ -2353,9 +2353,9 @@ pub async fn run(
                     config.skills.install_suggestions.enabled,
                 ) {
                     final_output = suggestion;
-                    if let Err(e) = clawcrew_api::channel::Channel::send(
+                    if let Err(e) = galleon_api::channel::Channel::send(
                         &*cli,
-                        &clawcrew_api::channel::SendMessage::new(
+                        &galleon_api::channel::SendMessage::new(
                             format!("\n{final_output}\n"),
                             "user",
                         ),
@@ -2514,7 +2514,7 @@ pub async fn run(
                             runtime.shell_profile().as_ref(),
                         )?;
                     }
-                    match clawcrew_api::NATIVE_THINKING_OVERRIDE
+                    match galleon_api::NATIVE_THINKING_OVERRIDE
                         .scope(
                             thinking_params.native_thinking,
                             TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
@@ -2795,9 +2795,9 @@ pub async fn run(
                 final_output = response;
                 if content_was_streamed.load(std::sync::atomic::Ordering::Relaxed) {
                     println!();
-                } else if let Err(e) = clawcrew_api::channel::Channel::send(
+                } else if let Err(e) = galleon_api::channel::Channel::send(
                     &*cli,
-                    &clawcrew_api::channel::SendMessage::new(format!("\n{final_output}\n"), "user"),
+                    &galleon_api::channel::SendMessage::new(format!("\n{final_output}\n"), "user"),
                 )
                 .await
                 {
@@ -2868,7 +2868,7 @@ pub async fn run(
         let tokens_used = cost_tracking_context.as_ref().and_then(|ctx| {
             let usage = ctx.snapshot_turn_usage();
             (usage.input_tokens > 0 || usage.output_tokens > 0).then_some(
-                clawcrew_api::observability_traits::TurnTokenUsage {
+                galleon_api::observability_traits::TurnTokenUsage {
                     input_tokens: usage.input_tokens,
                     output_tokens: usage.output_tokens,
                 },
@@ -3420,9 +3420,9 @@ pub(crate) async fn process_message_shared(
         });
         let routed_approval_channel_ref = routed_approval_channel
             .as_ref()
-            .map(|c| c as &dyn clawcrew_api::channel::Channel);
+            .map(|c| c as &dyn galleon_api::channel::Channel);
 
-        clawcrew_api::NATIVE_THINKING_OVERRIDE
+        galleon_api::NATIVE_THINKING_OVERRIDE
             .scope(
                 thinking_params.native_thinking,
                 agent_turn_with_sop_reassembly(

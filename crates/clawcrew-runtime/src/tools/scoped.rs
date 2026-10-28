@@ -10,7 +10,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use clawcrew_api::runtime_traits::RuntimeAdapter;
+use galleon_api::runtime_traits::RuntimeAdapter;
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::schema::Config;
 
@@ -33,7 +33,7 @@ use crate::tools::{
 /// registry is a compile error, not a review-checklist item. Read sites are
 /// unchanged: the registry [`std::ops::Deref`]s to the same `[Box<dyn Tool>]`
 /// slice the raw `Vec` used to expose.
-pub struct ScopedToolRegistry(clawcrew_api::tool::ScopedToolRegistry);
+pub struct ScopedToolRegistry(galleon_api::tool::ScopedToolRegistry);
 
 impl std::ops::Deref for ScopedToolRegistry {
     type Target = [Box<dyn Tool>];
@@ -45,7 +45,7 @@ impl std::ops::Deref for ScopedToolRegistry {
 impl ScopedToolRegistry {
     /// Wrap a vector of boxed tools into the runtime's scoped registry.
     pub fn new(tools: Vec<Box<dyn Tool>>) -> Self {
-        Self(clawcrew_api::tool::ScopedToolRegistry::new(tools))
+        Self(galleon_api::tool::ScopedToolRegistry::new(tools))
     }
 
     /// Consume the assembled registry into the owned `Vec` for non-turn
@@ -56,7 +56,7 @@ impl ScopedToolRegistry {
     }
 
     /// Extract the underlying API-level `ScopedToolRegistry`.
-    pub fn into_api_scoped(self) -> clawcrew_api::tool::ScopedToolRegistry {
+    pub fn into_api_scoped(self) -> galleon_api::tool::ScopedToolRegistry {
         self.0
     }
 
@@ -79,17 +79,17 @@ impl ScopedToolRegistry {
     /// in shipped builds and the seal holds where it matters.
     #[cfg(any(test, feature = "test-util"))]
     pub fn from_raw_for_test(tools: Vec<Box<dyn Tool>>) -> Self {
-        Self(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(tools))
+        Self(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(tools))
     }
 }
 
-impl From<clawcrew_api::tool::ScopedToolRegistry> for ScopedToolRegistry {
-    fn from(inner: clawcrew_api::tool::ScopedToolRegistry) -> Self {
+impl From<galleon_api::tool::ScopedToolRegistry> for ScopedToolRegistry {
+    fn from(inner: galleon_api::tool::ScopedToolRegistry) -> Self {
         Self(inner)
     }
 }
 
-impl From<ScopedToolRegistry> for clawcrew_api::tool::ScopedToolRegistry {
+impl From<ScopedToolRegistry> for galleon_api::tool::ScopedToolRegistry {
     fn from(outer: ScopedToolRegistry) -> Self {
         outer.0
     }
@@ -664,9 +664,9 @@ mod tests {
 
     struct MockTool(&'static str);
 
-    impl clawcrew_api::attribution::Attributable for MockTool {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+    impl galleon_api::attribution::Attributable for MockTool {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             self.0
@@ -678,7 +678,7 @@ mod tests {
         calls: Arc<AtomicUsize>,
     }
 
-    clawcrew_api::mock_tool_attribution!(CountingTool);
+    galleon_api::mock_tool_attribution!(CountingTool);
 
     #[async_trait]
     impl Tool for CountingTool {

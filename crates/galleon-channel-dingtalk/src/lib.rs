@@ -10,7 +10,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::Message;
 use uuid::Uuid;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const DINGTALK_BOT_CALLBACK_TOPIC: &str = "/v1.0/im/bot/messages/get";
 
@@ -152,10 +152,10 @@ impl DingTalkChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for DingTalkChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::DingTalk,
+impl ::galleon_api::attribution::Attributable for DingTalkChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::DingTalk,
         )
     }
     fn alias(&self) -> &str {

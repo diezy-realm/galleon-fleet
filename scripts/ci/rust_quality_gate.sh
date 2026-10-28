@@ -43,7 +43,7 @@ PROTECTED_METHODS='\.(chat|stream_chat|simple_chat|chat_with_system|chat_with_hi
 #   - `self.<method>(...)` self-calls (same Attributable instance;
 #     dispatcher wrap would be a redundant attribution layer).
 #   - `self.as_ref().<method>(...)` blanket-impl forwarders (used by
-#     `impl ModelProvider for Arc<T>` in clawcrew-api — must call
+#     `impl ModelProvider for Arc<T>` in galleon-api — must call
 #     inner directly to avoid infinite recursion through the dispatcher).
 #   - Method calls that follow a ProviderDispatch construction within
 #     the prior 3 lines. The dispatcher's borrowed/owned variants

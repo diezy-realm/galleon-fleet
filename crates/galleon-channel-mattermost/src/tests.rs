@@ -2449,8 +2449,8 @@ mod approval_tests {
         )
     }
 
-    fn approval_request() -> clawcrew_api::channel::ChannelApprovalRequest {
-        clawcrew_api::channel::ChannelApprovalRequest {
+    fn approval_request() -> galleon_api::channel::ChannelApprovalRequest {
+        galleon_api::channel::ChannelApprovalRequest {
             tool_name: "shell".into(),
             arguments_summary: "rm -rf /".into(),
             raw_arguments: None,
@@ -2487,7 +2487,7 @@ mod approval_tests {
         assert_eq!(attributed.response, ChannelApprovalResponse::Deny);
         assert_eq!(
             attributed.source,
-            clawcrew_api::channel::ApprovalSource::TimedOut,
+            galleon_api::channel::ApprovalSource::TimedOut,
             "an unanswered prompt is the runtime denying, not an operator refusing"
         );
         assert!(
@@ -2654,7 +2654,7 @@ mod approval_tests {
     #[tokio::test]
     async fn failed_prompt_post_is_an_error_not_an_operator_decision() {
         let ch = channel_with_peers(vec![ALLOWED_USER.to_string()]).with_approval_timeout_secs(0);
-        let request = clawcrew_api::channel::ChannelApprovalRequest {
+        let request = galleon_api::channel::ChannelApprovalRequest {
             tool_name: "shell".into(),
             arguments_summary: "rm -rf /".into(),
             raw_arguments: None,

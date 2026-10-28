@@ -14,7 +14,7 @@ publish = true
 exclude = ["tests/regression_suite.rs"]
 
 [dependencies]
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 clawcrew-runtime.workspace = true
 galleon-config.workspace = true
 galleon-memory.workspace = true

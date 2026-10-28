@@ -8,8 +8,8 @@ use notify::{Event, EventKind, RecursiveMode, Watcher};
 use sha2::{Digest, Sha256};
 use tokio::sync::mpsc;
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_api::sop::{FilesystemEventKind, SopFanInDispatcher, SopTriggerSource};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::sop::{FilesystemEventKind, SopFanInDispatcher, SopTriggerSource};
 use galleon_config::schema::FilesystemConfig;
 
 /// Filesystem change source as a `Channel`.
@@ -225,10 +225,10 @@ impl Channel for FilesystemChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for FilesystemChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Filesystem,
+impl ::galleon_api::attribution::Attributable for FilesystemChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Filesystem,
         )
     }
     fn alias(&self) -> &str {
@@ -892,8 +892,8 @@ mod tests {
             _payload: Option<&str>,
             _target_sop: Option<&str>,
             _dedup: Option<(String, bool)>,
-        ) -> clawcrew_api::sop::SopFanInResult {
-            clawcrew_api::sop::SopFanInResult::default()
+        ) -> galleon_api::sop::SopFanInResult {
+            galleon_api::sop::SopFanInResult::default()
         }
     }
 

@@ -2098,7 +2098,7 @@ pub async fn model_catalog(
     model_provider: &str,
 ) -> (
     Vec<String>,
-    Option<std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing>>,
+    Option<std::collections::HashMap<String, galleon_api::model_provider::ModelPricing>>,
     bool,
 ) {
     model_catalog_with_config(None, model_provider).await
@@ -2109,7 +2109,7 @@ pub async fn model_catalog_with_config(
     model_provider: &str,
 ) -> (
     Vec<String>,
-    Option<std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing>>,
+    Option<std::collections::HashMap<String, galleon_api::model_provider::ModelPricing>>,
     bool,
 ) {
     galleon_providers::catalog::model_catalog_with_config(config, model_provider).await

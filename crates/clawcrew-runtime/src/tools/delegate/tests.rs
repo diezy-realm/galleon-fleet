@@ -22,7 +22,7 @@
         ReliableProviderTerminalFailureKind, ToolCall,
     };
 
-    clawcrew_api::mock_tool_attribution!(EchoTool, FakeMcpTool);
+    galleon_api::mock_tool_attribution!(EchoTool, FakeMcpTool);
 
     fn task_record(id: &str, status: TaskStatus) -> TaskRecord {
         TaskRecord {
@@ -1337,11 +1337,11 @@
             }
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for OneToolThenFinalModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for OneToolThenFinalModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1423,11 +1423,11 @@
     }
 
     #[cfg(unix)]
-    impl ::clawcrew_api::attribution::Attributable for IndependentRiskPolicyModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for IndependentRiskPolicyModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1494,11 +1494,11 @@
             }
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for EchoToolResultThenFinalModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for EchoToolResultThenFinalModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1538,11 +1538,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for TextFallbackToolModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for TextFallbackToolModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1584,11 +1584,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for InfiniteToolCallModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for InfiniteToolCallModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1620,11 +1620,11 @@
             Err(anyhow::Error::msg("model_provider boom"))
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for FailingModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for FailingModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1883,11 +1883,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for MemoryStoreRecallThenFinalModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MemoryStoreRecallThenFinalModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -3514,7 +3514,7 @@
             "test-provider",
             "test-model",
             Err(anyhow::Error::new(
-                clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+                galleon_api::model_provider::SemanticEmptyTerminalCompletion,
             )),
         );
 
@@ -3837,11 +3837,11 @@
             }
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for McpToolThenFinalModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for McpToolThenFinalModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -3882,11 +3882,11 @@
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for FinalOnlyModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for FinalOnlyModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -3922,11 +3922,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for EmptyTerminalModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for EmptyTerminalModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -3984,11 +3984,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ToolThenEmptyTerminalModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ToolThenEmptyTerminalModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -4037,11 +4037,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ToolCountModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ToolCountModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -4054,7 +4054,7 @@
     #[derive(Debug)]
     struct RecordedThinkingRequest {
         thinking_budget: Option<u32>,
-        thinking_display: Option<clawcrew_api::model_provider::ThinkingDisplay>,
+        thinking_display: Option<galleon_api::model_provider::ThinkingDisplay>,
         system_prompt: Option<String>,
         temperature: Option<f64>,
     }
@@ -4113,11 +4113,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ThinkingRecordingModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ThinkingRecordingModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -4206,7 +4206,7 @@
             display: None,
         });
 
-        clawcrew_api::NATIVE_THINKING_OVERRIDE
+        galleon_api::NATIVE_THINKING_OVERRIDE
             .scope(parent, async {
                 let result = tool
                     .execute_agentic(
@@ -4222,7 +4222,7 @@
                     .unwrap();
                 assert!(result.success, "{result:?}");
                 assert_eq!(
-                    clawcrew_api::NATIVE_THINKING_OVERRIDE
+                    galleon_api::NATIVE_THINKING_OVERRIDE
                         .try_with(Clone::clone)
                         .unwrap(),
                     parent,
@@ -4242,7 +4242,7 @@
 
     #[tokio::test]
     async fn independent_delegate_propagates_display_mode_to_target_request() {
-        use clawcrew_api::model_provider::ThinkingDisplay;
+        use galleon_api::model_provider::ThinkingDisplay;
         use galleon_config::scattered_types::ThinkingDisplayMode;
 
         let target_thinking = ThinkingConfig {
@@ -4259,7 +4259,7 @@
             display: None,
         });
 
-        clawcrew_api::NATIVE_THINKING_OVERRIDE
+        galleon_api::NATIVE_THINKING_OVERRIDE
             .scope(parent, async {
                 let result = tool
                     .execute_agentic(
@@ -4300,7 +4300,7 @@
             display: None,
         });
 
-        clawcrew_api::NATIVE_THINKING_OVERRIDE
+        galleon_api::NATIVE_THINKING_OVERRIDE
             .scope(parent, async {
                 let result = tool
                     .execute_agentic(
@@ -4316,7 +4316,7 @@
                     .unwrap();
                 assert!(result.success, "{result:?}");
                 assert_eq!(
-                    clawcrew_api::NATIVE_THINKING_OVERRIDE
+                    galleon_api::NATIVE_THINKING_OVERRIDE
                         .try_with(Clone::clone)
                         .unwrap(),
                     parent,
@@ -4356,7 +4356,7 @@
             display: None,
         });
 
-        clawcrew_api::NATIVE_THINKING_OVERRIDE
+        galleon_api::NATIVE_THINKING_OVERRIDE
             .scope(parent, async {
                 let result = tool
                     .execute_agentic(
@@ -4702,10 +4702,10 @@
         let config = AliasedAgentConfig::default();
 
         struct MockShellTool;
-        impl ::clawcrew_api::attribution::Attributable for MockShellTool {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Tool(
-                    ::clawcrew_api::attribution::ToolKind::Shell,
+        impl ::galleon_api::attribution::Attributable for MockShellTool {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Tool(
+                    ::galleon_api::attribution::ToolKind::Shell,
                 )
             }
             fn alias(&self) -> &str {
@@ -4854,10 +4854,10 @@
         let config = AliasedAgentConfig::default();
 
         struct MockShellTool;
-        impl ::clawcrew_api::attribution::Attributable for MockShellTool {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Tool(
-                    ::clawcrew_api::attribution::ToolKind::Shell,
+        impl ::galleon_api::attribution::Attributable for MockShellTool {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Tool(
+                    ::galleon_api::attribution::ToolKind::Shell,
                 )
             }
             fn alias(&self) -> &str {
@@ -4901,8 +4901,8 @@
             fn shell_dialect(&self) -> crate::platform::ShellDialect {
                 crate::platform::ShellDialect::PowerShell
             }
-            fn shell_profile(&self) -> Option<clawcrew_api::runtime_traits::ShellProfile> {
-                Some(clawcrew_api::runtime_traits::ShellProfile {
+            fn shell_profile(&self) -> Option<galleon_api::runtime_traits::ShellProfile> {
+                Some(galleon_api::runtime_traits::ShellProfile {
                     name: "powershell".to_string(),
                     dialect: crate::platform::ShellDialect::PowerShell,
                 })
@@ -6826,9 +6826,9 @@
 
         struct DeliverFileFixture;
 
-        impl clawcrew_api::attribution::Attributable for DeliverFileFixture {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+        impl galleon_api::attribution::Attributable for DeliverFileFixture {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
             }
 
             fn alias(&self) -> &str {
@@ -7146,11 +7146,11 @@
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for DelegateCallThenFinalModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for DelegateCallThenFinalModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -8710,11 +8710,11 @@ command = "echo hi"
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for FullTargetProbeProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for FullTargetProbeProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -9892,9 +9892,9 @@ command = "rm independent-delegate-marker"
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for FileReadTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+    impl ::galleon_api::attribution::Attributable for FileReadTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             <Self as Tool>::name(self)
@@ -9921,9 +9921,9 @@ command = "rm independent-delegate-marker"
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for FileWriteTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+    impl ::galleon_api::attribution::Attributable for FileWriteTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             <Self as Tool>::name(self)
@@ -9950,9 +9950,9 @@ command = "rm independent-delegate-marker"
             })
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for MockShellTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Shell)
+    impl ::galleon_api::attribution::Attributable for MockShellTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Shell)
         }
         fn alias(&self) -> &str {
             <Self as Tool>::name(self)
@@ -10002,11 +10002,11 @@ command = "rm independent-delegate-marker"
             true
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for ToolListInspector {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ToolListInspector {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -10259,15 +10259,15 @@ command = "rm independent-delegate-marker"
 #[cfg(test)]
 mod tool_arc_ref_spec_tests {
     use super::*;
-    use clawcrew_api::tool::ToolSpec;
+    use galleon_api::tool::ToolSpec;
 
     struct ArcSchemaTool {
         schema: Arc<serde_json::Value>,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ArcSchemaTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+    impl ::galleon_api::attribution::Attributable for ArcSchemaTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             "arc-schema-tool"
@@ -10329,9 +10329,9 @@ mod tool_arc_ref_spec_tests {
     /// delegation's `ToolArcRef` wrapper.
     struct TriggerOwningTool;
 
-    impl ::clawcrew_api::attribution::Attributable for TriggerOwningTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+    impl ::galleon_api::attribution::Attributable for TriggerOwningTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             "trigger-owning-tool"

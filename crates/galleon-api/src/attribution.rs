@@ -452,7 +452,7 @@ impl Role {
 
     /// Closest `galleon_log::EventCategory` for this role, used by
     /// the layer to default `event.category` when the call site doesn't
-    /// override. Returned as a `&'static str` to keep `clawcrew-api`
+    /// override. Returned as a `&'static str` to keep `galleon-api`
     /// free of a back-dep on `galleon-log`.
     #[must_use]
     pub fn default_category(self) -> &'static str {

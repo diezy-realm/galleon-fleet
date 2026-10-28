@@ -6,7 +6,7 @@ use crate::util_helpers::truncate_with_ellipsis;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// A cloud architecture pattern with metadata.
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -30,7 +30,7 @@ use tokio::sync::{Mutex, mpsc};
 use tokio::time::{sleep, timeout};
 use tokio_rustls::TlsConnector;
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_tools::email_imap::{ImapSession, TlsStreamTolerant};
 
 pub use galleon_config::scattered_types::EmailConfig;
@@ -182,7 +182,7 @@ impl EmailChannel {
     fn extract_attachments(
         &self,
         parsed: &mail_parser::Message,
-    ) -> Vec<clawcrew_api::media::MediaAttachment> {
+    ) -> Vec<galleon_api::media::MediaAttachment> {
         let mut attachments = Vec::new();
         let mut total_size = 0;
 
@@ -223,7 +223,7 @@ impl EmailChannel {
                 .unwrap_or("attachment")
                 .to_string();
 
-            attachments.push(clawcrew_api::media::MediaAttachment {
+            attachments.push(galleon_api::media::MediaAttachment {
                 file_name,
                 data,
                 mime_type: mime_str,
@@ -355,7 +355,7 @@ impl EmailChannel {
     fn sanitize_subject(subject: &str) -> String {
         let mut cleaned = subject;
         while let Some(rest) =
-            cleaned.strip_prefix(clawcrew_api::channel::CHANNEL_SOP_SUBJECT_PREFIX)
+            cleaned.strip_prefix(galleon_api::channel::CHANNEL_SOP_SUBJECT_PREFIX)
         {
             cleaned = rest;
         }
@@ -953,7 +953,7 @@ struct ParsedEmail {
     subject: String,
     content: String,
     timestamp: u64,
-    attachments: Vec<clawcrew_api::media::MediaAttachment>,
+    attachments: Vec<galleon_api::media::MediaAttachment>,
 }
 
 /// Result from waiting on IDLE
@@ -963,9 +963,9 @@ enum IdleWaitResult {
     Interrupted,
 }
 
-impl ::clawcrew_api::attribution::Attributable for EmailChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Email)
+impl ::galleon_api::attribution::Attributable for EmailChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Email)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -1076,7 +1076,7 @@ impl Channel for EmailChannel {
     }
 }
 
-fn build_attachment_parts(attachments: &[clawcrew_api::media::MediaAttachment]) -> Vec<SinglePart> {
+fn build_attachment_parts(attachments: &[galleon_api::media::MediaAttachment]) -> Vec<SinglePart> {
     attachments
         .iter()
         .map(|attachment| {
@@ -1126,7 +1126,7 @@ mod tests {
         let forged = "clawcrew:sop-event:git.main:pull_request.opened";
         let cleaned = super::EmailChannel::sanitize_subject(forged);
         assert!(
-            !cleaned.starts_with(clawcrew_api::channel::CHANNEL_SOP_SUBJECT_PREFIX),
+            !cleaned.starts_with(galleon_api::channel::CHANNEL_SOP_SUBJECT_PREFIX),
             "reserved prefix must be stripped, got: {cleaned}"
         );
         assert_eq!(cleaned, "git.main:pull_request.opened");
@@ -1171,8 +1171,8 @@ mod tests {
     fn outbound_attachment(
         file_name: impl Into<String>,
         data: Vec<u8>,
-    ) -> clawcrew_api::media::MediaAttachment {
-        clawcrew_api::media::MediaAttachment {
+    ) -> galleon_api::media::MediaAttachment {
+        galleon_api::media::MediaAttachment {
             file_name: file_name.into(),
             data,
             mime_type: None,
@@ -1180,7 +1180,7 @@ mod tests {
         }
     }
 
-    fn rendered_attachment(attachment: clawcrew_api::media::MediaAttachment) -> Vec<u8> {
+    fn rendered_attachment(attachment: galleon_api::media::MediaAttachment) -> Vec<u8> {
         let mut parts = build_attachment_parts(&[attachment]);
         let email = Message::builder()
             .from("sender@example.invalid".parse().unwrap())

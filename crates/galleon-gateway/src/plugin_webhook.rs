@@ -31,11 +31,11 @@ fn plugin_webhook_idempotency_key(path: &str, message_id: &str) -> String {
 fn plugin_webhook_idempotency(
     store: Arc<IdempotencyStore>,
     path: &str,
-) -> clawcrew_api::webhook::WebhookIdempotency {
+) -> galleon_api::webhook::WebhookIdempotency {
     let begin_store = Arc::clone(&store);
     let commit_store = Arc::clone(&store);
     let path = path.to_string();
-    clawcrew_api::webhook::WebhookIdempotency::new(
+    galleon_api::webhook::WebhookIdempotency::new(
         move |message_id| {
             begin_store.begin_reservation(&plugin_webhook_idempotency_key(&path, message_id))
         },
@@ -45,7 +45,7 @@ fn plugin_webhook_idempotency(
 }
 
 pub(super) fn routes(
-    registry: Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
+    registry: Arc<galleon_api::webhook::PluginWebhookRegistry>,
 ) -> Router<AppState> {
     Router::new()
         .route(
@@ -70,14 +70,14 @@ async fn unsupported_method() -> impl IntoResponse {
 async fn handle_plugin_webhook(
     State(state): State<AppState>,
     ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
-    axum::Extension(registry): axum::Extension<Arc<clawcrew_api::webhook::PluginWebhookRegistry>>,
+    axum::Extension(registry): axum::Extension<Arc<galleon_api::webhook::PluginWebhookRegistry>>,
     Path(path): Path<String>,
     method: Method,
     RawQuery(query): RawQuery,
     headers: HeaderMap,
     body: Bytes,
 ) -> Response {
-    use clawcrew_api::webhook::{
+    use galleon_api::webhook::{
         MAX_WEBHOOK_RESPONSE_BODY_BYTES, RawWebhook, WebhookOutcome, WebhookReject,
     };
 
@@ -118,7 +118,7 @@ async fn handle_plugin_webhook(
                 .map(|value| (name.as_str().to_ascii_lowercase(), value.to_string()))
         })
         .collect();
-    let cancellation = clawcrew_api::webhook::WebhookCancellation::new();
+    let cancellation = galleon_api::webhook::WebhookCancellation::new();
     let _cancel_on_exit = cancellation.clone().drop_guard();
     let (reply, outcome) = tokio::sync::oneshot::channel();
     let request = RawWebhook {

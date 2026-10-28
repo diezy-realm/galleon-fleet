@@ -8,7 +8,7 @@
 //! tool surfaces (which already route back through the broker + chokepoint).
 //!
 //! Layering: this lives in `clawcrew-runtime` because it needs only
-//! [`clawcrew_api::channel::Channel`] (a runtime dependency already), never the
+//! [`galleon_api::channel::Channel`] (a runtime dependency already), never the
 //! `galleon-channels` implementations. The DAEMON builds the concrete channel map
 //! (via `galleon_channels::orchestrator::build_channel_map`) and injects it here, so
 //! there is no runtime -> channels layering inversion.
@@ -24,7 +24,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use tokio::runtime::Handle;
-use clawcrew_api::channel::{Channel, SendMessage};
+use galleon_api::channel::{Channel, SendMessage};
 
 use super::broker::{ApprovalNoticeKind, ApprovalRouteAdapter, GateNotice};
 
@@ -262,8 +262,8 @@ fn render_notice(kind: ApprovalNoticeKind, notice: &GateNotice<'_>) -> String {
 fn build_gate_prompt(
     kind: ApprovalNoticeKind,
     notice: &GateNotice<'_>,
-) -> clawcrew_api::channel::ChannelGatePrompt {
-    use clawcrew_api::channel::{
+) -> galleon_api::channel::ChannelGatePrompt {
+    use galleon_api::channel::{
         ChannelGatePrompt, GateChoice, GateChoiceEmphasis, GateChoiceInput, GateChoiceKind,
     };
     // Discord embeds cap descriptions at 4096 chars; stay comfortably under.
@@ -554,8 +554,8 @@ mod tests {
 
     use async_trait::async_trait;
     use std::sync::Mutex;
-    use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
-    use clawcrew_api::channel::ChannelMessage;
+    use galleon_api::attribution::{Attributable, ChannelKind, Role};
+    use galleon_api::channel::ChannelMessage;
 
     // ── pure build_delivery / parse_approval_route ───────────────
 

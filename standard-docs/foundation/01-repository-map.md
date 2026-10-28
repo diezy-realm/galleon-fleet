@@ -28,7 +28,7 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 
 | Kelompok | Crate | Peran |
 |---|---|---|
-| Kontrak/leaf | `clawcrew-api` | Trait + tipe bersama (tanpa dep internal) |
+| Kontrak/leaf | `galleon-api` | Trait + tipe bersama (tanpa dep internal) |
 | | `galleon-macros`, `-commands`, `-relay-proto`, `-sop-graph`, `-dist` | Macro config, katalog slash-command, protokol relay, proyeksi graf SOP, registri target rilis |
 | Fondasi | `galleon-log`, `-spawn`, `-infra`, `-tls` | Logging terstruktur, spawn ber-atribusi, backend sesi/watchdog, TLS/mTLS |
 | | `galleon-config` (85k LOC, hub), `galleon-i18n` | Skema config & secret; Fluent i18n |

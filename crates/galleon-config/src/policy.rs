@@ -3,7 +3,7 @@ use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
-use clawcrew_api::runtime_traits::ShellDialect;
+use galleon_api::runtime_traits::ShellDialect;
 
 // Re-export from galleon-config.
 pub use crate::autonomy::AutonomyLevel;
@@ -182,7 +182,7 @@ impl PerSenderTracker {
 
     /// Resolve the current sender key from the task-local, falling back to GLOBAL_KEY.
     fn current_key() -> String {
-        clawcrew_api::TOOL_LOOP_THREAD_ID
+        galleon_api::TOOL_LOOP_THREAD_ID
             .try_with(|v| v.clone())
             .ok()
             .flatten()

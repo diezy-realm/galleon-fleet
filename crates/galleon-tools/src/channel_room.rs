@@ -7,8 +7,8 @@ use std::{
     str::FromStr,
     sync::{Arc, OnceLock},
 };
-use clawcrew_api::channel::{Channel, RoomCreationOptions, RoomVisibility};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::channel::{Channel, RoomCreationOptions, RoomVisibility};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::{SecurityPolicy, ToolOperation};
 
 const TOOL_DESCRIPTION_KEY: &str = "tool-channel-room";
@@ -333,7 +333,7 @@ mod tests {
     use parking_lot::RwLock;
     use std::collections::HashMap;
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use clawcrew_api::channel::{ChannelMessage, SendMessage};
+    use galleon_api::channel::{ChannelMessage, SendMessage};
 
     struct MockChannel {
         created: AtomicUsize,
@@ -362,10 +362,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for MockChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Matrix,
+    impl ::galleon_api::attribution::Attributable for MockChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Matrix,
             )
         }
         fn alias(&self) -> &str {

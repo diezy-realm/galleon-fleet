@@ -12,11 +12,11 @@ use tower_http::limit::RequestBodyLimitLayer;
 use crate::{
     GatewayRateLimiter, MAX_BODY_SIZE, SlidingWindowRateLimiter, tests::admin_paircode_state,
 };
-use clawcrew_api::webhook::WebhookOutcome;
+use galleon_api::webhook::WebhookOutcome;
 
 fn plugin_webhook_test_router(
     state: AppState,
-    registry: Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
+    registry: Arc<galleon_api::webhook::PluginWebhookRegistry>,
 ) -> Router {
     routes(registry)
         .with_state(state)
@@ -54,7 +54,7 @@ async fn response_text(response: Response) -> String {
 
 #[tokio::test]
 async fn plugin_webhook_router_delivers_exact_request() {
-    use clawcrew_api::webhook::PluginWebhookRegistry;
+    use galleon_api::webhook::PluginWebhookRegistry;
 
     let tmp = tempfile::TempDir::new().expect("temp dir");
     let state = admin_paircode_state(&tmp, false, false);
@@ -90,7 +90,7 @@ async fn plugin_webhook_router_delivers_exact_request() {
 
 #[tokio::test]
 async fn plugin_webhook_router_keeps_all_diagnostics_private() {
-    use clawcrew_api::webhook::{PluginWebhookRegistry, WebhookReject};
+    use galleon_api::webhook::{PluginWebhookRegistry, WebhookReject};
 
     let tmp = tempfile::TempDir::new().expect("temp dir");
     let state = admin_paircode_state(&tmp, false, false);
@@ -142,7 +142,7 @@ async fn plugin_webhook_router_keeps_all_diagnostics_private() {
 
 #[tokio::test(start_paused = true)]
 async fn plugin_webhook_router_timeout_cancels_the_worker_request() {
-    use clawcrew_api::webhook::PluginWebhookRegistry;
+    use galleon_api::webhook::PluginWebhookRegistry;
 
     let tmp = tempfile::TempDir::new().expect("temp dir");
     let state = admin_paircode_state(&tmp, false, false);
@@ -178,7 +178,7 @@ async fn plugin_webhook_router_timeout_cancels_the_worker_request() {
 
 #[tokio::test]
 async fn plugin_webhook_router_bounds_queue_body_and_route_availability() {
-    use clawcrew_api::webhook::{PluginWebhookRegistry, RawWebhook};
+    use galleon_api::webhook::{PluginWebhookRegistry, RawWebhook};
 
     let tmp = tempfile::TempDir::new().expect("temp dir");
     let state = admin_paircode_state(&tmp, false, false);
@@ -200,7 +200,7 @@ async fn plugin_webhook_router_bounds_queue_body_and_route_availability() {
             query: String::new(),
             headers: Vec::new(),
             body: Vec::new(),
-            cancellation: clawcrew_api::webhook::WebhookCancellation::new(),
+            cancellation: galleon_api::webhook::WebhookCancellation::new(),
             idempotency: None,
             reply: prefill_reply,
         })
@@ -245,10 +245,10 @@ async fn plugin_webhook_router_bounds_queue_body_and_route_availability() {
 
 #[tokio::test]
 async fn plugin_webhook_router_uses_the_canonical_client_key_policy() {
-    use clawcrew_api::webhook::PluginWebhookRegistry;
+    use galleon_api::webhook::PluginWebhookRegistry;
 
     async fn acknowledge(
-        mut receiver: tokio::sync::mpsc::Receiver<clawcrew_api::webhook::RawWebhook>,
+        mut receiver: tokio::sync::mpsc::Receiver<galleon_api::webhook::RawWebhook>,
     ) {
         while let Some(request) = receiver.recv().await {
             let _ = request.reply.send(Ok(WebhookOutcome::Ack));
@@ -343,7 +343,7 @@ async fn plugin_webhook_router_uses_the_canonical_client_key_policy() {
 
 #[tokio::test]
 async fn plugin_webhook_routes_preserve_authoritative_request_metadata() {
-    use clawcrew_api::webhook::PluginWebhookRegistry;
+    use galleon_api::webhook::PluginWebhookRegistry;
 
     let tmp = tempfile::TempDir::new().expect("temp dir");
     let registry = Arc::new(PluginWebhookRegistry::new());
@@ -397,7 +397,7 @@ async fn plugin_webhook_routes_preserve_authoritative_request_metadata() {
 
 #[tokio::test]
 async fn plugin_webhook_unsupported_methods_never_reach_the_guest() {
-    use clawcrew_api::webhook::PluginWebhookRegistry;
+    use galleon_api::webhook::PluginWebhookRegistry;
 
     let tmp = tempfile::TempDir::new().expect("temp dir");
     let registry = Arc::new(PluginWebhookRegistry::new());
@@ -429,7 +429,7 @@ async fn plugin_webhook_unsupported_methods_never_reach_the_guest() {
 
 #[tokio::test]
 async fn plugin_webhook_response_limit_counts_utf8_bytes_at_the_gateway() {
-    use clawcrew_api::webhook::{MAX_WEBHOOK_RESPONSE_BODY_BYTES, PluginWebhookRegistry};
+    use galleon_api::webhook::{MAX_WEBHOOK_RESPONSE_BODY_BYTES, PluginWebhookRegistry};
 
     let tmp = tempfile::TempDir::new().expect("temp dir");
     let registry = Arc::new(PluginWebhookRegistry::new());
@@ -476,7 +476,7 @@ async fn plugin_webhook_response_limit_counts_utf8_bytes_at_the_gateway() {
 
 #[tokio::test]
 async fn plugin_webhook_idempotency_waits_for_owner_outcome_and_fences_stale_tokens() {
-    use clawcrew_api::webhook::{WebhookReservation, WebhookReservationStatus};
+    use galleon_api::webhook::{WebhookReservation, WebhookReservationStatus};
 
     let store = Arc::new(IdempotencyStore::new(Duration::from_secs(300), 8));
     let idempotency = plugin_webhook_idempotency(Arc::clone(&store), "fixture");
@@ -515,7 +515,7 @@ async fn plugin_webhook_idempotency_waits_for_owner_outcome_and_fences_stale_tok
 
 #[test]
 fn plugin_webhook_pending_capacity_does_not_starve_existing_idempotency_callers() {
-    use clawcrew_api::webhook::WebhookReservation;
+    use galleon_api::webhook::WebhookReservation;
 
     let store = Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1));
     let idempotency = plugin_webhook_idempotency(Arc::clone(&store), "fixture");

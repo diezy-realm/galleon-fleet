@@ -198,7 +198,7 @@ enum ServerResponse {
 async fn execute(
     fixture: &mut Fixture,
     value: serde_json::Value,
-) -> anyhow::Result<clawcrew_api::tool::ToolResult> {
+) -> anyhow::Result<galleon_api::tool::ToolResult> {
     runtime::call_execute(
         &mut fixture.plugin,
         &serde_json::to_vec(&value).expect("serialize fixture input"),
@@ -348,9 +348,9 @@ async fn blocked_host_log_writer_cannot_stall_export_or_exhaust_host_memory() {
     /// Test-local attributable whose role maps to the `agent_alias`
     /// attribution field, mirroring how a host agent scope labels events.
     struct E2eAgent;
-    impl clawcrew_api::attribution::Attributable for E2eAgent {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Agent
+    impl galleon_api::attribution::Attributable for E2eAgent {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Agent
         }
         fn alias(&self) -> &str {
             ATTRIB_ALIAS

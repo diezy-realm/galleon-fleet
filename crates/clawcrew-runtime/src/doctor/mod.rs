@@ -22,7 +22,7 @@ fn canonicalize_provider_ref(provider_name: &str) -> String {
 
 // ── Diagnostic item ──────────────────────────────────────────────
 
-pub use clawcrew_api::doctor::{DiagResult, DiagnosticsRunner, Severity};
+pub use galleon_api::doctor::{DiagResult, DiagnosticsRunner, Severity};
 
 pub struct RuntimeDiagnosticsRunner {
     config_getter: std::sync::Arc<dyn Fn() -> Config + Send + Sync>,
@@ -433,7 +433,7 @@ fn configured_model_provider_api_key<'a>(
 fn create_doctor_model_provider(
     config: &Config,
     provider_name: &str,
-) -> anyhow::Result<Box<dyn clawcrew_api::model_provider::ModelProvider>> {
+) -> anyhow::Result<Box<dyn galleon_api::model_provider::ModelProvider>> {
     let api_key = configured_model_provider_api_key(config, provider_name);
     let options = galleon_providers::options_for_provider_ref(
         config,

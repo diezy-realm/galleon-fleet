@@ -9,11 +9,11 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use parking_lot::RwLock;
-use clawcrew_api::channel::Channel;
-use clawcrew_api::webhook::PluginWebhookRegistryLease;
+use galleon_api::channel::Channel;
+use galleon_api::webhook::PluginWebhookRegistryLease;
 use galleon_config::schema::Config;
 
-pub use clawcrew_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED;
+pub use galleon_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED;
 
 #[cfg(feature = "plugins-wasm")]
 use galleon_plugins::PluginCapability;

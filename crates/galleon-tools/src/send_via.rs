@@ -1,8 +1,8 @@
 //! Per-turn output routing tool (`send_via`).
 
 use async_trait::async_trait;
-use clawcrew_api::channel::{Channel, SendMessage};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::channel::{Channel, SendMessage};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::multi_agent::OutputModality;
 use galleon_config::multi_agent::PeerGroupConfig;
 use galleon_config::policy::{SecurityPolicy, ToolOperation};
@@ -583,8 +583,8 @@ fn modality_str(m: OutputModality) -> &'static str {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
-    use clawcrew_api::channel::ChannelMessage;
+    use galleon_api::attribution::{Attributable, ChannelKind, Role};
+    use galleon_api::channel::ChannelMessage;
     use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
 
     struct StubChannel {
@@ -716,7 +716,7 @@ mod tests {
         // Everything is lowercase: the scan contract is case-insensitive
         // matching against a lowercased message.
         assert!(triggers.iter().all(|t| t == &t.to_lowercase()));
-        // Under word-boundary matching (clawcrew_api::tool::
+        // Under word-boundary matching (galleon_api::tool::
         // invocation_trigger_matches), a short channel type like "email" is a
         // safe whole-word trigger and must not be dropped for length.
         assert!(has("email"));

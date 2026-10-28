@@ -6091,7 +6091,7 @@ pub(crate) fn channel_trigger_topic_matches(
         return false;
     };
     let (topic_channel, topic_alias, _event_type) =
-        clawcrew_api::channel::ChannelSopTopic::parse(topic);
+        galleon_api::channel::ChannelSopTopic::parse(topic);
     if !topic_channel.eq_ignore_ascii_case(channel) {
         return false;
     }

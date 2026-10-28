@@ -7,7 +7,7 @@ use std::borrow::Cow;
 use super::super::transcription::TranscriptionManager;
 
 // Re-export media types from clawcrew-types for backwards compatibility.
-pub use clawcrew_api::media::{MarkerKind, MediaAttachment, MediaKind, RenderedMarker};
+pub use galleon_api::media::{MarkerKind, MediaAttachment, MediaKind, RenderedMarker};
 
 /// The media understanding pipeline.
 /// Consumes a message's text and attachments, returning enriched text with

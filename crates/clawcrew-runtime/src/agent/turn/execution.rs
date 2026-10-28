@@ -2,7 +2,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use clawcrew_api::model_provider::{ChatRequest, ChatResponse, SemanticEmptyTerminalCompletion};
+use galleon_api::model_provider::{ChatRequest, ChatResponse, SemanticEmptyTerminalCompletion};
 use galleon_config::schema::{MultimodalConfig, PacingConfig, ResolvedContextLimits};
 use galleon_providers::dispatch::{AccountedAttempt, with_exact_dispatch_route};
 use galleon_providers::{ModelProvider, ProviderDispatch, multimodal};
@@ -315,8 +315,8 @@ mod run_model_query_tests {
         Arc,
         atomic::{AtomicUsize, Ordering},
     };
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-    use clawcrew_api::model_provider::{
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::model_provider::{
         ChatRequest, ChatResponse, SemanticEmptyTerminalCompletion, ToolCall,
     };
     use galleon_providers::reliable::ReliableModelProvider;

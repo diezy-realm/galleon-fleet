@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::oneshot;
 use uuid::Uuid;
-use clawcrew_api::session_keys::sanitize_session_key;
+use galleon_api::session_keys::sanitize_session_key;
 
 /// Maximum allowed connect timeout (seconds) to avoid unreasonable waits.
 const POSTGRES_CONNECT_TIMEOUT_CAP_SECS: u64 = 300;
@@ -842,9 +842,9 @@ impl Memory for PostgresMemory {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for PostgresMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::Postgres)
+impl ::galleon_api::attribution::Attributable for PostgresMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::Postgres)
     }
     fn alias(&self) -> &str {
         &self.alias

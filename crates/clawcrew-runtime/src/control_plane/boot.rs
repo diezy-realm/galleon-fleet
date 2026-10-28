@@ -12,7 +12,7 @@ use super::task_registry::TaskRegistry;
 use super::task_store_sqlite::SqliteTaskStore;
 
 /// The live control-plane, shared (cheaply, via `Arc`/clone) across producers and
-pub use clawcrew_api::control_plane::ControlPlaneHandle;
+pub use galleon_api::control_plane::ControlPlaneHandle;
 
 pub trait ControlPlaneHandleExt {
     /// Open the durable task store for producers and observers without gaining

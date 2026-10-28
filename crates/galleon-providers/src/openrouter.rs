@@ -14,7 +14,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_api::tool::ToolSpec;
+use galleon_api::tool::ToolSpec;
 
 pub struct OpenRouterModelProvider {
     /// `[providers.models.<family>.<alias>]` config-key alias.
@@ -265,7 +265,7 @@ impl OpenRouterBuilder {
             credential: self.credential,
             timeout_secs: self
                 .timeout_secs
-                .unwrap_or(clawcrew_api::model_provider::BASELINE_TIMEOUT_SECS),
+                .unwrap_or(galleon_api::model_provider::BASELINE_TIMEOUT_SECS),
             max_tokens: self.max_tokens,
             extra_body: self.extra_body,
             #[cfg(test)]
@@ -1109,11 +1109,11 @@ fn is_valid_openai_tool_name(name: &str) -> bool {
             .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
 }
 
-impl ::clawcrew_api::attribution::Attributable for OpenRouterModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::OpenRouter,
+impl ::galleon_api::attribution::Attributable for OpenRouterModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::OpenRouter,
             ),
         )
     }
@@ -1464,7 +1464,7 @@ data: [DONE]
             .build();
         assert_eq!(
             model_provider.timeout_secs,
-            clawcrew_api::model_provider::BASELINE_TIMEOUT_SECS
+            galleon_api::model_provider::BASELINE_TIMEOUT_SECS
         );
     }
 
@@ -2260,7 +2260,7 @@ data: [DONE]
 
     #[test]
     fn convert_tools_skips_invalid_names() {
-        use clawcrew_api::tool::ToolSpec;
+        use galleon_api::tool::ToolSpec;
 
         let tools = vec![
             ToolSpec::new(
@@ -2288,7 +2288,7 @@ data: [DONE]
 
     #[test]
     fn convert_tools_preserves_skill_namespaced_names_with_double_underscore() {
-        use clawcrew_api::tool::ToolSpec;
+        use galleon_api::tool::ToolSpec;
 
         let tools = vec![
             // New format — must pass through.
@@ -2319,7 +2319,7 @@ data: [DONE]
 
     #[test]
     fn convert_tools_returns_none_when_all_invalid() {
-        use clawcrew_api::tool::ToolSpec;
+        use galleon_api::tool::ToolSpec;
 
         let tools = vec![ToolSpec::new(
             "mcp:bad.name",

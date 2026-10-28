@@ -7,7 +7,7 @@ use crate::mcp_client::McpRegistry;
 use crate::mcp_protocol::McpToolDef;
 use crate::mcp_tool::McpToolWrapper;
 use crate::tool_search::ToolAccessPolicy;
-use clawcrew_api::tool::{Tool, ToolSpec};
+use galleon_api::tool::{Tool, ToolSpec};
 use galleon_config::policy::SecurityPolicy;
 
 // ── DeferredMcpToolStub ──────────────────────────────────────────────────
@@ -380,13 +380,13 @@ mod tests {
     #[test]
     fn activated_set_tracks_activation() {
         use async_trait::async_trait;
-        use clawcrew_api::tool::{ToolOutput, ToolResult};
+        use galleon_api::tool::{ToolOutput, ToolResult};
 
         struct FakeTool;
-        impl ::clawcrew_api::attribution::Attributable for FakeTool {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Tool(
-                    ::clawcrew_api::attribution::ToolKind::Plugin,
+        impl ::galleon_api::attribution::Attributable for FakeTool {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Tool(
+                    ::galleon_api::attribution::ToolKind::Plugin,
                 )
             }
             fn alias(&self) -> &str {
@@ -424,13 +424,13 @@ mod tests {
     #[test]
     fn activated_set_resolves_unique_suffix() {
         use async_trait::async_trait;
-        use clawcrew_api::tool::{ToolOutput, ToolResult};
+        use galleon_api::tool::{ToolOutput, ToolResult};
 
         struct FakeTool;
-        impl ::clawcrew_api::attribution::Attributable for FakeTool {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Tool(
-                    ::clawcrew_api::attribution::ToolKind::Plugin,
+        impl ::galleon_api::attribution::Attributable for FakeTool {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Tool(
+                    ::galleon_api::attribution::ToolKind::Plugin,
                 )
             }
             fn alias(&self) -> &str {
@@ -465,13 +465,13 @@ mod tests {
     #[test]
     fn activated_set_rejects_ambiguous_suffix() {
         use async_trait::async_trait;
-        use clawcrew_api::tool::{ToolOutput, ToolResult};
+        use galleon_api::tool::{ToolOutput, ToolResult};
 
         struct FakeTool(&'static str);
-        impl ::clawcrew_api::attribution::Attributable for FakeTool {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Tool(
-                    ::clawcrew_api::attribution::ToolKind::Plugin,
+        impl ::galleon_api::attribution::Attributable for FakeTool {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Tool(
+                    ::galleon_api::attribution::ToolKind::Plugin,
                 )
             }
             fn alias(&self) -> &str {

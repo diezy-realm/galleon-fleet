@@ -220,7 +220,7 @@ mod tests {
     use crate::gemini_cli::GeminiCliTool;
     use crate::opencode_cli::OpenCodeCliTool;
     use std::sync::Mutex;
-    use clawcrew_api::tool::Tool;
+    use galleon_api::tool::Tool;
     use galleon_config::autonomy::AutonomyLevel;
     use galleon_config::policy::SecurityPolicy;
     use galleon_config::schema::{

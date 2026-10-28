@@ -1,7 +1,7 @@
 //! Delivery acknowledgement handoff for Telegram model picker selections.
 //!
 //! `Channel::listen` fixes the runtime queue item type at
-//! `clawcrew_api::channel::ChannelMessage`, so a confirmation cannot ride
+//! `galleon_api::channel::ChannelMessage`, so a confirmation cannot ride
 //! along as a queue payload without a public API change. Instead the
 //! Telegram callback registers a one-shot acknowledgement keyed by the
 //! selection message id *before* enqueueing, and the orchestrator confirms

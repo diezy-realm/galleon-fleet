@@ -5,7 +5,7 @@ use galleon_config::traits::{PropFieldInfo, PropKind};
 // `Eq` is intentionally NOT derived: `slash_options` carries `SkillSlashOption`,
 // whose `min`/`max` bounds are `f64` (no total ordering). `PartialEq` is all the
 // surfaces (tests, change detection) need.
-pub use clawcrew_api::skill::SkillFrontmatter;
+pub use galleon_api::skill::SkillFrontmatter;
 
 pub trait SkillFrontmatterExt {
     /// Field set in canonical order. Surfaces iterate this to build flag

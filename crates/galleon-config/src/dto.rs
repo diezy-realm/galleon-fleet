@@ -21,7 +21,7 @@ pub struct CatalogModelsResult {
     pub models: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pricing:
-        Option<std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing>>,
+        Option<std::collections::HashMap<String, galleon_api::model_provider::ModelPricing>>,
     pub local: bool,
     pub live: bool,
 }

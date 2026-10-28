@@ -7,8 +7,8 @@ use serde_json::json;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_api::platform::is_android;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
+use galleon_api::platform::is_android;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
 
 /// Maximum output size in bytes (1MB).
 const MAX_OUTPUT_BYTES: usize = 1_048_576;
@@ -162,7 +162,7 @@ fn collect_allowed_shell_env_vars(security: &SecurityPolicy) -> Vec<String> {
 pub(crate) const SESSION_ID_ENV_VAR: &str = "CLAWCREW_SESSION_ID";
 
 fn get_session_id() -> Option<String> {
-    clawcrew_api::TOOL_LOOP_SESSION_KEY
+    galleon_api::TOOL_LOOP_SESSION_KEY
         .try_with(Clone::clone)
         .ok()
         .flatten()
@@ -593,7 +593,7 @@ mod tests {
 
     #[test]
     fn is_android_returns_bool_without_panicking() {
-        let _ = clawcrew_api::platform::is_android();
+        let _ = galleon_api::platform::is_android();
     }
     use super::*;
     use crate::platform::{DockerRuntime, NativeRuntime, RuntimeAdapter};

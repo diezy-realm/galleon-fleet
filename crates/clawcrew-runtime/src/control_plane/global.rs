@@ -13,7 +13,7 @@ static CONTROL_PLANE: OnceLock<ControlPlaneRecoveryOwner> = OnceLock::new();
 /// (`daemon::run`). Subsequent calls are ignored (returns `false`), so a reload
 /// iteration cannot swap the live store out from under in-flight producers.
 pub(crate) fn init_control_plane(owner: ControlPlaneRecoveryOwner) -> bool {
-    clawcrew_api::control_plane::init_control_plane(owner.handle().clone());
+    galleon_api::control_plane::init_control_plane(owner.handle().clone());
     CONTROL_PLANE.set(owner).is_ok()
 }
 

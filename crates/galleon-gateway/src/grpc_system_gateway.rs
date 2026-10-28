@@ -33,7 +33,7 @@ pub struct SystemGatewayService {
     /// Optional authorization token required for privileged RPCs like GetDecryptedSecret
     auth_token: Option<String>,
     /// Optional Memory backend for learned rule persistence (BL-01)
-    memory: Option<std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>>,
+    memory: Option<std::sync::Arc<dyn galleon_api::memory_traits::Memory>>,
     /// Device registry backed by SQLite for SSOT device pairing (BG-C2 / T-08)
     device_registry: Option<std::sync::Arc<crate::api_pairing::DeviceRegistry>>,
     /// Optional ClawCrew configuration for resolving agent aliases (BL-001 / SPEC-001)
@@ -67,7 +67,7 @@ impl SystemGatewayService {
         let memory = galleon_memory::sqlite::SqliteMemory::new("gateway", &root)
             .ok()
             .map(|m| {
-                std::sync::Arc::new(m) as std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>
+                std::sync::Arc::new(m) as std::sync::Arc<dyn galleon_api::memory_traits::Memory>
             });
         let device_registry = Some(std::sync::Arc::new(
             crate::api_pairing::DeviceRegistry::new(&root),
@@ -102,7 +102,7 @@ impl SystemGatewayService {
     /// Configure a custom memory backend for learned rule persistence (BL-01)
     pub fn with_memory(
         mut self,
-        memory: std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>,
+        memory: std::sync::Arc<dyn galleon_api::memory_traits::Memory>,
     ) -> Self {
         self.memory = Some(memory);
         self
@@ -738,10 +738,10 @@ impl SystemGateway for SystemGatewayService {
 
             if let Some(provider) = model_provider {
                 use futures_util::StreamExt;
-                let chat_messages: Vec<clawcrew_api::model_provider::ChatMessage> = req
+                let chat_messages: Vec<galleon_api::model_provider::ChatMessage> = req
                     .messages
                     .iter()
-                    .map(|m| clawcrew_api::model_provider::ChatMessage {
+                    .map(|m| galleon_api::model_provider::ChatMessage {
                         role: m.role.clone(),
                         content: m.content.clone(),
                     })
@@ -751,7 +751,7 @@ impl SystemGateway for SystemGatewayService {
                     &chat_messages,
                     &effective_model,
                     req.temperature.map(|t| t as f64),
-                    clawcrew_api::model_provider::StreamOptions::new(true),
+                    galleon_api::model_provider::StreamOptions::new(true),
                 );
 
                 let mut total_chars = 0;
@@ -912,7 +912,7 @@ impl SystemGateway for SystemGatewayService {
             .store(
                 &key,
                 &content,
-                clawcrew_api::memory_traits::MemoryCategory::Core,
+                galleon_api::memory_traits::MemoryCategory::Core,
                 None,
             )
             .await
@@ -957,7 +957,7 @@ impl SystemGateway for SystemGatewayService {
 
         let entries = memory
             .list(
-                Some(&clawcrew_api::memory_traits::MemoryCategory::Core),
+                Some(&galleon_api::memory_traits::MemoryCategory::Core),
                 None,
             )
             .await

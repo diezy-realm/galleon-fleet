@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use crate::agent::agent::{RoutedApproval, resolve_routed_approval};
 use crate::tools::PerToolChannelHandle;
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     AttributedApprovalResponse, Channel, ChannelApprovalRequest, ChannelMessage, SendMessage,
 };
 
@@ -24,9 +24,9 @@ impl AskUserApprovalBridge {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for AskUserApprovalBridge {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Cli)
+impl ::galleon_api::attribution::Attributable for AskUserApprovalBridge {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Cli)
     }
     fn alias(&self) -> &str {
         "agent-approval-bridge"
@@ -54,7 +54,7 @@ impl Channel for AskUserApprovalBridge {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::ChannelApprovalResponse>> {
+    ) -> anyhow::Result<Option<galleon_api::channel::ChannelApprovalResponse>> {
         Ok(self
             .request_approval_attributed(recipient, request)
             .await?
@@ -133,7 +133,7 @@ mod tests {
     use super::*;
     use parking_lot::RwLock;
     use std::collections::HashMap;
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     /// A back-channel that approves only when the recipient matches its
     /// configured target, abstaining (`Ok(None)`) for anything else. Lets a
@@ -143,10 +143,10 @@ mod tests {
         approves_recipient: String,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for RecipientScopedApprover {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Cli,
+    impl ::galleon_api::attribution::Attributable for RecipientScopedApprover {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Cli,
             )
         }
         fn alias(&self) -> &str {
@@ -194,10 +194,10 @@ mod tests {
         name: String,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for TimedOutApprover {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Cli,
+    impl ::galleon_api::attribution::Attributable for TimedOutApprover {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Cli,
             )
         }
         fn alias(&self) -> &str {
@@ -223,11 +223,11 @@ mod tests {
             &self,
             _recipient: &str,
             _r: &ChannelApprovalRequest,
-        ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+        ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
             Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::TimedOut,
+                    galleon_api::channel::ApprovalSource::TimedOut,
                 ),
             ))
         }
@@ -260,7 +260,7 @@ mod tests {
         assert_eq!(decided.response, ChannelApprovalResponse::Deny);
         assert_eq!(
             decided.source,
-            clawcrew_api::channel::ApprovalSource::TimedOut,
+            galleon_api::channel::ApprovalSource::TimedOut,
             "the back-channel's runtime provenance must survive the fan-out"
         );
         assert!(decided.source.is_runtime_fail_closed());
@@ -287,7 +287,7 @@ mod tests {
 
         assert_eq!(
             decided.source,
-            clawcrew_api::channel::ApprovalSource::Operator
+            galleon_api::channel::ApprovalSource::Operator
         );
         assert!(!decided.source.is_runtime_fail_closed());
     }

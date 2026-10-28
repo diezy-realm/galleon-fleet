@@ -17,8 +17,8 @@ use std::process::Command;
 use std::sync::{Arc, OnceLock, RwLock};
 use std::time::Duration;
 
-use clawcrew_api::attribution::Attributable;
-use clawcrew_api::channel::Channel;
+use galleon_api::attribution::Attributable;
+use galleon_api::channel::Channel;
 use galleon_plugins::component::PluginLimits;
 use galleon_plugins::config::{PluginConfigResolver, resolve_plugin_config};
 use galleon_plugins::endpoint::PluginChannelEndpoint;

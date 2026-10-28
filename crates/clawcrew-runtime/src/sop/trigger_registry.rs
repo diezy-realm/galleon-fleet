@@ -7,7 +7,7 @@
 
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
-use clawcrew_api::attribution::ChannelKind;
+use galleon_api::attribution::ChannelKind;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]

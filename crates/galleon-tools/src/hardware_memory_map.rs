@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 use serde_json::json;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Known memory maps (from datasheets). Used when probe-rs is unavailable.
 const MEMORY_MAPS: &[(&str, &str)] = &[

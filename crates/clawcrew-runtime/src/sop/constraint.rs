@@ -1,6 +1,6 @@
 use std::sync::{Arc, RwLock};
 use async_trait::async_trait;
-use clawcrew_api::hook::{HookHandler, HookResult, ToolCallHookContext};
+use galleon_api::hook::{HookHandler, HookResult, ToolCallHookContext};
 use serde::{Deserialize, Serialize};
 
 use super::types::{Sop, SopStepResult};

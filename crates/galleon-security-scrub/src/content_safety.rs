@@ -8,7 +8,7 @@ use std::sync::OnceLock;
 
 use super::leak_detector::{LeakDetector, LeakResult};
 use super::prompt_guard::{GuardAction, GuardResult, PromptGuard};
-use clawcrew_api::sop::{SopEvent, SopTriggerSource};
+use galleon_api::sop::{SopEvent, SopTriggerSource};
 use galleon_config::schema::SopConfig;
 
 #[derive(Debug, Clone, PartialEq)]

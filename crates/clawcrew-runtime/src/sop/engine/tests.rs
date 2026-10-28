@@ -9227,7 +9227,7 @@ type = "manual"
         // for it. Without that routing the tool answers "not waiting for approval"
         // and a deterministic run is stuck unresumable through every surface.
         use crate::tools::SopApproveTool;
-        use clawcrew_api::tool::Tool;
+        use galleon_api::tool::Tool;
 
         let mut engine = engine_with_sops(vec![deterministic_sop("det-cp")]);
         let action = engine.start_run("det-cp", manual_event()).unwrap();

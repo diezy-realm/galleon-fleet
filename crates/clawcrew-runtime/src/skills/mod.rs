@@ -57,7 +57,7 @@ const SKILLS_REGISTRY_SYNC_INTERVAL_SECS: u64 = 60 * 60 * 24;
 /// clone/pull/sync machinery as the default skills registry.
 const EXTRA_REGISTRY_DIR_PREFIX: &str = "extra-registry-";
 
-pub use clawcrew_api::skill::*;
+pub use galleon_api::skill::*;
 
 
 /// Why the audited resolver dropped a candidate skill directory/file.
@@ -1565,7 +1565,7 @@ pub fn skills_to_tools(
     skills: &[Skill],
     security: std::sync::Arc<crate::security::SecurityPolicy>,
     nat64_prefixes: &[galleon_infra::net_guard::Nat64Prefix],
-) -> Vec<Box<dyn clawcrew_api::tool::Tool>> {
+) -> Vec<Box<dyn galleon_api::tool::Tool>> {
     skills_to_tools_with_context(skills, security, &[], nat64_prefixes)
 }
 
@@ -1573,8 +1573,8 @@ fn resolve_elevated_tool(
     skill_name: &str,
     tool: &SkillTool,
     kind_label: &str,
-    resolution_registry: &[std::sync::Arc<dyn clawcrew_api::tool::Tool>],
-) -> Option<Box<dyn clawcrew_api::tool::Tool>> {
+    resolution_registry: &[std::sync::Arc<dyn galleon_api::tool::Tool>],
+) -> Option<Box<dyn galleon_api::tool::Tool>> {
     let Some(target_name) = tool.target.as_deref() else {
         ::galleon_log::record!(
             WARN,
@@ -1614,9 +1614,9 @@ fn resolve_elevated_tool(
 pub fn skills_to_tools_with_context(
     skills: &[Skill],
     security: std::sync::Arc<crate::security::SecurityPolicy>,
-    unfiltered_registry: &[std::sync::Arc<dyn clawcrew_api::tool::Tool>],
+    unfiltered_registry: &[std::sync::Arc<dyn galleon_api::tool::Tool>],
     nat64_prefixes: &[galleon_infra::net_guard::Nat64Prefix],
-) -> Vec<Box<dyn clawcrew_api::tool::Tool>> {
+) -> Vec<Box<dyn galleon_api::tool::Tool>> {
     skills_to_tools_with_context_and_runtime(
         skills,
         security,
@@ -1629,10 +1629,10 @@ pub fn skills_to_tools_with_context(
 pub fn skills_to_tools_with_context_and_runtime(
     skills: &[Skill],
     security: std::sync::Arc<crate::security::SecurityPolicy>,
-    unfiltered_registry: &[std::sync::Arc<dyn clawcrew_api::tool::Tool>],
+    unfiltered_registry: &[std::sync::Arc<dyn galleon_api::tool::Tool>],
     runtime: std::sync::Arc<dyn crate::platform::RuntimeAdapter>,
     nat64_prefixes: &[galleon_infra::net_guard::Nat64Prefix],
-) -> Vec<Box<dyn clawcrew_api::tool::Tool>> {
+) -> Vec<Box<dyn galleon_api::tool::Tool>> {
     skills_to_tools_with_context_and_runtime_optional_nat64(
         skills,
         security,
@@ -1647,11 +1647,11 @@ pub fn skills_to_tools_with_context_and_runtime(
 pub(crate) fn skills_to_tools_with_context_and_runtime_optional_nat64(
     skills: &[Skill],
     security: std::sync::Arc<crate::security::SecurityPolicy>,
-    unfiltered_registry: &[std::sync::Arc<dyn clawcrew_api::tool::Tool>],
+    unfiltered_registry: &[std::sync::Arc<dyn galleon_api::tool::Tool>],
     runtime: std::sync::Arc<dyn crate::platform::RuntimeAdapter>,
     nat64_prefixes: Option<&[galleon_infra::net_guard::Nat64Prefix]>,
-) -> Vec<Box<dyn clawcrew_api::tool::Tool>> {
-    let mut tools: Vec<Box<dyn clawcrew_api::tool::Tool>> = Vec::new();
+) -> Vec<Box<dyn galleon_api::tool::Tool>> {
+    let mut tools: Vec<Box<dyn galleon_api::tool::Tool>> = Vec::new();
     for skill in skills {
         for tool in &skill.tools {
             if !is_registered_skill_tool_kind(tool.kind.as_str()) {

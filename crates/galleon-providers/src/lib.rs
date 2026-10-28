@@ -62,8 +62,8 @@ pub use safeguard_notice::{
 pub fn model_refusal_from_error(error: &anyhow::Error) -> Option<&AnthropicRefusalError> {
     error.chain().find_map(|cause| {
         cause.downcast_ref::<AnthropicRefusalError>().or_else(|| {
-            match cause.downcast_ref::<clawcrew_api::model_provider::StreamError>() {
-                Some(clawcrew_api::model_provider::StreamError::ModelRefusal(refusal)) => {
+            match cause.downcast_ref::<galleon_api::model_provider::StreamError>() {
+                Some(galleon_api::model_provider::StreamError::ModelRefusal(refusal)) => {
                     Some(refusal.as_ref())
                 }
                 _ => None,
@@ -3869,7 +3869,7 @@ mod tests {
         // operator's policy, dropping allowed attachments. Drive a real request
         // and count the images that actually leave.
         use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
-        use clawcrew_api::model_provider::ChatRequest;
+        use galleon_api::model_provider::ChatRequest;
         use galleon_config::schema::Config;
         use serde_json::{Value, json};
         use std::sync::{Arc, Mutex};
@@ -3962,7 +3962,7 @@ mod tests {
 
     #[test]
     fn create_model_provider_from_ref_preserves_custom_url_with_dotted_host() {
-        use clawcrew_api::attribution::Attributable;
+        use galleon_api::attribution::Attributable;
         use galleon_config::schema::Config;
         // A `custom:<url>` vision route whose host contains dots (e.g. 127.0.0.1)
         // must NOT be split on '.' into a bogus `<family>.<alias>` - the whole ref

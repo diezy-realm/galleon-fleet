@@ -12,7 +12,7 @@ use crate::transcription::TranscriptionManager;
 use galleon_config::schema::TranscriptionConfig;
 use galleon_config::schema::VoiceWakeConfig;
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 fn normalize_samples<T>(data: &[T]) -> Vec<f32>
 where
@@ -181,10 +181,10 @@ impl VoiceWakeChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for VoiceWakeChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::VoiceWake,
+impl ::galleon_api::attribution::Attributable for VoiceWakeChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::VoiceWake,
         )
     }
     fn alias(&self) -> &str {

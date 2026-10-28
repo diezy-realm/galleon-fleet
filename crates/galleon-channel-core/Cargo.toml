@@ -20,7 +20,7 @@ publish = true
 galleon-config.workspace = true
 # RF-B1 seam #2 — approval. `ChannelApprovalResponse` and the approval wire
 # types; the i18n-free half of the approval helper reused by channels.
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-log.workspace = true
 rand = "0.10"
 anyhow = "1.0"

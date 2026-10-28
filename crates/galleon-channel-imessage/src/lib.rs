@@ -23,7 +23,7 @@ use directories::UserDirs;
 use rusqlite::{Connection, OpenFlags};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 fn extract_text_from_attributed_body(blob: &[u8]) -> Option<String> {
     // Find the start-of-text marker: [0x01, 0x2B]
@@ -155,10 +155,10 @@ fn is_valid_imessage_target(target: &str) -> bool {
     false
 }
 
-impl ::clawcrew_api::attribution::Attributable for IMessageChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::IMessage,
+impl ::galleon_api::attribution::Attributable for IMessageChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::IMessage,
         )
     }
     fn alias(&self) -> &str {

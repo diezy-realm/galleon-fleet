@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use clawcrew_api::tool::ToolSpec;
+use galleon_api::tool::ToolSpec;
 
 use super::binding::{BindingRef, BindingScope, ExtractedBinding, extract_bindings_with_paths};
 use super::types::{Sop, SopStep};

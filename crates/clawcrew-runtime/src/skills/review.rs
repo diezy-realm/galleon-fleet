@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 
 use tokio::task_local;
 use tokio_util::sync::CancellationToken;
-use clawcrew_api::tool::Tool;
+use galleon_api::tool::Tool;
 use galleon_config::schema::{MultimodalConfig, PacingConfig, SkillImprovementConfig};
 use galleon_providers::{ChatMessage, ModelProvider};
 
@@ -193,7 +193,7 @@ pub async fn maybe_run_skill_review(
                 // Phase 1: stamp Internal/Trusted. Per-transport
                 // stamping lands in a later phase.
                 memory: None,
-                ingress: clawcrew_api::ingress::IngressContext::sub_turn(),
+                ingress: galleon_api::ingress::IngressContext::sub_turn(),
                 agent_alias,
                 parent_agent_alias: None,
                 turn_id: &turn_id,

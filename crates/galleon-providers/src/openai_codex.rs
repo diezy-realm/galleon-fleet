@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use clawcrew_api::tool::ToolSpec;
+use galleon_api::tool::ToolSpec;
 
 const DEFAULT_CODEX_RESPONSES_URL: &str = "https://chatgpt.com/backend-api/codex/responses";
 const DEFAULT_CODEX_INSTRUCTIONS: &str =
@@ -1676,11 +1676,11 @@ impl ModelProvider for OpenAiCodexModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for OpenAiCodexModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::OpenAiCodex,
+impl ::galleon_api::attribution::Attributable for OpenAiCodexModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::OpenAiCodex,
             ),
         )
     }
@@ -2100,7 +2100,7 @@ mod tests {
             .await;
 
         let messages = vec![ChatMessage::user("hello")];
-        let empty_tools: Vec<clawcrew_api::tool::ToolSpec> = vec![];
+        let empty_tools: Vec<galleon_api::tool::ToolSpec> = vec![];
         let response = provider
             .chat(
                 ProviderChatRequest {

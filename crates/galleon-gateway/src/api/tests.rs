@@ -113,9 +113,9 @@ impl Memory for MockMemory {
         Ok(0)
     }
 }
-impl ::clawcrew_api::attribution::Attributable for MockMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::InMemory)
+impl ::galleon_api::attribution::Attributable for MockMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::InMemory)
     }
     fn alias(&self) -> &str {
         "MockMemory"
@@ -136,11 +136,11 @@ impl ModelProvider for MockModelProvider {
         Ok("ok".to_string())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for MockModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -210,7 +210,7 @@ pub(crate) fn test_state(config: galleon_config::schema::Config) -> AppState {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -415,7 +415,7 @@ fn memory_entry_with_content(content: String) -> MemoryEntry {
         key: "huge-memory".into(),
         content,
         category: MemoryCategory::Conversation,
-        scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+        scope: galleon_api::memory_traits::MemoryScope::Workspace,
         timestamp: "2026-04-06T00:00:00Z".into(),
         session_id: None,
         score: None,
@@ -513,7 +513,7 @@ async fn handle_api_memory_search_truncates_oversized_content_after_filtering() 
 
 #[tokio::test]
 async fn handle_api_tools_scopes_listing_by_agent_query() {
-    use clawcrew_api::tool::ToolSpec;
+    use galleon_api::tool::ToolSpec;
 
     let mut config = galleon_config::schema::Config::default();
     config.gateway.require_pairing = false;

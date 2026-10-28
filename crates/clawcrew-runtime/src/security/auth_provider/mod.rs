@@ -3,7 +3,7 @@
 //!
 //! Each provider verifies ONE credential kind (OIDC token, peer uid, native
 //! pairing bearer, …) and emits a uniform
-//! [`clawcrew_api::principal::AuthenticatedIdentity`] — identity and evidence
+//! [`galleon_api::principal::AuthenticatedIdentity`] — identity and evidence
 //! only. Grants are resolved separately by the shared principal resolver from
 //! the current permission-profile configuration, so providers cannot carry an
 //! authorization vocabulary and cannot snapshot policy.
@@ -35,7 +35,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use clawcrew_api::principal::{AuthMethod, AuthOutcome, DenyReason};
+use galleon_api::principal::{AuthMethod, AuthOutcome, DenyReason};
 
 /// A credential presented for verification (the input to the `initialize`
 /// handshake). Secret material is **redacted** in `Debug` — never log it raw.
@@ -260,7 +260,7 @@ impl ProviderRegistry {
 /// provider registered under one name cannot borrow another method, another
 /// issuer's profile mapping, or the shared-operator sentinel.
 fn bind_provenance(provider: &dyn AuthProvider, outcome: AuthOutcome) -> AuthOutcome {
-    use clawcrew_api::principal::{AuthMethod, IdentitySubject};
+    use galleon_api::principal::{AuthMethod, IdentitySubject};
     let AuthOutcome::Verified(identity) = &outcome else {
         return outcome;
     };
@@ -301,7 +301,7 @@ fn bind_provenance(provider: &dyn AuthProvider, outcome: AuthOutcome) -> AuthOut
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::principal::{AuthenticatedIdentity, IdentitySubject};
+    use galleon_api::principal::{AuthenticatedIdentity, IdentitySubject};
 
     /// A trivial provider that accepts one fixed bearer token.
     struct FixedBearer {

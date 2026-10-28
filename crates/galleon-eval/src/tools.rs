@@ -2,8 +2,8 @@
 
 use async_trait::async_trait;
 use serde_json::json;
-use clawcrew_api::attribution::{Attributable, Role, ToolKind};
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::attribution::{Attributable, Role, ToolKind};
+use galleon_api::tool::{Tool, ToolResult};
 
 /// Echoes its `message` argument back as the tool output.
 pub struct EchoTool;
@@ -59,7 +59,7 @@ pub fn default_tools() -> Vec<Box<dyn Tool>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::attribution::{Attributable, Role, ToolKind};
+    use galleon_api::attribution::{Attributable, Role, ToolKind};
 
     #[test]
     fn echo_tool_name_and_alias() {

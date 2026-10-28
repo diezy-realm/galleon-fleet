@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const NOTION_API_BASE: &str = "https://api.notion.com/v1";
 const NOTION_VERSION: &str = "2022-06-28";
@@ -346,9 +346,9 @@ impl NotionChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for NotionChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Notion)
+impl ::galleon_api::attribution::Attributable for NotionChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Notion)
     }
     fn alias(&self) -> &str {
         &self.alias

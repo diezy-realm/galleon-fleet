@@ -22,7 +22,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 // Re-export TurnEvent from clawcrew-types for backwards compatibility.
-pub use clawcrew_api::agent::TurnEvent;
+pub use galleon_api::agent::TurnEvent;
 
 /// The turn engine's single per-call limits authority. Aliased from the turn
 /// module so the `Agent`, its builder, and `run_tool_call_loop` all thread one
@@ -133,9 +133,9 @@ pub(crate) enum RoutedApproval {
     /// that on its own: it is also `None` when a single non-fan-out channel
     /// relays a real operator answer.
     Decided {
-        response: clawcrew_api::channel::ChannelApprovalResponse,
+        response: galleon_api::channel::ChannelApprovalResponse,
         decider: Option<String>,
-        source: clawcrew_api::channel::ApprovalSource,
+        source: galleon_api::channel::ApprovalSource,
     },
     /// Explicit `InheritOriginator` — defer to the originating-channel fan-out.
     Fallthrough,
@@ -145,9 +145,9 @@ pub(crate) async fn resolve_routed_approval(
     handles: &tools::PerToolChannelHandle,
     route: &galleon_config::autonomy::ApprovalRoute,
     recipient: &str,
-    request: &clawcrew_api::channel::ChannelApprovalRequest,
+    request: &galleon_api::channel::ChannelApprovalRequest,
 ) -> RoutedApproval {
-    let approver: Option<(String, Arc<dyn clawcrew_api::channel::Channel>)> = handles
+    let approver: Option<(String, Arc<dyn galleon_api::channel::Channel>)> = handles
         .read()
         .iter()
         .find(|(name, _)| name.as_str() == route.approver_channel)
@@ -156,7 +156,7 @@ pub(crate) async fn resolve_routed_approval(
     // `source` is tracked alongside `reason` so the fail-closed deny below can
     // say WHY no operator decided, rather than leaving the caller to guess from
     // a missing decider.
-    let (reason, source): (&str, clawcrew_api::channel::ApprovalSource) =
+    let (reason, source): (&str, galleon_api::channel::ApprovalSource) =
         if let Some((channel_name, channel)) = approver {
             let dur = std::time::Duration::from_secs(route.timeout_secs.max(1));
             // Attributed, not legacy: if the approver channel synthesizes its own
@@ -175,21 +175,21 @@ pub(crate) async fn resolve_routed_approval(
                 }
                 Ok(Ok(None)) => (
                     "approver returned no decision",
-                    clawcrew_api::channel::ApprovalSource::Unreachable,
+                    galleon_api::channel::ApprovalSource::Unreachable,
                 ),
                 Ok(Err(_)) => (
                     "approver channel unreachable",
-                    clawcrew_api::channel::ApprovalSource::Unreachable,
+                    galleon_api::channel::ApprovalSource::Unreachable,
                 ),
                 Err(_) => (
                     "approver timed out",
-                    clawcrew_api::channel::ApprovalSource::TimedOut,
+                    galleon_api::channel::ApprovalSource::TimedOut,
                 ),
             }
         } else {
             (
                 "approver channel not registered",
-                clawcrew_api::channel::ApprovalSource::Unavailable,
+                galleon_api::channel::ApprovalSource::Unavailable,
             )
         };
 
@@ -208,7 +208,7 @@ pub(crate) async fn resolve_routed_approval(
                 "approval route fail-closed: denying gated tool"
             );
             RoutedApproval::Decided {
-                response: clawcrew_api::channel::ChannelApprovalResponse::Deny,
+                response: galleon_api::channel::ChannelApprovalResponse::Deny,
                 decider: None,
                 // The runtime denied this, not a person. Carrying the specific
                 // reason lets the tool result say so instead of reporting a
@@ -248,9 +248,9 @@ impl RoutedApprovalChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for RoutedApprovalChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Cli)
+impl ::galleon_api::attribution::Attributable for RoutedApprovalChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Cli)
     }
     fn alias(&self) -> &str {
         "approval-route"
@@ -258,18 +258,18 @@ impl ::clawcrew_api::attribution::Attributable for RoutedApprovalChannel {
 }
 
 #[async_trait::async_trait]
-impl clawcrew_api::channel::Channel for RoutedApprovalChannel {
+impl galleon_api::channel::Channel for RoutedApprovalChannel {
     fn name(&self) -> &str {
         "approval-route"
     }
 
-    async fn send(&self, _message: &clawcrew_api::channel::SendMessage) -> anyhow::Result<()> {
+    async fn send(&self, _message: &galleon_api::channel::SendMessage) -> anyhow::Result<()> {
         Ok(())
     }
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -280,8 +280,8 @@ impl clawcrew_api::channel::Channel for RoutedApprovalChannel {
     async fn request_approval(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::ChannelApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::ChannelApprovalResponse>> {
         Ok(self
             .request_approval_attributed(recipient, request)
             .await?
@@ -291,8 +291,8 @@ impl clawcrew_api::channel::Channel for RoutedApprovalChannel {
     async fn request_approval_attributed(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         match resolve_routed_approval(&self.handles, &self.route, recipient, request).await {
             // The deciding approver's name travels on the response itself;
             // `None` for a bridge-synthesized fail-closed deny.
@@ -305,7 +305,7 @@ impl clawcrew_api::channel::Channel for RoutedApprovalChannel {
                 decider,
                 source,
             } => Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::from_runtime(response, source)
+                galleon_api::channel::AttributedApprovalResponse::from_runtime(response, source)
                     .with_decider_opt(decider),
             )),
             // No originating channel to inherit on this path; let the gate apply
@@ -411,7 +411,7 @@ pub struct Agent {
     /// The shell this agent's runtime adapter will spawn, so the system
     /// prompt reports the dialect the agent actually executes under.
     /// `None` for a shell-less runtime.
-    shell_profile: Option<clawcrew_api::runtime_traits::ShellProfile>,
+    shell_profile: Option<galleon_api::runtime_traits::ShellProfile>,
     /// Cross-channel HITL: resolved from the active risk profile's
     /// `approval_route`. When set, the per-turn approval bridge asks the named
     /// approver channel (bounded + fail-closed) instead of the originating
@@ -560,7 +560,7 @@ pub struct AgentBuilder {
     response_cache: Option<Arc<galleon_memory::response_cache::ResponseCache>>,
     security_summary: Option<String>,
     autonomy_level: Option<crate::security::AutonomyLevel>,
-    shell_profile: Option<clawcrew_api::runtime_traits::ShellProfile>,
+    shell_profile: Option<galleon_api::runtime_traits::ShellProfile>,
     approval_route: Option<galleon_config::autonomy::ApprovalRoute>,
     activated_tools: Option<Arc<std::sync::Mutex<crate::tools::ActivatedToolSet>>>,
     app_registry: Option<Arc<std::sync::RwLock<crate::platform::app_registry::AppRegistry>>>,
@@ -825,7 +825,7 @@ impl AgentBuilder {
     /// than the one that will execute. Unset means no shell is reported.
     pub fn shell_profile(
         mut self,
-        profile: Option<clawcrew_api::runtime_traits::ShellProfile>,
+        profile: Option<galleon_api::runtime_traits::ShellProfile>,
     ) -> Self {
         self.shell_profile = profile;
         self
@@ -1253,7 +1253,7 @@ impl Agent {
 
     pub fn populate_channels(
         &self,
-        channel_map: &std::collections::HashMap<String, Arc<dyn clawcrew_api::channel::Channel>>,
+        channel_map: &std::collections::HashMap<String, Arc<dyn galleon_api::channel::Channel>>,
     ) -> Vec<String> {
         let mut names = Vec::new();
         for (name, ch) in channel_map {
@@ -1379,7 +1379,7 @@ impl Agent {
         }
         matches!(
             crate::agent::memory_inject::resolve_inject_policy(
-                clawcrew_api::ingress::TurnOrigin::AgentDirect,
+                galleon_api::ingress::TurnOrigin::AgentDirect,
                 self.memory_session_id.is_some(),
                 false,
             ),
@@ -1398,7 +1398,7 @@ impl Agent {
         if self.temperature != Some(0.0)
             || self.response_cache.is_none()
             || self.memory_injection_active()
-            || clawcrew_api::NATIVE_THINKING_OVERRIDE
+            || galleon_api::NATIVE_THINKING_OVERRIDE
                 .try_with(Option::is_some)
                 .unwrap_or(false)
             || self
@@ -1595,7 +1595,7 @@ impl Agent {
         &self,
         name: &str,
         args: serde_json::Value,
-    ) -> Option<anyhow::Result<clawcrew_api::tool::ToolResult>> {
+    ) -> Option<anyhow::Result<galleon_api::tool::ToolResult>> {
         let tool = crate::agent::tool_execution::find_tool(&self.tools, name)?;
         Some(tool.execute(args).await)
     }
@@ -3152,7 +3152,7 @@ impl Agent {
                             suppress: false,
                             cfg: self.memory_inject_cfg,
                         }),
-                        ingress: clawcrew_api::ingress::IngressContext::agent_direct(),
+                        ingress: galleon_api::ingress::IngressContext::agent_direct(),
                         agent_alias: agent_alias_for_loop.as_deref(),
                         parent_agent_alias: None,
                         turn_id: &turn_id,
@@ -3215,7 +3215,7 @@ impl Agent {
         let usage = cost_context.snapshot_turn_usage();
         if usage.input_tokens > 0 || usage.output_tokens > 0 {
             guard.set_usage(
-                Some(clawcrew_api::observability_traits::TurnTokenUsage {
+                Some(galleon_api::observability_traits::TurnTokenUsage {
                     input_tokens: usage.input_tokens,
                     output_tokens: usage.output_tokens,
                 }),
@@ -3550,12 +3550,12 @@ impl Agent {
         // confused by `sync_pending` which always grows `loop_history` via the
         // canonical. After each round, prefix_len = loop_history.len() - total_canonical_len.
         let mut total_canonical_len = 0usize;
-        let approval_bridge: Option<Box<dyn clawcrew_api::channel::Channel>> =
+        let approval_bridge: Option<Box<dyn galleon_api::channel::Channel>> =
             self.channel_handles.ask_user.as_ref().map(|handles| {
                 Box::new(crate::agent::approval_bridge::AskUserApprovalBridge::new(
                     Arc::clone(handles),
                     self.approval_route.clone(),
-                )) as Box<dyn clawcrew_api::channel::Channel>
+                )) as Box<dyn galleon_api::channel::Channel>
             });
 
         let knobs = crate::agent::loop_::LoopKnobs {
@@ -3735,7 +3735,7 @@ impl Agent {
                                 suppress: false,
                                 cfg: self.memory_inject_cfg,
                             }),
-                            ingress: clawcrew_api::ingress::IngressContext::agent_direct(),
+                            ingress: galleon_api::ingress::IngressContext::agent_direct(),
                             agent_alias: agent_alias_for_loop.as_deref(),
                             parent_agent_alias: None,
                             turn_id: &turn_id,
@@ -3798,7 +3798,7 @@ impl Agent {
             let usage = cost_context.snapshot_turn_usage();
             if usage.input_tokens > 0 || usage.output_tokens > 0 {
                 guard.set_usage(
-                    Some(clawcrew_api::observability_traits::TurnTokenUsage {
+                    Some(galleon_api::observability_traits::TurnTokenUsage {
                         input_tokens: usage.input_tokens,
                         output_tokens: usage.output_tokens,
                     }),
@@ -4052,7 +4052,7 @@ impl Agent {
         );
 
         let listen_handle = galleon_spawn::spawn!(async move {
-            let _ = clawcrew_api::channel::Channel::listen(&*cli, tx).await;
+            let _ = galleon_api::channel::Channel::listen(&*cli, tx).await;
         });
 
         while let Some(msg) = rx.recv().await {
@@ -4116,7 +4116,7 @@ pub async fn run(
 }
 
 #[async_trait::async_trait]
-impl clawcrew_api::agent::AgentSession for Agent {
+impl galleon_api::agent::AgentSession for Agent {
     fn set_channel_name(&mut self, name: String) {
         self.set_channel_name(name);
     }
@@ -4135,15 +4135,15 @@ impl clawcrew_api::agent::AgentSession for Agent {
 
     fn seed_history_with_event(
         &mut self,
-        messages: &[clawcrew_api::model_provider::ChatMessage],
-    ) -> Option<clawcrew_api::agent::TurnEvent> {
+        messages: &[galleon_api::model_provider::ChatMessage],
+    ) -> Option<galleon_api::agent::TurnEvent> {
         self.seed_history_with_event(messages)
     }
 
     fn register_channel(
         &self,
         name: &str,
-        channel: std::sync::Arc<dyn clawcrew_api::channel::Channel>,
+        channel: std::sync::Arc<dyn galleon_api::channel::Channel>,
     ) {
         self.channel_handles.register_channel(name, channel);
     }
@@ -4156,7 +4156,7 @@ impl clawcrew_api::agent::AgentSession for Agent {
         self.attribution_fields()
     }
 
-    fn history(&self) -> &[clawcrew_api::model_provider::ConversationMessage] {
+    fn history(&self) -> &[galleon_api::model_provider::ConversationMessage] {
         self.history()
     }
 
@@ -4175,24 +4175,24 @@ impl clawcrew_api::agent::AgentSession for Agent {
     async fn turn_streamed_with_steering_state(
         &mut self,
         user_message: &str,
-        event_tx: tokio::sync::mpsc::Sender<clawcrew_api::agent::TurnEvent>,
+        event_tx: tokio::sync::mpsc::Sender<galleon_api::agent::TurnEvent>,
         cancel_token: Option<tokio_util::sync::CancellationToken>,
         steering_rx: Option<&mut tokio::sync::mpsc::Receiver<String>>,
     ) -> std::result::Result<
-        clawcrew_api::agent::AgentTurnSuccess,
-        clawcrew_api::agent::AgentTurnError,
+        galleon_api::agent::AgentTurnSuccess,
+        galleon_api::agent::AgentTurnError,
     > {
         let res = self
             .turn_streamed_with_steering_state(user_message, event_tx, cancel_token, steering_rx)
             .await;
         match res {
-            Ok(success) => Ok(clawcrew_api::agent::AgentTurnSuccess {
+            Ok(success) => Ok(galleon_api::agent::AgentTurnSuccess {
                 response: success.response,
                 new_messages: success.new_messages,
                 provider_name: success.provider_name,
                 model: success.model,
                 final_context_limits: success.final_context_limits.map(|l| {
-                    clawcrew_api::agent::AgentContextLimits {
+                    galleon_api::agent::AgentContextLimits {
                         model_context_window: l.model_context_window,
                         context_token_budget: l.context_token_budget,
                         is_compatibility_fallback: matches!(
@@ -4202,16 +4202,16 @@ impl clawcrew_api::agent::AgentSession for Agent {
                     }
                 }),
                 safeguard_fallback: success.safeguard_fallback.map(|s| {
-                    clawcrew_api::agent::AgentSafeguardFallback {
+                    galleon_api::agent::AgentSafeguardFallback {
                         kind: match s.kind {
                             galleon_providers::SafeguardFallbackKind::ServerSide => {
-                                clawcrew_api::agent::AgentSafeguardKind::ServerSide
+                                galleon_api::agent::AgentSafeguardKind::ServerSide
                             }
                             galleon_providers::SafeguardFallbackKind::ClientSide => {
-                                clawcrew_api::agent::AgentSafeguardKind::ClientSide
+                                galleon_api::agent::AgentSafeguardKind::ClientSide
                             }
                             galleon_providers::SafeguardFallbackKind::ClientAndServer => {
-                                clawcrew_api::agent::AgentSafeguardKind::ClientAndServer
+                                galleon_api::agent::AgentSafeguardKind::ClientAndServer
                             }
                         },
                         requested_model: s.requested_model,
@@ -4219,7 +4219,7 @@ impl clawcrew_api::agent::AgentSession for Agent {
                     }
                 }),
             }),
-            Err(err) => Err(clawcrew_api::agent::AgentTurnError {
+            Err(err) => Err(galleon_api::agent::AgentTurnError {
                 error: err.error,
                 committed_response: err.committed_response,
                 new_messages: err.new_messages,
@@ -4231,14 +4231,14 @@ impl clawcrew_api::agent::AgentSession for Agent {
 pub struct RuntimeAgentRunner;
 
 #[async_trait::async_trait]
-impl clawcrew_api::agent::AgentRunner for RuntimeAgentRunner {
+impl galleon_api::agent::AgentRunner for RuntimeAgentRunner {
     async fn create_session(
         &self,
         config: Box<dyn std::any::Any + Send + Sync>,
         agent_alias: &str,
         session_cwd: Option<&std::path::Path>,
         canvas_store: Option<Box<dyn std::any::Any + Send + Sync>>,
-    ) -> anyhow::Result<Box<dyn clawcrew_api::agent::AgentSession>> {
+    ) -> anyhow::Result<Box<dyn galleon_api::agent::AgentSession>> {
         let config_arc = config
             .downcast::<std::sync::Arc<parking_lot::RwLock<Config>>>()
             .map_err(|_| anyhow::anyhow!("invalid config type for create_session"))?;
@@ -4277,7 +4277,7 @@ impl clawcrew_api::agent::AgentRunner for RuntimeAgentRunner {
         agent_alias: &str,
         message: &str,
         session_id: Option<&str>,
-        origin: clawcrew_api::ingress::TurnOrigin,
+        origin: galleon_api::ingress::TurnOrigin,
     ) -> anyhow::Result<String> {
         let cfg = config
             .downcast::<Config>()
@@ -4287,7 +4287,7 @@ impl clawcrew_api::agent::AgentRunner for RuntimeAgentRunner {
 }
 
 pub fn install_agent_runner() {
-    clawcrew_api::agent::set_agent_runner(std::sync::Arc::new(RuntimeAgentRunner));
+    galleon_api::agent::set_agent_runner(std::sync::Arc::new(RuntimeAgentRunner));
 }
 
 // safety net (child module so fixtures can reach Agent internals the

@@ -1,1 +1,1 @@
-pub use clawcrew_api::peripherals_traits::*;
+pub use galleon_api::peripherals_traits::*;

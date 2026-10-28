@@ -7,7 +7,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::policy::ToolOperation;
 

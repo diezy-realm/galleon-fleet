@@ -14,7 +14,7 @@ use portable_atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{Mutex, mpsc};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 // Use tokio_rustls's re-export of rustls types
 use tokio_rustls::rustls;
@@ -375,9 +375,9 @@ impl rustls::client::danger::ServerCertVerifier for NoVerify {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for IrcChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Irc)
+impl ::galleon_api::attribution::Attributable for IrcChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Irc)
     }
     fn alias(&self) -> &str {
         &self.alias

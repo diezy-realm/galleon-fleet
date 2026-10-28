@@ -9,9 +9,9 @@ use tokio::process::{Child, ChildStderr, ChildStdout, Command};
 use tokio::sync::oneshot;
 use tokio::task::{JoinError, JoinHandle};
 use tokio::time::{Duration, Instant, timeout, timeout_at};
-use clawcrew_api::attribution::{ToolKind, ToolProvenance};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::{ToolKind, ToolProvenance};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool_attribution;
 
 tool_attribution!(SubprocessTool, ToolKind::Plugin, ToolProvenance::Extension);
 
@@ -642,7 +642,7 @@ mod tests {
         Arc,
         atomic::{AtomicBool, Ordering},
     };
-    use clawcrew_api::attribution::Attributable;
+    use galleon_api::attribution::Attributable;
 
     fn make_manifest(name: &str, params: Vec<ParameterDef>) -> ToolManifest {
         ToolManifest {

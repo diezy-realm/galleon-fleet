@@ -860,7 +860,7 @@ impl Observer for OtelObserver {
                     .add(1, &[KeyValue::new("component", component.clone())]);
             }
             // `ObserverEvent` is `#[non_exhaustive]` — silently ignore any
-            // future variant added by upstream `clawcrew-api`.
+            // future variant added by upstream `galleon-api`.
             _ => {}
         }
     }
@@ -1723,7 +1723,7 @@ mod tests {
             model_provider: "anthropic".into(),
             model: "claude-sonnet-4-6".into(),
             duration: Duration::from_millis(50),
-            tokens_used: Some(clawcrew_api::observability_traits::TurnTokenUsage {
+            tokens_used: Some(galleon_api::observability_traits::TurnTokenUsage {
                 input_tokens: 10,
                 output_tokens: 5,
             }),

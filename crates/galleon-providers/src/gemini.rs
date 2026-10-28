@@ -1448,8 +1448,8 @@ impl ModelProvider for GeminiModelProvider {
         Some(BASE_URL)
     }
 
-    fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-        clawcrew_api::model_provider::ProviderCapabilities {
+    fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+        galleon_api::model_provider::ProviderCapabilities {
             vision: true,
             native_tool_calling: false,
             prompt_caching: false,
@@ -1593,11 +1593,11 @@ impl ModelProvider for GeminiModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for GeminiModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Gemini,
+impl ::galleon_api::attribution::Attributable for GeminiModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Gemini,
             ),
         )
     }

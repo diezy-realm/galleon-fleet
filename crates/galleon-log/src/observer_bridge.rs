@@ -1,11 +1,11 @@
 //! Observer bridge — projects [`crate::LogEvent`]s onto the typed
-//! [`clawcrew_api::observability_traits::ObserverEvent`] variants when a
+//! [`galleon_api::observability_traits::ObserverEvent`] variants when a
 //! bound observer is installed.
 
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use clawcrew_api::observability_traits::{Observer, ObserverEvent, TurnTokenUsage};
+use galleon_api::observability_traits::{Observer, ObserverEvent, TurnTokenUsage};
 use parking_lot::RwLock;
 
 use crate::event::LogEvent;
@@ -235,7 +235,7 @@ fn project(event: &LogEvent) -> Option<ObserverEvent> {
 mod tests {
     use super::*;
     use crate::event::{EventCategory, EventOutcome, Severity};
-    use clawcrew_api::observability_traits::ObserverMetric;
+    use galleon_api::observability_traits::ObserverMetric;
     use std::any::Any;
     use std::sync::Mutex;
 

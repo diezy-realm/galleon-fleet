@@ -267,12 +267,12 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   - `crates/galleon-memory/src/knowledge_graph.rs`: Field `pub citations: Vec<String>` ditambahkan pada `KnowledgeNode`, method `verify_citations(&self)` diimplementasikan untuk validasi integritas provenance. Method `add_node_with_citations` dan backward-compatible `add_node` ditambahkan.
   - Skema SQLite `nodes` ditambahkan kolom `citations TEXT NOT NULL DEFAULT ''` dengan migrasi otomatis.
   - Dokumentasi dan behavior `query_by_similarity` dipertegas sebagai FTS5 lexical/BM25 rank similarity (anti configuration lies).
-  - `crates/clawcrew-api/src/knowledge.rs`: Field `citations` ditambahkan pada model `Lesson`.
+  - `crates/galleon-api/src/knowledge.rs`: Field `citations` ditambahkan pada model `Lesson`.
   - Test suite `node_citations_storage_and_verification` dan seluruh test `knowledge_graph` (15/15) lolos via `cargo nextest run -p galleon-memory -E 'test(knowledge_graph)'`.
   #### Detail Eksekusi -- R-92
   1. **File & simbol spesifik:**
      - `/crates/galleon-memory/src/knowledge_graph.rs` - current implementation
-     - `/crates/clawcrew-api/src/knowledge.rs` - API layer
+     - `/crates/galleon-api/src/knowledge.rs` - API layer
      - `/crates/galleon-memory/src/traits.rs` - Memory trait definition
   2. **Spesifikasi API:**
      - Tambah field `citations: Vec<String>` ke `KnowledgeEntry`
@@ -519,7 +519,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 | A | `engine/pkg/store/postgres/`, `engine/pkg/store/vector/` (baru) | Backend-Go |
 | B | `crates/clawcrew-{gateway,channels,runtime}/src/**` (per-crate berseri, JANGAN paralel di crate yang sama) | Backend-Rust |
 | C | `crates/clawcrew-runtime/src/agent/{history_trim,loop_}/mod.rs` (verified paths) | Backend-Rust |
-| D | `crates/galleon-memory/src/knowledge_graph.rs`, `clawcrew-api/src/knowledge.rs` | Backend-Rust |
+| D | `crates/galleon-memory/src/knowledge_graph.rs`, `galleon-api/src/knowledge.rs` | Backend-Rust |
 | E | `proto/agent_service.proto`, `crates/galleon-gateway/src/grpc_system_gateway.rs`, `engine/src/memory/{proposal,store,wire}.go`, `standard-docs/tech-standart/plugin-standard/` (BL-03) | Backend-Go + Backend-Rust (BL-01 serial: proto dulu) |
 
 ## Keluaran Sprint

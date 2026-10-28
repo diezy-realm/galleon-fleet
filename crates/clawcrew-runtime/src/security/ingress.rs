@@ -1,9 +1,9 @@
-pub use clawcrew_api::ingress::{IngressPolicy, ingress_policy};
+pub use galleon_api::ingress::{IngressPolicy, ingress_policy};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::ingress::{IngressContext, IngressDecision, SourceClass, Transport, TrustClass};
+    use galleon_api::ingress::{IngressContext, IngressDecision, SourceClass, Transport, TrustClass};
 
     #[test]
     fn default_policy_returns_loop_for_internal() {
@@ -28,7 +28,7 @@ mod tests {
                 alias: "gh".to_string(),
             },
             trust: TrustClass::Untrusted,
-            origin: clawcrew_api::ingress::TurnOrigin::Channel,
+            origin: galleon_api::ingress::TurnOrigin::Channel,
         };
         let policy = IngressPolicy::default();
         assert_eq!(

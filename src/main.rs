@@ -4821,7 +4821,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 true,
                 session_state_file,
                 None,
-                clawcrew_api::ingress::TurnOrigin::Interactive,
+                galleon_api::ingress::TurnOrigin::Interactive,
                 clawcrew_runtime::agent::loop_::AgentRunOverrides::default(),
             ))
             .await
@@ -5217,12 +5217,12 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 let canvas_store_for_channels = canvas_store_for_channels.clone();
                 let mut registry = daemon::DaemonRegistry::new();
                 #[cfg(feature = "gateway")]
-                let plugin_webhooks = Arc::new(clawcrew_api::webhook::PluginWebhookRegistry::new());
+                let plugin_webhooks = Arc::new(galleon_api::webhook::PluginWebhookRegistry::new());
                 #[cfg(feature = "gateway")]
                 let channel_plugin_webhooks = Some(Arc::clone(&plugin_webhooks));
                 #[cfg(not(feature = "gateway"))]
                 let channel_plugin_webhooks: Option<
-                    Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
+                    Arc<galleon_api::webhook::PluginWebhookRegistry>,
                 > = None;
 
                 // SOP loading is gated on `runtime_enabled()`: `sops_dir` is unset
@@ -5263,7 +5263,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         let sop_engine = sop_e.clone();
                         let sop_audit = sop_a.clone();
                         let plugin_webhooks = Arc::clone(&plugin_webhooks);
-                        let sop_runner: Option<std::sync::Arc<dyn clawcrew_api::sop::SopRunner>> =
+                        let sop_runner: Option<std::sync::Arc<dyn galleon_api::sop::SopRunner>> =
                             if sop_engine.is_some() {
                                 let install_root = config.install_root_dir();
                                 Some(std::sync::Arc::new(
@@ -5288,7 +5288,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 reload_controls,
                                 tui_registry.map(|r| {
                                     r as std::sync::Arc<
-                                        dyn clawcrew_api::runtime_traits::TuiConnectionRegistry,
+                                        dyn galleon_api::runtime_traits::TuiConnectionRegistry,
                                     >
                                 }),
                                 Some(canvas_store),
@@ -5312,7 +5312,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         let sop_audit = sop_a.clone();
                         let plugin_webhooks = plugin_webhooks.clone();
                         Box::pin(async move {
-                            let sop_dispatcher: Option<std::sync::Arc<dyn clawcrew_api::sop::SopFanInDispatcher>> =
+                            let sop_dispatcher: Option<std::sync::Arc<dyn galleon_api::sop::SopFanInDispatcher>> =
                                 match (sop_engine, sop_audit) {
                                     (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
                                         clawcrew_runtime::sop::SopRuntimeDispatcher::new(
@@ -5322,7 +5322,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                     _ => None,
                                 };
                             let turn_runner =
-                                std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
+                                std::sync::Arc::new(galleon_api::channel::NoopChannelTurnRunner);
                             let channels = galleon_channels::orchestrator::start_channels_with_plugin_webhooks(
                                 config,
                                 turn_runner,
@@ -6512,14 +6512,14 @@ Add pricing to the active provider profile or supply a catalog entry."
                     config.sop.maintenance_interval_secs,
                 );
                 let sop_dispatcher: Option<
-                    std::sync::Arc<dyn clawcrew_api::sop::SopFanInDispatcher>,
+                    std::sync::Arc<dyn galleon_api::sop::SopFanInDispatcher>,
                 > = match (sop_engine, sop_audit) {
                     (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
                         clawcrew_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
                     )),
                     _ => None,
                 };
-                let turn_runner = std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
+                let turn_runner = std::sync::Arc::new(galleon_api::channel::NoopChannelTurnRunner);
                 let result = Box::pin(channels::start_channels(
                     config,
                     turn_runner,

@@ -1,5 +1,5 @@
-use clawcrew_api::attribution::{Attributable, Role, ToolKind, ToolProvenance};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::{Attributable, Role, ToolKind, ToolProvenance};
+use galleon_api::tool_attribution;
 
 use crate::tools::cron_add::CronAddTool;
 use crate::tools::cron_list::CronListTool;
@@ -59,7 +59,7 @@ impl Attributable for SkillBuiltinTool {
     }
 
     fn alias(&self) -> &str {
-        clawcrew_api::tool::Tool::name(self)
+        galleon_api::tool::Tool::name(self)
     }
 
     // A skill controls this callable's public name, schema, and locked

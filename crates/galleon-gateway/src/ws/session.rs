@@ -4,7 +4,7 @@ use super::*;
 use crate::GW_SESSION_PREFIX;
 use crate::ws_approval::{PendingApprovals, WsApprovalChannel, new_pending_approvals};
 use axum::extract::ws::{Message, WebSocket};
-use clawcrew_api::channel::ChannelApprovalResponse;
+use galleon_api::channel::ChannelApprovalResponse;
 use futures_util::{SinkExt, StreamExt};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -75,7 +75,7 @@ pub(crate) async fn handle_socket(
     // reconnects.
     let session_key = format!("{GW_SESSION_PREFIX}{session_id}");
     // Match the sanitized form persisted by memory backend migrations.
-    let mut memory_session_id = clawcrew_api::session_keys::sanitize_session_key(&session_id);
+    let mut memory_session_id = galleon_api::session_keys::sanitize_session_key(&session_id);
 
     // Hydrate session metadata from persistence (if available). Agent
     // construction is deferred until after the optional `connect` frame so the
@@ -184,7 +184,7 @@ pub(crate) async fn handle_socket(
                         ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"session_id": cp.session_id, "device_name": cp.device_name, "capabilities": cp.capabilities, "cwd": cp.cwd})), "WebSocket connect params received");
                         if let Some(sid) = &cp.session_id {
                             memory_session_id =
-                                clawcrew_api::session_keys::sanitize_session_key(sid);
+                                galleon_api::session_keys::sanitize_session_key(sid);
                             ::galleon_log::record!(
                                 DEBUG,
                                 ::galleon_log::Event::new(
@@ -243,7 +243,7 @@ pub(crate) async fn handle_socket(
         return;
     }
 
-    let mut agent = match clawcrew_api::agent::create_agent_session(
+    let mut agent = match galleon_api::agent::create_agent_session(
         Arc::clone(&state.config),
         &agent_alias,
         Some(&session_cwd),
@@ -356,7 +356,7 @@ pub(crate) async fn handle_socket(
     }
 
     let (approval_event_tx, mut approval_event_rx) =
-        tokio::sync::mpsc::channel::<clawcrew_api::agent::TurnEvent>(8);
+        tokio::sync::mpsc::channel::<galleon_api::agent::TurnEvent>(8);
     let pending_approvals: PendingApprovals = new_pending_approvals();
     let approval_channel = Arc::new(WsApprovalChannel::new(
         approval_event_tx.clone(),
@@ -393,7 +393,7 @@ pub(crate) async fn handle_socket(
     // Seeding happens before the connection's agent setup is complete. Forward
     // its one-shot trim outcome only after channels are registered, so restore
     // notifications cannot race setup or be emitted twice.
-    if let Some(clawcrew_api::agent::TurnEvent::HistoryTrimmed {
+    if let Some(galleon_api::agent::TurnEvent::HistoryTrimmed {
         dropped_messages,
         kept_turns,
         reason,
@@ -640,7 +640,7 @@ pub(crate) async fn handle_socket(
                 // Forward the runtime-produced summary without inspecting or
                 // reconstructing it from the raw argument object.
                 let frame = match event {
-                    clawcrew_api::agent::TurnEvent::ApprovalRequest {
+                    galleon_api::agent::TurnEvent::ApprovalRequest {
                         request_id,
                         tool_name,
                         arguments_summary,
@@ -774,7 +774,7 @@ pub(crate) fn replace_conversation_state_unless_deleted(
 pub(crate) fn persist_agent_conversation_state(
     backend: &dyn galleon_infra::session_backend::SessionBackend,
     session_key: &str,
-    agent: &(dyn clawcrew_api::agent::AgentSession + '_),
+    agent: &(dyn galleon_api::agent::AgentSession + '_),
 ) -> bool {
     let durable = galleon_providers::durable_chat_messages(agent.history());
     replace_conversation_state_unless_deleted(

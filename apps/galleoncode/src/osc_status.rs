@@ -58,7 +58,7 @@ use std::sync::{
     Mutex, TryLockError,
     atomic::{AtomicU8, AtomicUsize, Ordering},
 };
-use clawcrew_api::lifecycle::{LifecycleActivity, LifecycleState};
+use galleon_api::lifecycle::{LifecycleActivity, LifecycleState};
 
 use crate::turn_status::TurnStatus;
 

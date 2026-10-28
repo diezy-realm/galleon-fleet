@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::path::{Path, PathBuf};
 use tokio::fs;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Workspace data lifecycle tool: retention status, time-based purge, and
 /// storage statistics.

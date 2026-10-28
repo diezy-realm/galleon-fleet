@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use std::io::{BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock, Weak};
-use clawcrew_api::model_provider::ChatMessage;
-pub use clawcrew_api::session_keys::sanitize_session_key;
+use galleon_api::model_provider::ChatMessage;
+pub use galleon_api::session_keys::sanitize_session_key;
 
 #[derive(Default)]
 pub(crate) struct MutationState {

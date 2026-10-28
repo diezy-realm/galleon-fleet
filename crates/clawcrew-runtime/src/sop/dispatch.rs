@@ -1232,7 +1232,7 @@ pub async fn dispatch_untrusted_fan_in(
     }
 }
 
-/// Concrete adapter implementing [`clawcrew_api::sop::SopFanInDispatcher`]
+/// Concrete adapter implementing [`galleon_api::sop::SopFanInDispatcher`]
 /// for a paired `(Arc<Mutex<SopEngine>>, Arc<SopAuditLogger>)`.
 pub struct SopRuntimeDispatcher {
     engine: Arc<Mutex<SopEngine>>,
@@ -1246,26 +1246,26 @@ impl SopRuntimeDispatcher {
 }
 
 #[async_trait::async_trait]
-impl clawcrew_api::sop::SopFanInDispatcher for SopRuntimeDispatcher {
+impl galleon_api::sop::SopFanInDispatcher for SopRuntimeDispatcher {
     async fn dispatch_untrusted(
         &self,
-        source: clawcrew_api::sop::SopTriggerSource,
+        source: galleon_api::sop::SopTriggerSource,
         topic: Option<&str>,
         payload: Option<&str>,
         target_sop: Option<&str>,
         dedup: Option<(String, bool)>,
-    ) -> clawcrew_api::sop::SopFanInResult {
+    ) -> galleon_api::sop::SopFanInResult {
         let rt_source = match source {
-            clawcrew_api::sop::SopTriggerSource::Mqtt => SopTriggerSource::Mqtt,
-            clawcrew_api::sop::SopTriggerSource::Webhook => SopTriggerSource::Webhook,
-            clawcrew_api::sop::SopTriggerSource::Cron => SopTriggerSource::Cron,
-            clawcrew_api::sop::SopTriggerSource::Peripheral => SopTriggerSource::Peripheral,
-            clawcrew_api::sop::SopTriggerSource::Filesystem => SopTriggerSource::Filesystem,
-            clawcrew_api::sop::SopTriggerSource::Calendar => SopTriggerSource::Calendar,
-            clawcrew_api::sop::SopTriggerSource::Channel => SopTriggerSource::Channel,
-            clawcrew_api::sop::SopTriggerSource::Manual => SopTriggerSource::Manual,
-            clawcrew_api::sop::SopTriggerSource::Amqp => SopTriggerSource::Amqp,
-            clawcrew_api::sop::SopTriggerSource::Subagent => {
+            galleon_api::sop::SopTriggerSource::Mqtt => SopTriggerSource::Mqtt,
+            galleon_api::sop::SopTriggerSource::Webhook => SopTriggerSource::Webhook,
+            galleon_api::sop::SopTriggerSource::Cron => SopTriggerSource::Cron,
+            galleon_api::sop::SopTriggerSource::Peripheral => SopTriggerSource::Peripheral,
+            galleon_api::sop::SopTriggerSource::Filesystem => SopTriggerSource::Filesystem,
+            galleon_api::sop::SopTriggerSource::Calendar => SopTriggerSource::Calendar,
+            galleon_api::sop::SopTriggerSource::Channel => SopTriggerSource::Channel,
+            galleon_api::sop::SopTriggerSource::Manual => SopTriggerSource::Manual,
+            galleon_api::sop::SopTriggerSource::Amqp => SopTriggerSource::Amqp,
+            galleon_api::sop::SopTriggerSource::Subagent => {
                 // If runtime SopTriggerSource doesn't have Subagent, fallback to Channel or Manual
                 SopTriggerSource::Channel
             }
@@ -1278,7 +1278,7 @@ impl clawcrew_api::sop::SopFanInDispatcher for SopRuntimeDispatcher {
             _ => vec![],
         };
         let needs_redelivery = results_need_redelivery(&results);
-        clawcrew_api::sop::SopFanInResult { needs_redelivery }
+        galleon_api::sop::SopFanInResult { needs_redelivery }
     }
 }
 
@@ -1790,10 +1790,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for TestMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for TestMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
 

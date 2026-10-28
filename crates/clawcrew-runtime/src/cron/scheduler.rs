@@ -10,7 +10,7 @@ use crate::cron::{
 use crate::security::SecurityPolicy;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use clawcrew_api::runtime_traits::RuntimeAdapter;
+use galleon_api::runtime_traits::RuntimeAdapter;
 use galleon_config::schema::Config;
 use galleon_config::schema::{CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
 use galleon_log::Instrument;
@@ -961,7 +961,7 @@ async fn run_agent_job(
                     false,
                     Some(session_path.clone()),
                     job.allowed_tools.clone(),
-                    clawcrew_api::ingress::TurnOrigin::Cron,
+                    galleon_api::ingress::TurnOrigin::Cron,
                     run_overrides,
                 )
                 .instrument(subagent_span),
@@ -981,7 +981,7 @@ async fn run_agent_job(
         ),
         Err(e) => {
             if matches!(job.session_target, SessionTarget::Isolated) {
-                let mem_session_key = clawcrew_api::session_keys::sanitize_session_key(&format!(
+                let mem_session_key = galleon_api::session_keys::sanitize_session_key(&format!(
                     "cli:{}",
                     session_path.display()
                 ));
@@ -1564,8 +1564,8 @@ mod tests {
             true
         }
 
-        fn shell_dialect(&self) -> clawcrew_api::runtime_traits::ShellDialect {
-            clawcrew_api::runtime_traits::ShellDialect::PowerShell
+        fn shell_dialect(&self) -> galleon_api::runtime_traits::ShellDialect {
+            galleon_api::runtime_traits::ShellDialect::PowerShell
         }
 
         fn build_shell_command(

@@ -24,7 +24,7 @@ pub(crate) async fn gate_tool_approval(
     tool_name: &str,
     tool_args: &serde_json::Value,
     iteration: usize,
-    position: clawcrew_api::channel::ApprovalPosition,
+    position: galleon_api::channel::ApprovalPosition,
 ) -> ApprovalGateOutcome {
     let mut approval_requirement = ctx
         .approval
@@ -44,7 +44,7 @@ pub(crate) async fn gate_tool_approval(
         // back to auto-deny.
         let (decision, decided_by, unanswerable) = if mgr.is_non_interactive() {
             let attributed = if let Some(ch) = ctx.channel {
-                let ch_request = clawcrew_api::channel::ChannelApprovalRequest {
+                let ch_request = galleon_api::channel::ChannelApprovalRequest {
                     tool_name: request.tool_name.clone(),
                     arguments_summary: crate::approval::summarize_args(&request.arguments),
                     raw_arguments: Some(request.arguments.clone()),
@@ -112,14 +112,14 @@ pub(crate) async fn gate_tool_approval(
                 .map(|a| a.source.is_runtime_fail_closed())
                 .unwrap_or(true);
             let decision = match attributed.map(|a| a.response) {
-                Some(clawcrew_api::channel::ChannelApprovalResponse::Approve) => {
+                Some(galleon_api::channel::ChannelApprovalResponse::Approve) => {
                     ApprovalResponse::Yes
                 }
-                Some(clawcrew_api::channel::ChannelApprovalResponse::AlwaysApprove) => {
+                Some(galleon_api::channel::ChannelApprovalResponse::AlwaysApprove) => {
                     ApprovalResponse::Always
                 }
-                Some(clawcrew_api::channel::ChannelApprovalResponse::Deny) => ApprovalResponse::No,
-                Some(clawcrew_api::channel::ChannelApprovalResponse::DenyWithEdit {
+                Some(galleon_api::channel::ChannelApprovalResponse::Deny) => ApprovalResponse::No,
+                Some(galleon_api::channel::ChannelApprovalResponse::DenyWithEdit {
                     replacement,
                 }) => ApprovalResponse::ReplaceWith(replacement),
                 // Channel doesn't support approval — auto-deny.
@@ -269,8 +269,8 @@ mod tests {
     use crate::observability::NoopObserver;
     use crate::security::AutonomyLevel;
     use async_trait::async_trait;
-    use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
-    use clawcrew_api::channel::{
+    use galleon_api::attribution::{Attributable, ChannelKind, Role};
+    use galleon_api::channel::{
         Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
     };
     use galleon_config::schema::{PacingConfig, RiskProfileConfig, StreamReasoningMode};
@@ -372,7 +372,7 @@ mod tests {
             "shell",
             &serde_json::json!({"command": "ls"}),
             0,
-            clawcrew_api::channel::ApprovalPosition { index: 1, total: 1 },
+            galleon_api::channel::ApprovalPosition { index: 1, total: 1 },
         )
         .await
         {
@@ -396,7 +396,7 @@ mod tests {
             "file_write",
             &serde_json::json!({"path": "x"}),
             0,
-            clawcrew_api::channel::ApprovalPosition { index: 1, total: 1 },
+            galleon_api::channel::ApprovalPosition { index: 1, total: 1 },
         )
         .await
         {
@@ -429,7 +429,7 @@ mod tests {
             "shell",
             &serde_json::json!({"command": "ls"}),
             0,
-            clawcrew_api::channel::ApprovalPosition { index: 1, total: 1 },
+            galleon_api::channel::ApprovalPosition { index: 1, total: 1 },
         )
         .await
         {
@@ -457,7 +457,7 @@ mod tests {
             "file_write",
             &serde_json::json!({"path": "x"}),
             0,
-            clawcrew_api::channel::ApprovalPosition { index: 1, total: 1 },
+            galleon_api::channel::ApprovalPosition { index: 1, total: 1 },
         )
         .await
         {
@@ -600,7 +600,7 @@ mod tests {
             "shell",
             &arguments,
             0,
-            clawcrew_api::channel::ApprovalPosition { index: 1, total: 1 },
+            galleon_api::channel::ApprovalPosition { index: 1, total: 1 },
         );
         tokio::pin!(approval_wait);
         let line = tokio::select! {

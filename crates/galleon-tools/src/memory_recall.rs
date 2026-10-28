@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::fmt::Write;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_memory::Memory;
 
 /// Let the agent search its own memory
@@ -255,10 +255,10 @@ mod tests {
             self.recall(query, limit, session_id, since, until).await
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for QueryEchoMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for QueryEchoMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
         fn alias(&self) -> &str {

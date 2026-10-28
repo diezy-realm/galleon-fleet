@@ -20,7 +20,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 use tokio_util::sync::CancellationToken;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::{
     AliasedAgentConfig, Config, DelegateExecutionMode, DelegateToolConfig, ModelProviderConfig,
     ResolvedRuntime, RiskProfileConfig, RuntimeProfileConfig, SkillBundleConfig,
@@ -2337,7 +2337,7 @@ impl DelegateTool {
     ) -> ToolResult {
         match result {
             Ok(response)
-                if clawcrew_api::model_provider::strip_think_tags(&response).is_empty() =>
+                if galleon_api::model_provider::strip_think_tags(&response).is_empty() =>
             {
                 ToolResult {
                     success: false,
@@ -4076,7 +4076,7 @@ impl DelegateTool {
                 // Phase 1: stamp Internal/Trusted. Per-transport
                 // stamping lands in a later phase.
                 memory: None,
-                ingress: clawcrew_api::ingress::IngressContext::sub_turn(),
+                ingress: galleon_api::ingress::IngressContext::sub_turn(),
                 agent_alias: Some(agent_name),
                 parent_agent_alias: None,
                 turn_id: &turn_id,
@@ -4087,7 +4087,7 @@ impl DelegateTool {
         );
         let result = match thinking_params {
             Some(params) => {
-                clawcrew_api::NATIVE_THINKING_OVERRIDE
+                galleon_api::NATIVE_THINKING_OVERRIDE
                     .scope(params.native_thinking, execution)
                     .await
             }
@@ -4134,14 +4134,14 @@ impl ToolArcRef {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ToolArcRef {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
+impl ::galleon_api::attribution::Attributable for ToolArcRef {
+    fn role(&self) -> ::galleon_api::attribution::Role {
         self.inner.role()
     }
     fn alias(&self) -> &str {
         self.inner.alias()
     }
-    fn tool_provenance(&self) -> ::clawcrew_api::attribution::ToolProvenance {
+    fn tool_provenance(&self) -> ::galleon_api::attribution::ToolProvenance {
         self.inner.tool_provenance()
     }
 }
@@ -4164,14 +4164,14 @@ impl Tool for ToolArcRef {
         self.inner.output_schema()
     }
 
-    fn param_domains(&self) -> Vec<(&'static str, ::clawcrew_api::tool::OptionDomain)> {
+    fn param_domains(&self) -> Vec<(&'static str, ::galleon_api::tool::OptionDomain)> {
         self.inner.param_domains()
     }
 
     // Forward `spec()` so inner overrides keep their `Arc`-shared parameter
     // schemas; the trait default would rebuild the spec from
     // `parameters_schema()`, deep-cloning MCP schemas every loop iteration.
-    fn spec(&self) -> clawcrew_api::tool::ToolSpec {
+    fn spec(&self) -> galleon_api::tool::ToolSpec {
         self.inner.spec()
     }
 

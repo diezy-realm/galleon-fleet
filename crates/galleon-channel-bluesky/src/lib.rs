@@ -37,7 +37,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_channel_core::allowlist;
 
 /// Bluesky channel — polls for mentions via AT Protocol and replies as posts.
@@ -461,10 +461,10 @@ impl BlueskyChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for BlueskyChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Bluesky,
+impl ::galleon_api::attribution::Attributable for BlueskyChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Bluesky,
         )
     }
     fn alias(&self) -> &str {

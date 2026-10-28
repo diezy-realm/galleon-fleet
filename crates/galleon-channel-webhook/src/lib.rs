@@ -1,7 +1,7 @@
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDateTime, Utc};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use portable_atomic::{AtomicU64, Ordering};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -219,10 +219,10 @@ impl WebhookChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for WebhookChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for WebhookChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {

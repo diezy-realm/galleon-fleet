@@ -1,6 +1,6 @@
 //! Gateway cron adapter: fully decoupled from `clawcrew-runtime`.
 //!
-//! Uses leaf crates `galleon-infra`, `galleon-config`, and `clawcrew-api`
+//! Uses leaf crates `galleon-infra`, `galleon-config`, and `galleon-api`
 //! for all cron state persistence, validation, and execution.
 #![allow(dead_code)]
 
@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use anyhow::Context;
-use clawcrew_api::runtime_traits::CronRunner;
+use galleon_api::runtime_traits::CronRunner;
 use galleon_config::schema::{Config, CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
 use galleon_infra::cron_schedule::{next_run_for_schedule, schedule_cron_expression};
 use galleon_infra::cron_store::CronStore;
@@ -111,9 +111,9 @@ pub fn add_shell_job_with_approval_and_format(
 ) -> anyhow::Result<CronJob> {
     let security = galleon_config::policy::SecurityPolicy::for_agent(config, agent_alias)?;
     #[cfg(windows)]
-    let dialect = clawcrew_api::runtime_traits::ShellDialect::WindowsCmd;
+    let dialect = galleon_api::runtime_traits::ShellDialect::WindowsCmd;
     #[cfg(not(windows))]
-    let dialect = clawcrew_api::runtime_traits::ShellDialect::Posix;
+    let dialect = galleon_api::runtime_traits::ShellDialect::Posix;
     security
         .validate_command_execution_for_shell(command, approved, dialect)
         .map_err(|reason| anyhow::anyhow!("blocked by security policy: {reason}"))?;
@@ -165,9 +165,9 @@ pub fn update_shell_job_with_approval(
     if let Some(command) = patch.command.as_deref() {
         let security = galleon_config::policy::SecurityPolicy::for_agent(config, agent_alias)?;
         #[cfg(windows)]
-        let dialect = clawcrew_api::runtime_traits::ShellDialect::WindowsCmd;
+        let dialect = galleon_api::runtime_traits::ShellDialect::WindowsCmd;
         #[cfg(not(windows))]
-        let dialect = clawcrew_api::runtime_traits::ShellDialect::Posix;
+        let dialect = galleon_api::runtime_traits::ShellDialect::Posix;
         security
             .validate_command_execution_for_shell(command, approved, dialect)
             .map_err(|reason| anyhow::anyhow!("blocked by security policy: {reason}"))?;

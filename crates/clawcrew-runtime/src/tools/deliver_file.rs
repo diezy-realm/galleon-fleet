@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use serde_json::{Value, json};
 use std::path::Path;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_tools::embedded_resource::{content_hash_name, materialize_bytes};
 
 pub use galleon_tools::deliver_file::{
@@ -26,7 +26,7 @@ fn sanitize_display_title(raw: &str) -> String {
 /// Deliver a workspace file to an ACP client as an embedded binary resource.
 ///
 /// Returns path/mime metadata as structured data (projected into the event's
-/// [`clawcrew_api::agent::ToolArtifact`]) without embedding file bytes in the
+/// [`galleon_api::agent::ToolArtifact`]) without embedding file bytes in the
 /// tool result — the ACP layer re-reads the file for `blob`.
 pub struct DeliverFileTool {
     security: Arc<SecurityPolicy>,

@@ -2,7 +2,7 @@ use crate::sop::types::SopRunAction;
 
 
 /// Approve or deny a waiting SOP gate.
-pub use clawcrew_api::sop::ApprovalDecision;
+pub use galleon_api::sop::ApprovalDecision;
 
 
 /// What `resolve_gate` did. Returned to the caller (tool / CLI / gateway) so it

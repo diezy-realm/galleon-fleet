@@ -6,7 +6,7 @@ use serde_json::json;
 use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::policy::ToolOperation;
 

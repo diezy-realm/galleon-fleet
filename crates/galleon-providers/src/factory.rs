@@ -1425,7 +1425,7 @@ impl FamilyProviderFactory for HailoOllamaModelProviderConfig {
                 alias,
                 Some(base_url),
                 opts.provider_timeout_secs
-                    .unwrap_or(clawcrew_api::model_provider::BASELINE_TIMEOUT_SECS),
+                    .unwrap_or(galleon_api::model_provider::BASELINE_TIMEOUT_SECS),
                 self.queue_timeout_secs
                     .unwrap_or(crate::hailo_ollama::HAILO_DEFAULT_QUEUE_TIMEOUT_SECS),
                 tuning,
@@ -2068,7 +2068,7 @@ mod tests {
     #[tokio::test]
     async fn cache_ttl_runtime_option_reaches_both_builders() {
         use crate::traits::{ChatMessage, ChatRequest};
-        use clawcrew_api::tool::ToolSpec;
+        use galleon_api::tool::ToolSpec;
         use galleon_config::schema::{AnthropicModelProviderConfig, CacheTtl};
 
         fn collect_cache_controls(value: &serde_json::Value, out: &mut Vec<serde_json::Value>) {

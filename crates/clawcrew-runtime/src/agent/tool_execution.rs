@@ -8,8 +8,8 @@ use tokio_util::sync::CancellationToken;
 use crate::approval::ApprovalManager;
 use crate::observability::{Observer, ObserverEvent};
 use crate::tools::{ActivatedToolSet, Tool};
-use clawcrew_api::agent::{ToolArtifact, TurnEvent};
-use clawcrew_api::attribution::Attributable;
+use galleon_api::agent::{ToolArtifact, TurnEvent};
+use galleon_api::attribution::Attributable;
 use tokio::sync::mpsc::Sender;
 
 // Items that still live in `loop_` — import via the parent module.
@@ -26,12 +26,12 @@ fn maybe_plan_event(
     call_name: &str,
     success: bool,
     call_arguments: &serde_json::Value,
-) -> Option<clawcrew_api::agent::TurnEvent> {
+) -> Option<galleon_api::agent::TurnEvent> {
     if call_name != "TodoWrite" || !success {
         return None;
     }
     let entries = crate::tools::todo_write::parse_entries(call_arguments).ok()?;
-    Some(clawcrew_api::agent::TurnEvent::Plan { entries })
+    Some(galleon_api::agent::TurnEvent::Plan { entries })
 }
 
 /// Look up a tool by name in a slice of boxed `dyn Tool` values.
@@ -45,7 +45,7 @@ pub(crate) fn resolved_tool_provenance(
     tools_registry: &[Box<dyn Tool>],
     activated_tools: Option<&Arc<std::sync::Mutex<ActivatedToolSet>>>,
     name: &str,
-) -> Option<clawcrew_api::attribution::ToolProvenance> {
+) -> Option<galleon_api::attribution::ToolProvenance> {
     if let Some(tool) = find_tool(tools_registry, name) {
         return Some(tool.tool_provenance());
     }
@@ -731,7 +731,7 @@ mod tests {
     use crate::observability::traits::ObserverMetric;
     use crate::tools::ActivatedToolSet;
     use async_trait::async_trait;
-    use clawcrew_api::tool::Tool;
+    use galleon_api::tool::Tool;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::{Arc, Mutex};
 
@@ -752,9 +752,9 @@ mod tests {
         }
     }
 
-    impl clawcrew_api::attribution::Attributable for CountingTool {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for CountingTool {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-counting-tool"
@@ -773,7 +773,7 @@ mod tests {
 
         assert_eq!(
             resolved_tool_provenance(&[], Some(&activated), "mcp__browser"),
-            Some(clawcrew_api::attribution::ToolProvenance::Extension)
+            Some(galleon_api::attribution::ToolProvenance::Extension)
         );
     }
 
@@ -948,9 +948,9 @@ mod tests {
     }
 
     #[async_trait]
-    impl clawcrew_api::attribution::Attributable for FailingToolWithDetailedOutput {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for FailingToolWithDetailedOutput {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-failing-tool"
@@ -977,7 +977,7 @@ mod tests {
         ) -> anyhow::Result<crate::tools::ToolResult> {
             Ok(crate::tools::ToolResult {
                 success: false,
-                output: clawcrew_api::tool::ToolOutput::json_with_text(
+                output: galleon_api::tool::ToolOutput::json_with_text(
                     failing_tool_body_data(),
                     "Response Body: the api-version needs the -preview suffix",
                 ),
@@ -992,9 +992,9 @@ mod tests {
     struct FailingToolWithNoOutput;
 
     #[async_trait]
-    impl clawcrew_api::attribution::Attributable for FailingToolWithNoOutput {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for FailingToolWithNoOutput {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-failing-tool-no-output"
@@ -1021,7 +1021,7 @@ mod tests {
         ) -> anyhow::Result<crate::tools::ToolResult> {
             Ok(crate::tools::ToolResult {
                 success: false,
-                output: clawcrew_api::tool::ToolOutput::default(),
+                output: galleon_api::tool::ToolOutput::default(),
                 error: Some("old_string not found in file".into()),
             })
         }
@@ -1242,9 +1242,9 @@ mod tests {
     struct FailingToolWithPlainTextOutput;
 
     #[async_trait]
-    impl clawcrew_api::attribution::Attributable for FailingToolWithPlainTextOutput {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for FailingToolWithPlainTextOutput {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-failing-tool-plain-text"
@@ -1329,9 +1329,9 @@ mod tests {
     struct FailingToolWithOutputIdenticalToError;
 
     #[async_trait]
-    impl clawcrew_api::attribution::Attributable for FailingToolWithOutputIdenticalToError {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for FailingToolWithOutputIdenticalToError {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-failing-tool-identical-output"
@@ -1403,9 +1403,9 @@ mod tests {
     struct FailingToolWithNoErrorField;
 
     #[async_trait]
-    impl clawcrew_api::attribution::Attributable for FailingToolWithNoErrorField {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for FailingToolWithNoErrorField {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-failing-tool-no-error-field"
@@ -1534,9 +1534,9 @@ mod tests {
     struct FailingToolWithSecretInOutput;
 
     #[async_trait]
-    impl clawcrew_api::attribution::Attributable for FailingToolWithSecretInOutput {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for FailingToolWithSecretInOutput {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-failing-tool-secret"
@@ -1654,9 +1654,9 @@ mod tests {
 
         struct EchoTestTool;
         #[async_trait]
-        impl clawcrew_api::attribution::Attributable for EchoTestTool {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::System
+        impl galleon_api::attribution::Attributable for EchoTestTool {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::System
             }
             fn alias(&self) -> &str {
                 "echo-test-tool"
@@ -1766,14 +1766,14 @@ mod tests {
     /// single test can drive every `error`/`output` combination the failure
     /// arm branches on.
     struct ConfigurableFailingTool {
-        output: clawcrew_api::tool::ToolOutput,
+        output: galleon_api::tool::ToolOutput,
         error: Option<String>,
     }
 
     #[async_trait]
-    impl clawcrew_api::attribution::Attributable for ConfigurableFailingTool {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for ConfigurableFailingTool {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-configurable-failing-tool"
@@ -1821,7 +1821,7 @@ mod tests {
     /// template or an operator-controlled string, never remote content.
     #[tokio::test]
     async fn execute_one_tool_scrubs_model_visible_credential_across_failure_shapes() {
-        use clawcrew_api::tool::ToolOutput;
+        use galleon_api::tool::ToolOutput;
 
         struct Case {
             name: &'static str,
@@ -1964,9 +1964,9 @@ mod tests {
     }
 
     #[async_trait]
-    impl clawcrew_api::attribution::Attributable for FailingToolReturningErr {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::System
+    impl galleon_api::attribution::Attributable for FailingToolReturningErr {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::System
         }
         fn alias(&self) -> &str {
             "test-failing-tool-returning-err"
@@ -2190,7 +2190,7 @@ mod tests {
     #[tokio::test]
     async fn failure_output_scrub_leaves_bearer_prefixed_token_but_still_runs() {
         let tools: Vec<Box<dyn Tool>> = vec![Box::new(ConfigurableFailingTool {
-            output: clawcrew_api::tool::ToolOutput::text(
+            output: galleon_api::tool::ToolOutput::text(
                 "upstream said: Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payload.sig ; \
                  api_key=sk-CATCHME01234567",
             ),
@@ -2236,7 +2236,7 @@ mod tests {
     #[tokio::test]
     async fn failure_output_scrub_leaves_signed_url_query_params_but_still_runs() {
         let tools: Vec<Box<dyn Tool>> = vec![Box::new(ConfigurableFailingTool {
-            output: clawcrew_api::tool::ToolOutput::text(
+            output: galleon_api::tool::ToolOutput::text(
                 "redirect target: \
                  https://acct.blob.core.windows.net/c/b?sig=aBcD1234eFgH5678iJkL&se=2026 ; \
                  token=sk-CATCHME01234567",
@@ -2290,7 +2290,7 @@ mod tests {
 
         let secret = "sk-HISTORY0123456789";
         let tools: Vec<Box<dyn Tool>> = vec![Box::new(ConfigurableFailingTool {
-            output: clawcrew_api::tool::ToolOutput::text(format!(
+            output: galleon_api::tool::ToolOutput::text(format!(
                 "response body: api_key={secret} was rejected"
             )),
             error: Some("HTTP 401".into()),
@@ -2587,7 +2587,7 @@ mod tests {
             let args = json!({ "todos": [ { "content": "A", "status": "pending" } ] });
             let ev = maybe_plan_event("TodoWrite", true, &args);
             match ev {
-                Some(clawcrew_api::agent::TurnEvent::Plan { entries }) => {
+                Some(galleon_api::agent::TurnEvent::Plan { entries }) => {
                     assert_eq!(entries.len(), 1);
                     assert_eq!(entries[0].content, "A");
                 }
@@ -2617,7 +2617,7 @@ mod tests {
         fn empty_list_produces_clear_plan_event() {
             let args = json!({ "todos": [] });
             match maybe_plan_event("TodoWrite", true, &args) {
-                Some(clawcrew_api::agent::TurnEvent::Plan { entries }) => {
+                Some(galleon_api::agent::TurnEvent::Plan { entries }) => {
                     assert!(entries.is_empty());
                 }
                 _ => panic!("expected an empty Plan event (clear)"),

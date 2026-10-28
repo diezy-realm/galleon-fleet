@@ -3,12 +3,12 @@
 use crate::whatsapp_storage::RusqliteStore;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelConversationScope,
     ChannelMessage, SendMessage,
 };
 #[cfg(feature = "whatsapp-web")]
-use clawcrew_api::media::MediaAttachment;
+use galleon_api::media::MediaAttachment;
 use galleon_i18n as i18n;
 use parking_lot::Mutex;
 use std::path::{Path, PathBuf};
@@ -2635,10 +2635,10 @@ fn whatsapp_delivery_failure_note(failure_count: usize) -> Option<String> {
 }
 
 #[cfg(feature = "whatsapp-web")]
-impl ::clawcrew_api::attribution::Attributable for WhatsAppWebChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::WhatsappWeb,
+impl ::galleon_api::attribution::Attributable for WhatsAppWebChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::WhatsappWeb,
         )
     }
     fn alias(&self) -> &str {
@@ -3609,10 +3609,10 @@ impl WhatsAppWebChannel {
 }
 
 #[cfg(not(feature = "whatsapp-web"))]
-impl ::clawcrew_api::attribution::Attributable for WhatsAppWebChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::WhatsappWeb,
+impl ::galleon_api::attribution::Attributable for WhatsAppWebChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::WhatsappWeb,
         )
     }
     fn alias(&self) -> &str {
@@ -5345,7 +5345,7 @@ mod tests {
             Arc::new(Vec::new),
             Arc::new(Vec::new),
         );
-        assert!(clawcrew_api::channel::Channel::is_direct_message(
+        assert!(galleon_api::channel::Channel::is_direct_message(
             &channel,
             &dispatched
         ));

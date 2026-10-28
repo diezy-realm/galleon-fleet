@@ -22,7 +22,7 @@ use std::sync::{OnceLock, RwLock};
 use tokio::fs::File;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
-use clawcrew_api::runtime_status::RuntimeConfigKind;
+use galleon_api::runtime_status::RuntimeConfigKind;
 use galleon_macros::Configurable;
 
 const SUPPORTED_PROXY_SERVICE_KEYS: &[&str] = &[
@@ -11055,7 +11055,7 @@ fn validate_plugin_channel_instances(config: &ChannelsConfig) -> Result<()> {
                 "channels.plugin.{alias}.package must not have leading or trailing whitespace"
             );
         }
-        clawcrew_api::plugin::validate_plugin_package_name(&declaration.package).map_err(
+        galleon_api::plugin::validate_plugin_package_name(&declaration.package).map_err(
             |error| anyhow::Error::msg(format!("channels.plugin.{alias}.package: {error}")),
         )?;
     }
@@ -14090,15 +14090,15 @@ pub struct PermissionProfileConfig {
     /// `models`, `peer_groups`, `plugins`, `tools`, `sops`. Verbs:
     /// `create`, `read`, `update`, `delete`, `execute`. An unlisted
     /// resource is denied.
-    pub grants: HashMap<clawcrew_api::grants::Resource, Vec<clawcrew_api::grants::Verb>>,
+    pub grants: HashMap<galleon_api::grants::Resource, Vec<galleon_api::grants::Verb>>,
 }
 
 impl PermissionProfileConfig {
     /// Compile this profile into the runtime grant shape.
     #[must_use]
-    pub fn resolve(&self) -> clawcrew_api::grants::ResolvedGrants {
-        use clawcrew_api::principal::AgentAlias;
-        let mut resolved = clawcrew_api::grants::ResolvedGrants::none();
+    pub fn resolve(&self) -> galleon_api::grants::ResolvedGrants {
+        use galleon_api::principal::AgentAlias;
+        let mut resolved = galleon_api::grants::ResolvedGrants::none();
         resolved.admin = self.admin;
         // Normalize selectors: trim surrounding whitespace and drop empties.
         // Validation trims when checking existence, but the compiled selector

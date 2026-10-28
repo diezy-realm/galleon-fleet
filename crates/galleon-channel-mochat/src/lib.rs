@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Deduplication set capacity — evict half of entries when full.
 const DEDUP_CAPACITY: usize = 10_000;
@@ -104,9 +104,9 @@ impl MochatChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MochatChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::MoChat)
+impl ::galleon_api::attribution::Attributable for MochatChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::MoChat)
     }
     fn alias(&self) -> &str {
         &self.alias

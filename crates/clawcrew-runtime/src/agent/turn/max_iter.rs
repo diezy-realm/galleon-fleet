@@ -9,7 +9,7 @@ use anyhow::{Context, Result};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio_util::sync::CancellationToken;
-use clawcrew_api::agent::TurnEvent;
+use galleon_api::agent::TurnEvent;
 use galleon_config::schema::{MultimodalConfig, PacingConfig};
 use galleon_providers::{ChatMessage, ModelProvider};
 use galleon_tool_call_parser::{strip_think_tags, strip_trailing_terminal_markers};
@@ -185,7 +185,7 @@ pub(crate) async fn finish_after_max_iterations(
                     .await;
             }
             observer.record_event(
-                &clawcrew_api::observability_traits::ObserverEvent::HistoryTrimmed {
+                &galleon_api::observability_traits::ObserverEvent::HistoryTrimmed {
                     dropped_messages,
                     kept_turns: trim.kept_turns,
                     reason: crate::i18n::get_required_cli_string("history-trim-reason-budget"),
@@ -224,7 +224,7 @@ pub(crate) async fn finish_after_max_iterations(
         let summary_request = galleon_providers::ChatRequest {
             messages: &request_messages,
             tools: None, // No tools — force a text response
-            thinking: clawcrew_api::NATIVE_THINKING_OVERRIDE
+            thinking: galleon_api::NATIVE_THINKING_OVERRIDE
                 .try_with(Clone::clone)
                 .ok()
                 .flatten(),
@@ -385,8 +385,8 @@ mod graceful_summary_metering_tests {
     use std::collections::HashMap;
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-    use clawcrew_api::model_provider::{
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::model_provider::{
         ChatRequest, ChatResponse, ProviderCapabilities, SemanticEmptyTerminalCompletion,
     };
     use galleon_config::schema::{CostConfig, MultimodalConfig, PacingConfig};

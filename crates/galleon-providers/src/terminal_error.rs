@@ -100,7 +100,7 @@ where
 
 pub fn is_semantic_empty_terminal_completion(err: &anyhow::Error) -> bool {
     err.chain().any(|source| {
-        source.is::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>()
+        source.is::<galleon_api::model_provider::SemanticEmptyTerminalCompletion>()
             || source.is::<ReliableSemanticEmptyCompletion>()
             || source
                 .to_string()

@@ -5,7 +5,7 @@
 
 use serde_json::json;
 
-use clawcrew_api::skill::Skill;
+use galleon_api::skill::Skill;
 
 use super::slash_options::{Choice, OptKind, OptionSpec};
 use super::types::{DiscordSlashCommandSpec, ReconcileOutcome, SlashScope};
@@ -897,18 +897,18 @@ Write it.
             tools: Vec::new(),
             prompts: Vec::new(),
             slash_options: vec![
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "format".to_string(),
                     description: "Output format".to_string(),
                     kind: "string".to_string(),
                     required: true,
                     description_localizations: Default::default(),
                     choices: vec![
-                        clawcrew_api::skill::SkillSlashChoice {
+                        galleon_api::skill::SkillSlashChoice {
                             name: "Email".to_string(),
                             value: "email".to_string(),
                         },
-                        clawcrew_api::skill::SkillSlashChoice {
+                        galleon_api::skill::SkillSlashChoice {
                             name: "Tweet".to_string(),
                             value: "tweet".to_string(),
                         },
@@ -918,7 +918,7 @@ Write it.
                     min_length: None,
                     max_length: None,
                 },
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "words".to_string(),
                     description: "Word limit".to_string(),
                     kind: "integer".to_string(),
@@ -982,7 +982,7 @@ Write it.
 
     #[test]
     fn map_drops_unknown_kinds_and_sorts_required_first() {
-        let skill = clawcrew_api::skill::Skill {
+        let skill = galleon_api::skill::Skill {
             name: "s".to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -992,7 +992,7 @@ Write it.
             tools: Vec::new(),
             prompts: Vec::new(),
             slash_options: vec![
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "opt".to_string(),
                     description: "o".to_string(),
                     kind: "string".to_string(),
@@ -1004,7 +1004,7 @@ Write it.
                     min_length: None,
                     max_length: None,
                 },
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "Req".to_string(),
                     description: "r".to_string(),
                     kind: "integer".to_string(),
@@ -1016,7 +1016,7 @@ Write it.
                     min_length: None,
                     max_length: None,
                 },
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "bad".to_string(),
                     description: "b".to_string(),
                     kind: "bogus".to_string(),
@@ -1039,8 +1039,8 @@ Write it.
         assert_eq!(mapped[1].name, "opt");
     }
 
-    fn sso(name: &str, kind: &str) -> clawcrew_api::skill::SkillSlashOption {
-        clawcrew_api::skill::SkillSlashOption {
+    fn sso(name: &str, kind: &str) -> galleon_api::skill::SkillSlashOption {
+        galleon_api::skill::SkillSlashOption {
             name: name.to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -1055,9 +1055,9 @@ Write it.
     }
 
     fn skill_with(
-        slash_options: Vec<clawcrew_api::skill::SkillSlashOption>,
-    ) -> clawcrew_api::skill::Skill {
-        clawcrew_api::skill::Skill {
+        slash_options: Vec<galleon_api::skill::SkillSlashOption>,
+    ) -> galleon_api::skill::Skill {
+        galleon_api::skill::Skill {
             name: "s".to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -1088,11 +1088,11 @@ Write it.
     fn map_drops_a_nonparsing_numeric_choice() {
         let mut o = sso("n", "integer");
         o.choices = vec![
-            clawcrew_api::skill::SkillSlashChoice {
+            galleon_api::skill::SkillSlashChoice {
                 name: "ok".to_string(),
                 value: "10".to_string(),
             },
-            clawcrew_api::skill::SkillSlashChoice {
+            galleon_api::skill::SkillSlashChoice {
                 name: "bad".to_string(),
                 value: "3.14".to_string(),
             },

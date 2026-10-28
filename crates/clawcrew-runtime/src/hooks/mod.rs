@@ -9,4 +9,4 @@ pub(crate) use runner::tool_call_hook_context;
 // external integrations and future plugin authors.
 #[allow(unused_imports)]
 pub use traits::{HookHandler, HookResult};
-pub use clawcrew_api::hook::ToolCallHookContext;
+pub use galleon_api::hook::ToolCallHookContext;

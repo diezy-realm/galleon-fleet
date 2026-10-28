@@ -3,7 +3,7 @@ pub mod native;
 
 pub use docker::DockerRuntime;
 pub use native::NativeRuntime;
-pub use clawcrew_api::runtime_traits::{RuntimeAdapter, ShellDialect, ShellProfile};
+pub use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect, ShellProfile};
 
 use crate::schema::{RuntimeConfig, RuntimeKind};
 
@@ -30,7 +30,7 @@ fn validate_shell(shell: &str) -> anyhow::Result<()> {
 
     // Android pins the shell to /system/bin/sh; the configured value is never
     // used, so don't reject it.
-    if clawcrew_api::platform::is_android() {
+    if galleon_api::platform::is_android() {
         return Ok(());
     }
 

@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::task::Poll;
 
 use futures_util::stream::{self, StreamExt as _};
-use clawcrew_api::model_provider::{
+use galleon_api::model_provider::{
     ChatMessage, ChatRequest, ChatResponse, ModelInfo, ModelProvider, StreamEvent, StreamOptions,
     StreamResult,
 };
@@ -504,7 +504,7 @@ pub struct ProviderDispatchRef<'a> {
 }
 
 fn provider_reference(provider: &dyn ModelProvider) -> String {
-    clawcrew_api::attribution::Attributable::alias(provider).to_string()
+    galleon_api::attribution::Attributable::alias(provider).to_string()
 }
 
 fn accounted_chat_call<'a, F>(
@@ -1225,8 +1225,8 @@ mod tests {
     use super::*;
     use futures_util::StreamExt;
     use std::sync::Arc;
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-    use clawcrew_api::model_provider::{
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::model_provider::{
         ChatRequest, ChatResponse, ModelProvider, StreamChunk, StreamEvent, StreamOptions,
         StreamResult,
     };

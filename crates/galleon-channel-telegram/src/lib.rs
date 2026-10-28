@@ -1,6 +1,6 @@
 use anyhow::Context;
 use async_trait::async_trait;
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     Channel, ChannelMessage, ChannelModelPickerRequest, ListenerHealth, ProgressEvent, SendMessage,
 };
 use galleon_config::pairing::PairingGuard;
@@ -144,7 +144,7 @@ const TELEGRAM_MAX_MESSAGE_LENGTH: usize = 4096;
 const TELEGRAM_MULTI_MESSAGE_SYNTHETIC_PREFIX: &str = "multi_message_synthetic:";
 
 pub type TelegramSkillsResolver =
-    Arc<dyn Fn(&Path) -> Vec<clawcrew_api::skill::Skill> + Send + Sync>;
+    Arc<dyn Fn(&Path) -> Vec<galleon_api::skill::Skill> + Send + Sync>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct MultiDraftKey {
@@ -855,21 +855,21 @@ fn telegram_audio_send_spec(
 /// verdict, so a document the loader would reject cannot be re-decided as an
 /// image by a later payload-only classifier.
 fn attachment_marker_kind(
-    attachment: &clawcrew_api::media::MediaAttachment,
-) -> clawcrew_api::media::MarkerKind {
+    attachment: &galleon_api::media::MediaAttachment,
+) -> galleon_api::media::MarkerKind {
     if attachment.provider_loadable_image_mime().is_some() {
-        clawcrew_api::media::MarkerKind::Image
+        galleon_api::media::MarkerKind::Image
     } else {
-        clawcrew_api::media::MarkerKind::Document
+        galleon_api::media::MarkerKind::Document
     }
 }
 
 fn format_attachment_content(
-    attachment: &clawcrew_api::media::MediaAttachment,
+    attachment: &galleon_api::media::MediaAttachment,
     local_path: &Path,
 ) -> String {
     match attachment_marker_kind(attachment) {
-        clawcrew_api::media::MarkerKind::Image => format!("[IMAGE:{}]", local_path.display()),
+        galleon_api::media::MarkerKind::Image => format!("[IMAGE:{}]", local_path.display()),
         _ => format!(
             "[Document: {}] {}",
             attachment.file_name,
@@ -1218,7 +1218,7 @@ pub struct TelegramChannel {
     fixture_http_client: Option<reqwest::Client>,
     /// Pre-computed tool command specs (name, description) for bot command registration.
     tool_command_specs: Vec<(String, String)>,
-    skills: Vec<clawcrew_api::skill::Skill>,
+    skills: Vec<galleon_api::skill::Skill>,
     skills_resolver: Option<TelegramSkillsResolver>,
     /// Pending approval requests: callback_data key → oneshot sender.
     /// `listen()` resolves these when a matching `callback_query` arrives.
@@ -1273,7 +1273,7 @@ pub enum UpdateDisposition {
 enum AttachmentMaterialization {
     Ready {
         content: String,
-        attachment: clawcrew_api::media::MediaAttachment,
+        attachment: galleon_api::media::MediaAttachment,
     },
     SkipPermanent,
     RetryTransient,
@@ -2902,12 +2902,12 @@ impl TelegramChannel {
     fn conversation_scope_for(
         &self,
         message: &serde_json::Value,
-    ) -> clawcrew_api::channel::ChannelConversationScope {
+    ) -> galleon_api::channel::ChannelConversationScope {
         if (!self.per_user_session || self.passive_group_context) && Self::is_group_message(message)
         {
-            clawcrew_api::channel::ChannelConversationScope::ReplyTarget
+            galleon_api::channel::ChannelConversationScope::ReplyTarget
         } else {
-            clawcrew_api::channel::ChannelConversationScope::Sender
+            galleon_api::channel::ChannelConversationScope::Sender
         }
     }
 
@@ -2972,7 +2972,7 @@ impl TelegramChannel {
     }
 
     /// Configure skills for bot command registration.
-    pub fn with_skills(mut self, skills: Vec<clawcrew_api::skill::Skill>) -> Self {
+    pub fn with_skills(mut self, skills: Vec<galleon_api::skill::Skill>) -> Self {
         self.skills = skills;
         self
     }
@@ -4434,8 +4434,8 @@ impl TelegramChannel {
     async fn resolve_after_deadline(
         &self,
         approval_id: &str,
-        rx: &mut tokio::sync::oneshot::Receiver<clawcrew_api::channel::ChannelApprovalResponse>,
-    ) -> clawcrew_api::channel::AttributedApprovalResponse {
+        rx: &mut tokio::sync::oneshot::Receiver<galleon_api::channel::ChannelApprovalResponse>,
+    ) -> galleon_api::channel::AttributedApprovalResponse {
         let claimed = self
             .pending_approvals
             .lock()
@@ -4443,18 +4443,18 @@ impl TelegramChannel {
             .remove(approval_id)
             .is_some();
         if claimed {
-            return clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
-                clawcrew_api::channel::ChannelApprovalResponse::Deny,
-                clawcrew_api::channel::ApprovalSource::TimedOut,
+            return galleon_api::channel::AttributedApprovalResponse::from_runtime(
+                galleon_api::channel::ChannelApprovalResponse::Deny,
+                galleon_api::channel::ApprovalSource::TimedOut,
             );
         }
         match tokio::time::timeout(Self::CALLBACK_CLAIM_GRACE, rx).await {
             Ok(Ok(response)) => {
-                clawcrew_api::channel::AttributedApprovalResponse::operator(response)
+                galleon_api::channel::AttributedApprovalResponse::operator(response)
             }
-            _ => clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
-                clawcrew_api::channel::ChannelApprovalResponse::Deny,
-                clawcrew_api::channel::ApprovalSource::TimedOut,
+            _ => galleon_api::channel::AttributedApprovalResponse::from_runtime(
+                galleon_api::channel::ChannelApprovalResponse::Deny,
+                galleon_api::channel::ApprovalSource::TimedOut,
             ),
         }
     }
@@ -5251,14 +5251,14 @@ Allowlist Telegram username (without '@') or numeric user ID.",
         // Preserve the typed envelope as the source of truth for both the
         // rendered marker and downstream attachment classification. Albums
         // collect these envelopes alongside their ordered content markers.
-        let mut media_attachment = clawcrew_api::media::MediaAttachment {
+        let mut media_attachment = galleon_api::media::MediaAttachment {
             file_name: display_filename,
             data: file_data,
             mime_type: attachment.mime_type.clone(),
             marker: None,
         };
         let marker_kind = attachment_marker_kind(&media_attachment);
-        media_attachment.marker = Some(clawcrew_api::media::RenderedMarker {
+        media_attachment.marker = Some(galleon_api::media::RenderedMarker {
             target: local_path.display().to_string(),
             kind: marker_kind,
         });
@@ -5276,7 +5276,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
         sender_identity: String,
         mut content: String,
         gated_caption: Option<&str>,
-        attachments: Vec<clawcrew_api::media::MediaAttachment>,
+        attachments: Vec<galleon_api::media::MediaAttachment>,
     ) -> Option<ChannelMessage> {
         let chat_id = message
             .get("chat")
@@ -6413,7 +6413,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                     .await
                 {
                     Ok(_) => Ok(()),
-                    Err(e) => Err(clawcrew_api::channel::FinalizePartialDelivery {
+                    Err(e) => Err(galleon_api::channel::FinalizePartialDelivery {
                         delivered: e.delivered.max(delivered),
                     }
                     .into()),
@@ -7033,9 +7033,9 @@ Allowlist Telegram username (without '@') or numeric user ID.",
         };
 
         let response = match action {
-            "approve" => Some(clawcrew_api::channel::ChannelApprovalResponse::Approve),
-            "always" => Some(clawcrew_api::channel::ChannelApprovalResponse::AlwaysApprove),
-            "deny" => Some(clawcrew_api::channel::ChannelApprovalResponse::Deny),
+            "approve" => Some(galleon_api::channel::ChannelApprovalResponse::Approve),
+            "always" => Some(galleon_api::channel::ChannelApprovalResponse::AlwaysApprove),
+            "deny" => Some(galleon_api::channel::ChannelApprovalResponse::Deny),
             other => {
                 ::galleon_log::record!(
                     WARN,
@@ -7322,10 +7322,10 @@ Allowlist Telegram username (without '@') or numeric user ID.",
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for TelegramChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Telegram,
+impl ::galleon_api::attribution::Attributable for TelegramChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Telegram,
         )
     }
     fn alias(&self) -> &str {
@@ -8748,8 +8748,8 @@ Ensure only one `clawcrew` process is using this bot token."
     async fn request_approval(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::ChannelApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::ChannelApprovalResponse>> {
         Ok(self
             .request_approval_attributed(recipient, request)
             .await?
@@ -8759,9 +8759,9 @@ Ensure only one `clawcrew` process is using this bot token."
     async fn request_approval_attributed(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
+        use galleon_api::channel::ChannelApprovalResponse;
 
         // The runtime emits StreamDelta::FlushBarrier before this approval prompt;
         // its channel handler flushes ONLY the owning draft (by draft_id) and the
@@ -8924,15 +8924,15 @@ Ensure only one `clawcrew` process is using this bot token."
                 .await
             {
                 Ok(Ok(response)) => Some(
-                    clawcrew_api::channel::AttributedApprovalResponse::operator(response),
+                    galleon_api::channel::AttributedApprovalResponse::operator(response),
                 ),
                 Ok(Err(_)) => {
                     // Sender dropped — clean up and deny. Nobody tapped.
                     self.pending_approvals.lock().await.remove(&approval_id);
                     Some(
-                        clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                        galleon_api::channel::AttributedApprovalResponse::from_runtime(
                             ChannelApprovalResponse::Deny,
-                            clawcrew_api::channel::ApprovalSource::Unreachable,
+                            galleon_api::channel::ApprovalSource::Unreachable,
                         ),
                     )
                 }

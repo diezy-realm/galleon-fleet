@@ -98,7 +98,7 @@ pub struct OpenAiCompatibleModelProvider {
     /// provider clones (e.g. the streaming path's owned copy) share one
     /// memo. Paths that rebuild the provider per call (e.g. the
     /// per-iteration vision route) start it empty each time.
-    schema_cache: std::sync::Arc<clawcrew_api::schema::SchemaCleanCache>,
+    schema_cache: std::sync::Arc<galleon_api::schema::SchemaCleanCache>,
 }
 
 /// How the model_provider expects the API key to be sent.
@@ -386,7 +386,7 @@ struct ModelEntry {
     /// OpenRouter: `{"pricing": {"prompt": "0.000003", "completion": "0.000015"}}`
     /// Values are per-token rates (e.g. "0.000005" = $5/1M tokens).
     #[serde(default)]
-    pricing: Option<clawcrew_api::model_provider::ModelPricing>,
+    pricing: Option<galleon_api::model_provider::ModelPricing>,
 }
 
 fn normalize_model_ids(body: ModelsResponse) -> Vec<String> {
@@ -404,8 +404,8 @@ fn normalize_model_ids(body: ModelsResponse) -> Vec<String> {
 /// Returns sorted list of `ModelInfo` with pricing data where available.
 fn normalize_models_with_pricing(
     body: ModelsResponse,
-) -> Vec<clawcrew_api::model_provider::ModelInfo> {
-    use clawcrew_api::model_provider::ModelInfo;
+) -> Vec<galleon_api::model_provider::ModelInfo> {
+    use galleon_api::model_provider::ModelInfo;
     let mut models: Vec<ModelInfo> = body
         .data
         .into_iter()
@@ -426,8 +426,8 @@ fn normalize_models_with_pricing(
 /// `None` — "unknown", never a stub value.
 fn models_dev_to_model_info(
     models: Vec<(String, Option<usize>)>,
-) -> Vec<clawcrew_api::model_provider::ModelInfo> {
-    use clawcrew_api::model_provider::ModelInfo;
+) -> Vec<galleon_api::model_provider::ModelInfo> {
+    use galleon_api::model_provider::ModelInfo;
     models
         .into_iter()
         .map(|(id, context_window)| ModelInfo {
@@ -789,7 +789,7 @@ impl OpenAiCompatibleBuilder {
             public_model_listing: self.public_model_listing,
             tls_ca_cert_pem,
             extra_body: self.extra_body,
-            schema_cache: std::sync::Arc::new(clawcrew_api::schema::SchemaCleanCache::new()),
+            schema_cache: std::sync::Arc::new(galleon_api::schema::SchemaCleanCache::new()),
         }
     }
 }
@@ -1506,7 +1506,7 @@ impl UsageInfo {
             .and_then(|details| details.cache_creation_input_tokens)
     }
 
-    fn into_provider_usage(self) -> clawcrew_api::model_provider::TokenUsage {
+    fn into_provider_usage(self) -> galleon_api::model_provider::TokenUsage {
         if let Some(creation) = self.cache_creation_input_tokens.filter(|count| *count > 0) {
             ::galleon_log::record!(
                 DEBUG,
@@ -1521,7 +1521,7 @@ impl UsageInfo {
         }
         let cached_input_tokens = self.cached_input_tokens();
         let cache_creation_input_tokens = self.cache_creation_input_tokens();
-        clawcrew_api::model_provider::TokenUsage {
+        galleon_api::model_provider::TokenUsage {
             input_tokens: self.prompt_tokens,
             output_tokens: self.completion_tokens,
             cached_input_tokens,
@@ -1714,7 +1714,7 @@ struct ToolCall {
     )]
     parameters: Option<serde_json::Value>,
 
-    /// See [`clawcrew_api::ToolCall::extra_content`].
+    /// See [`galleon_api::ToolCall::extra_content`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     extra_content: Option<serde_json::Value>,
 }
@@ -2535,7 +2535,7 @@ impl OpenAiCompatibleModelProvider {
 
     fn convert_tool_specs(
         &self,
-        tools: Option<&[clawcrew_api::tool::ToolSpec]>,
+        tools: Option<&[galleon_api::tool::ToolSpec]>,
     ) -> Option<Vec<NativeToolSpec>> {
         tools.map(|items| {
             items
@@ -2552,7 +2552,7 @@ impl OpenAiCompatibleModelProvider {
                         // body — never deep-copied per request.
                         parameters: self.schema_cache.clean_shared(
                             &tool.parameters,
-                            clawcrew_api::schema::CleaningStrategy::OpenAI,
+                            galleon_api::schema::CleaningStrategy::OpenAI,
                         ),
                     },
                 })
@@ -2562,7 +2562,7 @@ impl OpenAiCompatibleModelProvider {
 
     fn convert_tool_specs_for_model(
         &self,
-        tools: Option<&[clawcrew_api::tool::ToolSpec]>,
+        tools: Option<&[galleon_api::tool::ToolSpec]>,
         model: &str,
     ) -> Option<Vec<NativeToolSpec>> {
         let mut converted = self.convert_tool_specs(tools)?;
@@ -2578,9 +2578,9 @@ impl OpenAiCompatibleModelProvider {
             let Some(raw_parameters) = tool.extra.get("parameters").cloned() else {
                 continue;
             };
-            let cleaned = clawcrew_api::schema::SchemaCleanr::clean(
+            let cleaned = galleon_api::schema::SchemaCleanr::clean(
                 raw_parameters,
-                clawcrew_api::schema::CleaningStrategy::Conservative,
+                galleon_api::schema::CleaningStrategy::Conservative,
             );
             tool.extra.insert("parameters".to_string(), cleaned);
         }
@@ -3072,7 +3072,7 @@ impl OpenAiCompatibleModelProvider {
 
     fn with_prompt_guided_tool_instructions(
         messages: &[ChatMessage],
-        tools: Option<&[clawcrew_api::tool::ToolSpec]>,
+        tools: Option<&[galleon_api::tool::ToolSpec]>,
     ) -> Vec<ChatMessage> {
         let Some(tools) = tools else {
             return messages.to_vec();
@@ -3082,7 +3082,7 @@ impl OpenAiCompatibleModelProvider {
             return messages.to_vec();
         }
 
-        let instructions = clawcrew_api::model_provider::build_tool_instructions_text(tools);
+        let instructions = galleon_api::model_provider::build_tool_instructions_text(tools);
         let mut modified_messages = messages.to_vec();
 
         if let Some(system_message) = modified_messages.iter_mut().find(|m| m.role == "system") {
@@ -3200,8 +3200,8 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
         self.canonical_base_url
     }
 
-    fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-        clawcrew_api::model_provider::ProviderCapabilities {
+    fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+        galleon_api::model_provider::ProviderCapabilities {
             native_tool_calling: self.native_tool_calling,
             vision: self.supports_vision,
             prompt_caching: self.cache_passthrough,
@@ -3301,7 +3301,7 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
 
     async fn list_models_with_pricing(
         &self,
-    ) -> anyhow::Result<Vec<clawcrew_api::model_provider::ModelInfo>> {
+    ) -> anyhow::Result<Vec<galleon_api::model_provider::ModelInfo>> {
         // When a credential is present, hit the provider's native /models
         // endpoint — this returns pricing data that we can capture.
         let list_credential = self.resolve_credential().await?;
@@ -3897,8 +3897,8 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
         // unreadable past this point.
         let opencode_session = self.opencode_session_value();
         let messages_owned: Vec<ChatMessage> = request.messages.to_vec();
-        let tools_owned: Option<Vec<clawcrew_api::tool::ToolSpec>> =
-            request.tools.map(<[clawcrew_api::tool::ToolSpec]>::to_vec);
+        let tools_owned: Option<Vec<galleon_api::tool::ToolSpec>> =
+            request.tools.map(<[galleon_api::tool::ToolSpec]>::to_vec);
         let model = model.to_string();
         let count_tokens = options.count_tokens;
         let options_enabled = options.enabled;
@@ -4438,11 +4438,11 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for OpenAiCompatibleModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Plugin,
+impl ::galleon_api::attribution::Attributable for OpenAiCompatibleModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Plugin,
             ),
         )
     }

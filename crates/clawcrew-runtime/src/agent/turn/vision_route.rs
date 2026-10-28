@@ -330,11 +330,11 @@ mod tests {
                 Ok(String::new())
             }
         }
-        impl clawcrew_api::attribution::Attributable for NonVisionPrimary {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for NonVisionPrimary {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -398,8 +398,8 @@ vision = false
             fn capabilities_for_model(
                 &self,
                 _model: &str,
-            ) -> clawcrew_api::model_provider::ProviderCapabilities {
-                clawcrew_api::model_provider::ProviderCapabilities {
+            ) -> galleon_api::model_provider::ProviderCapabilities {
+                galleon_api::model_provider::ProviderCapabilities {
                     vision: false,
                     ..Default::default()
                 }
@@ -408,11 +408,11 @@ vision = false
                 Some("zai.default".to_string())
             }
         }
-        impl clawcrew_api::attribution::Attributable for NonVisionWithNamedFallback {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for NonVisionWithNamedFallback {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -465,11 +465,11 @@ vision = false
                 Ok(String::new())
             }
         }
-        impl clawcrew_api::attribution::Attributable for PlainNonVisionPrimary {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for PlainNonVisionPrimary {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -544,11 +544,11 @@ vision = false
                 Ok(String::new())
             }
         }
-        impl clawcrew_api::attribution::Attributable for NonVisionPrimary {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for NonVisionPrimary {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }

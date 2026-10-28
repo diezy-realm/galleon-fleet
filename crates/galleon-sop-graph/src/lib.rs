@@ -394,7 +394,7 @@ pub struct NodeRunOverlay {
 pub struct RunOverlay {
     pub run_id: String,
     pub sop_name: String,
-    pub status: clawcrew_api::sop::SopRunStatus,
+    pub status: galleon_api::sop::SopRunStatus,
     pub current_step: u32,
     pub total_steps: u32,
     pub waiting: bool,

@@ -6,7 +6,7 @@ use std::time::Duration;
 use anyhow::Result;
 use serde::Deserialize;
 use tokio::sync::OnceCell;
-use clawcrew_api::model_provider::ModelPricing;
+use galleon_api::model_provider::ModelPricing;
 
 const FETCH_TIMEOUT_SECS: u64 = 10;
 
@@ -103,8 +103,8 @@ pub(crate) fn filter_by_vendor(catalog: &[String], vendor_prefix: &str) -> Resul
 fn filter_by_vendor_with_pricing(
     catalog: &[ModelEntryWithPricing],
     vendor_prefix: &str,
-) -> Result<Vec<clawcrew_api::model_provider::ModelInfo>> {
-    use clawcrew_api::model_provider::ModelInfo;
+) -> Result<Vec<galleon_api::model_provider::ModelInfo>> {
+    use galleon_api::model_provider::ModelInfo;
     let needle = format!("{vendor_prefix}/");
     let mut models: Vec<ModelInfo> = catalog
         .iter()
@@ -139,7 +139,7 @@ pub async fn list_models_for_vendor(vendor_prefix: &str) -> Result<Vec<String>> 
 /// vendor prefix matches `vendor_prefix`. Sorted and deduplicated by id.
 pub async fn list_models_for_vendor_with_pricing(
     vendor_prefix: &str,
-) -> Result<Vec<clawcrew_api::model_provider::ModelInfo>> {
+) -> Result<Vec<galleon_api::model_provider::ModelInfo>> {
     let catalog = CACHED_CATALOG_WITH_PRICING
         .get_or_try_init(fetch_catalog_with_pricing)
         .await?;
@@ -148,8 +148,8 @@ pub async fn list_models_for_vendor_with_pricing(
 
 fn all_models_with_pricing(
     catalog: &[ModelEntryWithPricing],
-) -> Vec<clawcrew_api::model_provider::ModelInfo> {
-    use clawcrew_api::model_provider::ModelInfo;
+) -> Vec<galleon_api::model_provider::ModelInfo> {
+    use galleon_api::model_provider::ModelInfo;
     let mut models: Vec<ModelInfo> = catalog
         .iter()
         .map(|e| ModelInfo {
@@ -169,7 +169,7 @@ fn all_models_with_pricing(
 /// `<vendor>/<slug>` id. Sorted and deduplicated by id. Backs the first-class
 /// `OpenRouterModelProvider::list_models_with_pricing` so the cost-rates editor
 /// can prefill rates from the public catalog.
-pub async fn list_all_models_with_pricing() -> Result<Vec<clawcrew_api::model_provider::ModelInfo>>
+pub async fn list_all_models_with_pricing() -> Result<Vec<galleon_api::model_provider::ModelInfo>>
 {
     let catalog = CACHED_CATALOG_WITH_PRICING
         .get_or_try_init(fetch_catalog_with_pricing)

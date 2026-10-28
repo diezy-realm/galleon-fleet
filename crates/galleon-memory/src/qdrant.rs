@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::OnceCell;
 use uuid::Uuid;
-use clawcrew_api::session_keys::sanitize_session_key;
+use galleon_api::session_keys::sanitize_session_key;
 
 /// Qdrant vector database memory backend.
 /// Uses Qdrant's REST API for vector storage and semantic search.
@@ -172,7 +172,7 @@ impl QdrantMemory {
                 };
 
                 Some(MemoryEntry {
-                    scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                    scope: galleon_api::memory_traits::MemoryScope::Workspace,
                     id,
                     key: payload.key,
                     content: payload.content,
@@ -299,7 +299,7 @@ impl QdrantMemory {
                 }
 
                 entries.push(MemoryEntry {
-                    scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                    scope: galleon_api::memory_traits::MemoryScope::Workspace,
                     id,
                     key: payload.key,
                     content: payload.content,
@@ -577,7 +577,7 @@ impl QdrantMemory {
                 _ => return None,
             };
             Some(MemoryEntry {
-                scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                scope: galleon_api::memory_traits::MemoryScope::Workspace,
                 id,
                 key: payload.key,
                 content: payload.content,
@@ -787,7 +787,7 @@ impl Memory for QdrantMemory {
                 };
 
                 Some(MemoryEntry {
-                    scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                    scope: galleon_api::memory_traits::MemoryScope::Workspace,
                     id,
                     key: payload.key,
                     content: payload.content,
@@ -875,7 +875,7 @@ impl Memory for QdrantMemory {
                 };
 
                 Some(MemoryEntry {
-                    scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                    scope: galleon_api::memory_traits::MemoryScope::Workspace,
                     id,
                     key: payload.key,
                     content: payload.content,
@@ -1178,7 +1178,7 @@ impl Memory for QdrantMemory {
                 };
 
                 Some(MemoryEntry {
-                    scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                    scope: galleon_api::memory_traits::MemoryScope::Workspace,
                     id,
                     key: payload.key,
                     content: payload.content,
@@ -1208,9 +1208,9 @@ impl Memory for QdrantMemory {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for QdrantMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::Qdrant)
+impl ::galleon_api::attribution::Attributable for QdrantMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::Qdrant)
     }
     fn alias(&self) -> &str {
         &self.alias

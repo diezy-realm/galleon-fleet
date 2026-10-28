@@ -5,7 +5,7 @@ use crate::traits::{
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use clawcrew_api::tool::ToolSpec;
+use galleon_api::tool::ToolSpec;
 
 const DEFAULT_API_VERSION: &str = "2024-08-01-preview";
 
@@ -63,9 +63,9 @@ impl ResponseMessage {
 /// reasoning-only result is therefore a typed terminal failure, not a valid
 /// string result for direct callers that do not use the structured chat API.
 fn require_terminal_text(content: String) -> anyhow::Result<String> {
-    if clawcrew_api::model_provider::strip_think_tags(&content).is_empty() {
+    if galleon_api::model_provider::strip_think_tags(&content).is_empty() {
         return Err(anyhow::Error::new(
-            clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+            galleon_api::model_provider::SemanticEmptyTerminalCompletion,
         ));
     }
     Ok(content)
@@ -750,11 +750,11 @@ impl ModelProvider for AzureOpenAiModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for AzureOpenAiModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Azure,
+impl ::galleon_api::attribution::Attributable for AzureOpenAiModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Azure,
             ),
         )
     }
@@ -921,7 +921,7 @@ mod tests {
             .build();
         provider.base_url = format!("http://{addr}");
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1020,7 +1020,7 @@ mod tests {
             .build();
         provider.base_url = format!("http://{addr}");
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1106,7 +1106,7 @@ mod tests {
             .build();
         provider.base_url = format!("http://{addr}");
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1193,7 +1193,7 @@ mod tests {
             .build();
         provider.base_url = format!("http://{addr}");
         let messages = vec![ChatMessage::user("hello")];
-        let tools = vec![clawcrew_api::tool::ToolSpec::new(
+        let tools = vec![galleon_api::tool::ToolSpec::new(
             "get_weather",
             "Get weather",
             serde_json::json!({"type": "object", "properties": {}}),
@@ -1330,7 +1330,7 @@ mod tests {
             let error = require_terminal_text(text.to_string())
                 .expect_err("a string-only semantic-empty completion must fail");
             assert!(error.chain().any(|cause| {
-                cause.is::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>()
+                cause.is::<galleon_api::model_provider::SemanticEmptyTerminalCompletion>()
             }));
         }
     }
@@ -1507,7 +1507,7 @@ mod tests {
         // Pins that the azure_openai `convert_messages` call site of
         // `sanitize_tool_arguments` is wired in. The helper contract itself is
         // covered in `compatible::tests::sanitize_tool_arguments_*`.
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         let messages = vec![ChatMessage {
             role: "assistant".into(),
@@ -1526,7 +1526,7 @@ mod tests {
     #[test]
     fn convert_messages_passes_through_valid_tool_arguments() {
         // Companion regression: valid JSON must round-trip byte-for-byte.
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         let messages = vec![ChatMessage {
             role: "assistant".into(),

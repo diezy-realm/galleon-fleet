@@ -387,7 +387,7 @@ fn record_tool_loop_cost_usage_inner_with_live(
 
     // The session key scoped around this turn is the chat conversation the
     // spend belongs to; the tracker's own id is daemon-lifetime scoped.
-    let conversation_id = clawcrew_api::TOOL_LOOP_SESSION_KEY
+    let conversation_id = galleon_api::TOOL_LOOP_SESSION_KEY
         .try_with(Clone::clone)
         .ok()
         .flatten();
@@ -469,8 +469,8 @@ pub fn check_tool_loop_budget() -> Option<BudgetCheck> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-    use clawcrew_api::model_provider::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::model_provider::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
     use galleon_config::cost::tracker::CostTracker;
     use galleon_config::schema::{Config, DeepseekModelProviderConfig, ModelProviderConfig};
     use galleon_providers::ProviderDispatch;
@@ -1505,7 +1505,7 @@ mod tests {
             let ctx = ctx.clone();
             let usage = usage.clone();
             let session = session.to_string();
-            runtime.block_on(clawcrew_api::TOOL_LOOP_SESSION_KEY.scope(
+            runtime.block_on(galleon_api::TOOL_LOOP_SESSION_KEY.scope(
                 Some(session),
                 TOOL_LOOP_COST_TRACKING_CONTEXT.scope(Some(ctx), async {
                     record_tool_loop_cost_usage("deepseek", "deepseek-chat", &usage)

@@ -1,4 +1,4 @@
-//! HTTP adapter over `clawcrew_api::skill::SkillsRunner`.
+//! HTTP adapter over `galleon_api::skill::SkillsRunner`.
 
 use axum::{
     Json,
@@ -6,7 +6,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
-use clawcrew_api::skill::{
+use galleon_api::skill::{
     AgentSkillEntry, DroppedSkill, DroppedSkillEntry, EffectiveSkill, RemoveMode, ScaffoldOptions,
     ServiceError, ShadowedSkillEntry, SkillDocument, SkillDropReason, SkillFrontmatter,
     SkillOrigin, SkillsBundlesResult, SkillsListResult, SlashOptionKindDescriptor,
@@ -68,7 +68,7 @@ pub async fn handle_slash_option_kinds(
         return e.into_response();
     }
     Json(SlashOptionKindsResult {
-        kinds: clawcrew_api::skill::slash_option_kinds(),
+        kinds: galleon_api::skill::slash_option_kinds(),
     })
     .into_response()
 }
@@ -305,7 +305,7 @@ fn service_error_response(err: ServiceError) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::skill::{ShadowedSkill, SkillOrigin};
+    use galleon_api::skill::{ShadowedSkill, SkillOrigin};
     use std::path::PathBuf;
 
     // the write-guard error maps to 403, distinct from 404/400.

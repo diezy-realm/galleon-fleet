@@ -7,8 +7,8 @@ use std::collections::VecDeque;
 use std::ops::{Deref, DerefMut};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::sync::mpsc;
-use clawcrew_api::ingress::IngressContext;
-use clawcrew_api::model_provider::TokenUsage;
+use galleon_api::ingress::IngressContext;
+use galleon_api::model_provider::TokenUsage;
 use galleon_providers::{ChatResponse, ToolCall};
 
 // ── shared fixtures ─────────────────────────────────────────────────────
@@ -159,11 +159,11 @@ impl ModelProvider for ScriptedProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ScriptedProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ScriptedProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -178,7 +178,7 @@ pub(super) struct CountingTool {
     pub(super) calls: Arc<AtomicUsize>,
 }
 
-clawcrew_api::tool_attribution!(CountingTool, ::clawcrew_api::attribution::ToolKind::Plugin);
+galleon_api::tool_attribution!(CountingTool, ::galleon_api::attribution::ToolKind::Plugin);
 
 #[async_trait]
 impl Tool for CountingTool {
@@ -254,9 +254,9 @@ struct ModelSwitchTriggerTool {
     target_model: String,
 }
 
-clawcrew_api::tool_attribution!(
+galleon_api::tool_attribution!(
     ModelSwitchTriggerTool,
-    ::clawcrew_api::attribution::ToolKind::Plugin
+    ::galleon_api::attribution::ToolKind::Plugin
 );
 
 #[async_trait]
@@ -550,11 +550,11 @@ async fn safety_net_thinking_never_leaks_into_draft_or_chunks() {
             futures_util::stream::iter(events).boxed()
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for ThinkStreamProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ThinkStreamProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -718,10 +718,10 @@ async fn safety_net_streaming_approval_deny_with_edit_round_trip() {
         requests: Arc<AtomicUsize>,
         seen_summary: Arc<parking_lot::Mutex<Option<String>>>,
     }
-    impl ::clawcrew_api::attribution::Attributable for EditChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::AcpChannel,
+    impl ::galleon_api::attribution::Attributable for EditChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::AcpChannel,
             )
         }
         fn alias(&self) -> &str {
@@ -729,28 +729,28 @@ async fn safety_net_streaming_approval_deny_with_edit_round_trip() {
         }
     }
     #[async_trait]
-    impl clawcrew_api::channel::Channel for EditChannel {
+    impl galleon_api::channel::Channel for EditChannel {
         fn name(&self) -> &str {
             "edit-channel"
         }
-        async fn send(&self, _message: &clawcrew_api::channel::SendMessage) -> anyhow::Result<()> {
+        async fn send(&self, _message: &galleon_api::channel::SendMessage) -> anyhow::Result<()> {
             Ok(())
         }
         async fn listen(
             &self,
-            _tx: mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+            _tx: mpsc::Sender<galleon_api::channel::ChannelMessage>,
         ) -> anyhow::Result<()> {
             Ok(())
         }
         async fn request_approval(
             &self,
             _recipient: &str,
-            request: &clawcrew_api::channel::ChannelApprovalRequest,
-        ) -> anyhow::Result<Option<clawcrew_api::channel::ChannelApprovalResponse>> {
+            request: &galleon_api::channel::ChannelApprovalRequest,
+        ) -> anyhow::Result<Option<galleon_api::channel::ChannelApprovalResponse>> {
             self.requests.fetch_add(1, Ordering::SeqCst);
             *self.seen_summary.lock() = Some(request.arguments_summary.clone());
             Ok(Some(
-                clawcrew_api::channel::ChannelApprovalResponse::DenyWithEdit {
+                galleon_api::channel::ChannelApprovalResponse::DenyWithEdit {
                     replacement: "EDITED-RESULT".into(),
                 },
             ))
@@ -909,7 +909,7 @@ async fn safety_net_task_locals_probe_per_entry_path() {
     struct ProbeTool {
         seen: Probe,
     }
-    clawcrew_api::tool_attribution!(ProbeTool, ::clawcrew_api::attribution::ToolKind::Plugin);
+    galleon_api::tool_attribution!(ProbeTool, ::galleon_api::attribution::ToolKind::Plugin);
     #[async_trait]
     impl Tool for ProbeTool {
         fn name(&self) -> &str {
@@ -922,13 +922,13 @@ async fn safety_net_task_locals_probe_per_entry_path() {
             serde_json::json!({"type": "object"})
         }
         async fn execute(&self, _args: serde_json::Value) -> Result<crate::tools::ToolResult> {
-            let thread = clawcrew_api::TOOL_LOOP_THREAD_ID
+            let thread = galleon_api::TOOL_LOOP_THREAD_ID
                 .try_with(|v| v.is_some())
                 .unwrap_or(false);
-            let session = clawcrew_api::TOOL_LOOP_SESSION_KEY
+            let session = galleon_api::TOOL_LOOP_SESSION_KEY
                 .try_with(|v| v.is_some())
                 .unwrap_or(false);
-            let choice = clawcrew_api::TOOL_CHOICE_OVERRIDE
+            let choice = galleon_api::TOOL_CHOICE_OVERRIDE
                 .try_with(|v| v.is_some())
                 .unwrap_or(false);
             self.seen.lock().push((thread, session, choice));
@@ -1130,9 +1130,9 @@ async fn safety_net_streaming_tool_results_input_order_and_midbatch_cancel() {
     struct CancellingTool {
         token: tokio_util::sync::CancellationToken,
     }
-    clawcrew_api::tool_attribution!(
+    galleon_api::tool_attribution!(
         CancellingTool,
-        ::clawcrew_api::attribution::ToolKind::Plugin
+        ::galleon_api::attribution::ToolKind::Plugin
     );
     #[async_trait]
     impl Tool for CancellingTool {
@@ -1232,7 +1232,7 @@ impl Observer for EventCapture {
     fn record_event(&self, event: &ObserverEvent) {
         self.events.lock().push(event.clone());
     }
-    fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {}
+    fn record_metric(&self, _metric: &galleon_api::observability_traits::ObserverMetric) {}
     fn name(&self) -> &str {
         "event-capture"
     }
@@ -1439,11 +1439,11 @@ impl ModelProvider for ErrAfterScriptProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ErrAfterScriptProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ErrAfterScriptProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -1500,9 +1500,9 @@ async fn safety_net_midbatch_cancel_emits_events_for_completed_tools() {
     struct CancelAfterRunTool {
         token: tokio_util::sync::CancellationToken,
     }
-    clawcrew_api::tool_attribution!(
+    galleon_api::tool_attribution!(
         CancelAfterRunTool,
-        ::clawcrew_api::attribution::ToolKind::Plugin
+        ::galleon_api::attribution::ToolKind::Plugin
     );
     #[async_trait]
     impl Tool for CancelAfterRunTool {
@@ -1576,7 +1576,7 @@ async fn safety_net_midbatch_cancel_emits_events_for_completed_tools() {
 /// Streams the given events, then hangs (pending) so the test can cancel.
 struct StreamThenHangProvider {
     events: parking_lot::Mutex<
-        Vec<clawcrew_api::model_provider::StreamResult<clawcrew_api::model_provider::StreamEvent>>,
+        Vec<galleon_api::model_provider::StreamResult<galleon_api::model_provider::StreamEvent>>,
     >,
 }
 
@@ -1608,7 +1608,7 @@ impl ModelProvider for StreamThenHangProvider {
         _: galleon_providers::traits::StreamOptions,
     ) -> futures_util::stream::BoxStream<
         'static,
-        clawcrew_api::model_provider::StreamResult<clawcrew_api::model_provider::StreamEvent>,
+        galleon_api::model_provider::StreamResult<galleon_api::model_provider::StreamEvent>,
     > {
         use futures_util::StreamExt as _;
         let events = std::mem::take(&mut *self.events.lock());
@@ -1618,11 +1618,11 @@ impl ModelProvider for StreamThenHangProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for StreamThenHangProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for StreamThenHangProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -1633,9 +1633,9 @@ impl ::clawcrew_api::attribution::Attributable for StreamThenHangProvider {
 
 fn text_delta(
     delta: &str,
-) -> clawcrew_api::model_provider::StreamResult<clawcrew_api::model_provider::StreamEvent> {
-    Ok(clawcrew_api::model_provider::StreamEvent::TextDelta(
-        clawcrew_api::model_provider::StreamChunk {
+) -> galleon_api::model_provider::StreamResult<galleon_api::model_provider::StreamEvent> {
+    Ok(galleon_api::model_provider::StreamEvent::TextDelta(
+        galleon_api::model_provider::StreamChunk {
             delta: delta.to_string(),
             reasoning: None,
             is_final: false,
@@ -1711,8 +1711,8 @@ async fn safety_net_stream_error_persists_only_forwarded_text() {
     let provider = StreamThenHangProvider {
         events: parking_lot::Mutex::new(vec![
             // Thinking marks event-visible output without any forwarded text.
-            Ok(clawcrew_api::model_provider::StreamEvent::TextDelta(
-                clawcrew_api::model_provider::StreamChunk {
+            Ok(galleon_api::model_provider::StreamEvent::TextDelta(
+                galleon_api::model_provider::StreamChunk {
                     delta: String::new(),
                     reasoning: Some("working on it".into()),
                     is_final: false,
@@ -1722,7 +1722,7 @@ async fn safety_net_stream_error_persists_only_forwarded_text() {
             // Suspicious protocol prefix: the stream guard withholds it, so
             // no consumer ever sees this text.
             text_delta("{\"tool_call\": {\"name\": \"shell\""),
-            Err(clawcrew_api::model_provider::StreamError::Http(
+            Err(galleon_api::model_provider::StreamError::Http(
                 "connection reset".into(),
             )),
         ]),
@@ -1898,13 +1898,13 @@ async fn safety_net_failed_graceful_summary_does_not_persist_prompt() {
 
 /// Records each approval request and answers with a fixed decision.
 struct RecordingApprovalChannel {
-    response: clawcrew_api::channel::ChannelApprovalResponse,
+    response: galleon_api::channel::ChannelApprovalResponse,
     requests: Arc<AtomicUsize>,
 }
-impl ::clawcrew_api::attribution::Attributable for RecordingApprovalChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::AcpChannel,
+impl ::galleon_api::attribution::Attributable for RecordingApprovalChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::AcpChannel,
         )
     }
     fn alias(&self) -> &str {
@@ -1912,24 +1912,24 @@ impl ::clawcrew_api::attribution::Attributable for RecordingApprovalChannel {
     }
 }
 #[async_trait]
-impl clawcrew_api::channel::Channel for RecordingApprovalChannel {
+impl galleon_api::channel::Channel for RecordingApprovalChannel {
     fn name(&self) -> &str {
         "acp"
     }
-    async fn send(&self, _message: &clawcrew_api::channel::SendMessage) -> anyhow::Result<()> {
+    async fn send(&self, _message: &galleon_api::channel::SendMessage) -> anyhow::Result<()> {
         Ok(())
     }
     async fn listen(
         &self,
-        _tx: mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
     async fn request_approval(
         &self,
         _recipient: &str,
-        _request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::ChannelApprovalResponse>> {
+        _request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::ChannelApprovalResponse>> {
         self.requests.fetch_add(1, Ordering::SeqCst);
         Ok(Some(self.response.clone()))
     }
@@ -1943,9 +1943,9 @@ struct CapturingArgTool {
     calls: Arc<AtomicUsize>,
     last_args: Arc<parking_lot::Mutex<Option<serde_json::Value>>>,
 }
-clawcrew_api::tool_attribution!(
+galleon_api::tool_attribution!(
     CapturingArgTool,
-    ::clawcrew_api::attribution::ToolKind::Plugin
+    ::galleon_api::attribution::ToolKind::Plugin
 );
 #[async_trait]
 impl Tool for CapturingArgTool {
@@ -1984,7 +1984,7 @@ fn approval_agent(
     provider: Box<dyn ModelProvider>,
     tools_vec: Vec<Box<dyn Tool>>,
     manager: Option<Arc<ApprovalManager>>,
-    channel: Option<Arc<dyn clawcrew_api::channel::Channel>>,
+    channel: Option<Arc<dyn galleon_api::channel::Channel>>,
 ) -> TestAgent {
     let workspace = test_workspace();
     let mut builder = Agent::builder()
@@ -2030,7 +2030,7 @@ async fn safety_net_loop_approval_requested_then_executed_on_approve() {
         })],
         Some(Arc::new(ApprovalManager::for_non_interactive(&risk))),
         Some(Arc::new(RecordingApprovalChannel {
-            response: clawcrew_api::channel::ChannelApprovalResponse::Approve,
+            response: galleon_api::channel::ChannelApprovalResponse::Approve,
             requests: Arc::clone(&requests),
         })),
     );
@@ -2065,7 +2065,7 @@ async fn safety_net_loop_approval_denied_blocks_execution() {
         })],
         Some(Arc::new(ApprovalManager::for_non_interactive(&risk))),
         Some(Arc::new(RecordingApprovalChannel {
-            response: clawcrew_api::channel::ChannelApprovalResponse::Deny,
+            response: galleon_api::channel::ChannelApprovalResponse::Deny,
             requests: Arc::clone(&requests),
         })),
     );
@@ -2109,7 +2109,7 @@ async fn safety_net_loop_shell_does_not_trust_model_supplied_approved_arg() {
             &galleon_config::schema::RiskProfileConfig::default(),
         ))),
         Some(Arc::new(RecordingApprovalChannel {
-            response: clawcrew_api::channel::ChannelApprovalResponse::Deny,
+            response: galleon_api::channel::ChannelApprovalResponse::Deny,
             requests: Arc::clone(&requests),
         })),
     );
@@ -2157,7 +2157,7 @@ async fn safety_net_loop_shell_marks_args_approved_after_backchannel_approval() 
             &galleon_config::schema::RiskProfileConfig::default(),
         ))),
         Some(Arc::new(RecordingApprovalChannel {
-            response: clawcrew_api::channel::ChannelApprovalResponse::Approve,
+            response: galleon_api::channel::ChannelApprovalResponse::Approve,
             requests: Arc::clone(&requests),
         })),
     );
@@ -2203,7 +2203,7 @@ async fn safety_net_loop_shell_keeps_runtime_approval_from_always_allowlist() {
             &galleon_config::schema::RiskProfileConfig::default(),
         ))),
         Some(Arc::new(RecordingApprovalChannel {
-            response: clawcrew_api::channel::ChannelApprovalResponse::AlwaysApprove,
+            response: galleon_api::channel::ChannelApprovalResponse::AlwaysApprove,
             requests: Arc::clone(&requests),
         })),
     );
@@ -2269,7 +2269,7 @@ async fn safety_net_loop_cron_add_does_not_trust_model_supplied_approved_arg() {
 // client drops it and only the text after the last tool call renders.
 
 type StreamScriptItem =
-    clawcrew_api::model_provider::StreamResult<clawcrew_api::model_provider::StreamEvent>;
+    galleon_api::model_provider::StreamResult<galleon_api::model_provider::StreamEvent>;
 
 /// Streams one scripted event list per provider call; the non-streaming
 /// `chat` path answers with a marker so a test that expected the streaming
@@ -2318,16 +2318,16 @@ impl ModelProvider for ScriptedStreamProvider {
             .scripts
             .lock()
             .pop_front()
-            .unwrap_or_else(|| vec![Ok(clawcrew_api::model_provider::StreamEvent::Final)]);
+            .unwrap_or_else(|| vec![Ok(galleon_api::model_provider::StreamEvent::Final)]);
         futures_util::stream::iter(script).boxed()
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ScriptedStreamProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ScriptedStreamProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -2421,14 +2421,14 @@ async fn safety_net_live_streamed_tool_turn_does_not_duplicate_narration_chunk()
         Box::new(ScriptedStreamProvider::new(vec![
             vec![
                 text_delta("thinking aloud"),
-                Ok(clawcrew_api::model_provider::StreamEvent::ToolCall(
+                Ok(galleon_api::model_provider::StreamEvent::ToolCall(
                     tool_call("tc-1", "echo"),
                 )),
-                Ok(clawcrew_api::model_provider::StreamEvent::Final),
+                Ok(galleon_api::model_provider::StreamEvent::Final),
             ],
             vec![
                 text_delta("all done"),
-                Ok(clawcrew_api::model_provider::StreamEvent::Final),
+                Ok(galleon_api::model_provider::StreamEvent::Final),
             ],
         ])),
         vec![Box::new(CountingTool {
@@ -2489,14 +2489,14 @@ async fn safety_net_guard_held_narration_suffix_reaches_event_consumer_live_befo
             vec![
                 text_delta("About to "),
                 text_delta("check the <tool"),
-                Ok(clawcrew_api::model_provider::StreamEvent::ToolCall(
+                Ok(galleon_api::model_provider::StreamEvent::ToolCall(
                     tool_call("tc-1", "echo"),
                 )),
-                Ok(clawcrew_api::model_provider::StreamEvent::Final),
+                Ok(galleon_api::model_provider::StreamEvent::Final),
             ],
             vec![
                 text_delta("all done"),
-                Ok(clawcrew_api::model_provider::StreamEvent::Final),
+                Ok(galleon_api::model_provider::StreamEvent::Final),
             ],
         ])),
         vec![Box::new(CountingTool {
@@ -2580,14 +2580,14 @@ async fn safety_net_protocol_suppressed_tool_turn_emits_no_narration_chunk() {
             vec![
                 text_delta("thinking aloud"),
                 text_delta("<tool_call>{\"name\": \"echo\", \"arguments\": {}}</tool_call>"),
-                Ok(clawcrew_api::model_provider::StreamEvent::ToolCall(
+                Ok(galleon_api::model_provider::StreamEvent::ToolCall(
                     tool_call("tc-1", "echo"),
                 )),
-                Ok(clawcrew_api::model_provider::StreamEvent::Final),
+                Ok(galleon_api::model_provider::StreamEvent::Final),
             ],
             vec![
                 text_delta("all done"),
-                Ok(clawcrew_api::model_provider::StreamEvent::Final),
+                Ok(galleon_api::model_provider::StreamEvent::Final),
             ],
         ])),
         vec![Box::new(CountingTool {
@@ -3711,11 +3711,11 @@ async fn usage_identity_crosses_provider_boundary_without_usage() {
             Err(anyhow::Error::msg("provider A failed"))
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for FailingProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for FailingProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }

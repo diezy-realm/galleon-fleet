@@ -1,4 +1,4 @@
-pub use clawcrew_api::model_provider::*;
+pub use galleon_api::model_provider::*;
 
 /// Marks a provider failure as definitively non-retryable without coupling
 /// shared retry policy to provider-specific error text.

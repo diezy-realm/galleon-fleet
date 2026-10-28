@@ -70,7 +70,7 @@ pub use galleon_config::schema::{HardwareConfig, HardwareTransport};
 /// registry, deduplicating by name.
 /// Returns a tuple of `(device_summary, added_tool_names)`.
 pub fn merge_hardware_tools(
-    tools: &mut Vec<Box<dyn clawcrew_api::tool::Tool>>,
+    tools: &mut Vec<Box<dyn galleon_api::tool::Tool>>,
     hw_boot: HardwareBootResult,
 ) -> (String, Vec<String>) {
     let device_summary = hw_boot.device_summary.clone();
@@ -78,7 +78,7 @@ pub fn merge_hardware_tools(
     if !hw_boot.tools.is_empty() {
         let existing: std::collections::HashSet<String> =
             tools.iter().map(|t| t.name().to_string()).collect();
-        let new_hw_tools: Vec<Box<dyn clawcrew_api::tool::Tool>> = hw_boot
+        let new_hw_tools: Vec<Box<dyn galleon_api::tool::Tool>> = hw_boot
             .tools
             .into_iter()
             .filter(|t| !existing.contains(t.name()))
@@ -101,7 +101,7 @@ pub fn merge_hardware_tools(
 /// system prompt.
 pub struct HardwareBootResult {
     /// Tools to extend into the agent's `tools_registry`.
-    pub tools: Vec<Box<dyn clawcrew_api::tool::Tool>>,
+    pub tools: Vec<Box<dyn galleon_api::tool::Tool>>,
     /// Human-readable device summary for the LLM system prompt.
     pub device_summary: String,
     /// Content of `~/.clawcrew/hardware/` context files (HARDWARE.md, device
@@ -173,7 +173,7 @@ pub fn load_hardware_context_from_dir(hw_dir: &std::path::Path, aliases: &[&str]
 
 #[cfg(all(feature = "peripheral-rpi", target_os = "linux"))]
 fn inject_rpi_context(
-    tools: &mut Vec<Box<dyn clawcrew_api::tool::Tool>>,
+    tools: &mut Vec<Box<dyn galleon_api::tool::Tool>>,
     context_files_prompt: &mut String,
 ) {
     if let Some(ctx) = rpi::RpiSystemContext::discover() {

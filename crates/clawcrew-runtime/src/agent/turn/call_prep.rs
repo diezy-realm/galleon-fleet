@@ -11,8 +11,8 @@ use super::redact::scrub_credentials;
 use crate::agent::tool_execution::ToolExecutionOutcome;
 use crate::util::truncate_with_ellipsis;
 use anyhow::Result;
-use clawcrew_api::attribution::ToolProvenance;
-use clawcrew_api::hook::ToolCallHookContext;
+use galleon_api::attribution::ToolProvenance;
+use galleon_api::hook::ToolCallHookContext;
 use galleon_tool_call_parser::{ParsedToolCall, canonicalize_json_for_tool_signature};
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -222,7 +222,7 @@ pub(crate) async fn prepare_tool_calls(
             &mut tool_args,
             ctx.channel_name,
             ctx.channel
-                .map(clawcrew_api::attribution::Attributable::alias),
+                .map(galleon_api::attribution::Attributable::alias),
             ctx.channel_reply_target,
         );
 
@@ -285,7 +285,7 @@ pub(crate) async fn prepare_tool_calls(
         // The batch position comes from this enumeration, so the card can say
         // which of the model's calls it is describing. It counts every call in
         // the batch, not just the ones that need approval.
-        let position = clawcrew_api::channel::ApprovalPosition {
+        let position = galleon_api::channel::ApprovalPosition {
             index: u32::try_from(idx + 1).unwrap_or(u32::MAX),
             total: u32::try_from(tool_calls.len()).unwrap_or(u32::MAX),
         };
@@ -412,7 +412,7 @@ mod tests {
     use crate::tools::skill_tool::SkillBuiltinTool;
     use crate::tools::{Tool, ToolResult};
     use async_trait::async_trait;
-    use clawcrew_api::attribution::{Attributable, ToolProvenance};
+    use galleon_api::attribution::{Attributable, ToolProvenance};
     use galleon_config::schema::{PacingConfig, StreamReasoningMode};
     use galleon_tool_call_parser::ParsedToolCall;
     use std::collections::{HashMap, HashSet};
@@ -426,8 +426,8 @@ mod tests {
     }
 
     impl Attributable for AttributedTool {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
         }
 
         fn alias(&self) -> &str {
@@ -625,7 +625,7 @@ mod tests {
 
         async fn before_tool_call_with_context(
             &self,
-            context: &clawcrew_api::hook::ToolCallHookContext,
+            context: &galleon_api::hook::ToolCallHookContext,
             name: String,
             args: serde_json::Value,
         ) -> crate::hooks::HookResult<(String, serde_json::Value)> {
@@ -642,9 +642,9 @@ mod tests {
 
         async fn on_after_tool_call_with_context(
             &self,
-            context: &clawcrew_api::hook::ToolCallHookContext,
+            context: &galleon_api::hook::ToolCallHookContext,
             tool: &str,
-            _result: &clawcrew_api::tool::ToolResult,
+            _result: &galleon_api::tool::ToolResult,
             _duration: Duration,
         ) {
             self.events
@@ -655,7 +655,7 @@ mod tests {
 
         async fn on_tool_call_abandoned(
             &self,
-            context: &clawcrew_api::hook::ToolCallHookContext,
+            context: &galleon_api::hook::ToolCallHookContext,
             tool: &str,
         ) {
             self.events.lock().unwrap().push(format!(
@@ -807,8 +807,8 @@ mod tests {
 
     #[tokio::test]
     async fn approval_cancellation_abandons_retained_and_waiting_calls_once() {
-        use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
-        use clawcrew_api::channel::{
+        use galleon_api::attribution::{Attributable, ChannelKind, Role};
+        use galleon_api::channel::{
             Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
         };
         use tokio_util::sync::CancellationToken;
@@ -988,10 +988,10 @@ mod tests {
     /// replacement, exercising the Replace arm of the approval gate.
     struct ReplacingChannel;
 
-    impl clawcrew_api::attribution::Attributable for ReplacingChannel {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Channel(
-                clawcrew_api::attribution::ChannelKind::Webhook,
+    impl galleon_api::attribution::Attributable for ReplacingChannel {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Channel(
+                galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {
@@ -1000,18 +1000,18 @@ mod tests {
     }
 
     #[async_trait]
-    impl clawcrew_api::channel::Channel for ReplacingChannel {
+    impl galleon_api::channel::Channel for ReplacingChannel {
         fn name(&self) -> &str {
             "replacing-test"
         }
 
-        async fn send(&self, _message: &clawcrew_api::channel::SendMessage) -> anyhow::Result<()> {
+        async fn send(&self, _message: &galleon_api::channel::SendMessage) -> anyhow::Result<()> {
             Ok(())
         }
 
         async fn listen(
             &self,
-            _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+            _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
         ) -> anyhow::Result<()> {
             tokio::time::sleep(std::time::Duration::from_secs(600)).await;
             Ok(())
@@ -1020,11 +1020,11 @@ mod tests {
         async fn request_approval_attributed(
             &self,
             _recipient: &str,
-            _request: &clawcrew_api::channel::ChannelApprovalRequest,
-        ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+            _request: &galleon_api::channel::ChannelApprovalRequest,
+        ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
             Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::operator(
-                    clawcrew_api::channel::ChannelApprovalResponse::DenyWithEdit {
+                galleon_api::channel::AttributedApprovalResponse::operator(
+                    galleon_api::channel::ChannelApprovalResponse::DenyWithEdit {
                         replacement: "safe replacement".to_string(),
                     },
                 )

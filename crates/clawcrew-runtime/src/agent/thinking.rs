@@ -338,7 +338,7 @@ mod tests {
 
     #[test]
     fn display_mode_propagates_into_native_params() {
-        use clawcrew_api::model_provider::ThinkingDisplay;
+        use galleon_api::model_provider::ThinkingDisplay;
         use galleon_config::scattered_types::ThinkingDisplayMode;
 
         let config = ThinkingConfig {
@@ -404,7 +404,7 @@ display = "updates"
         assert_eq!(config.display, ThinkingDisplayMode::Updates);
         assert_eq!(
             config.display.to_display(),
-            Some(clawcrew_api::model_provider::ThinkingDisplay::Updates)
+            Some(galleon_api::model_provider::ThinkingDisplay::Updates)
         );
 
         // Round-trip: serialization keeps the knob settable again.
@@ -436,9 +436,9 @@ display = "updates"
             budget_tokens: 32_000,
             display: None,
         });
-        let read_back = clawcrew_api::NATIVE_THINKING_OVERRIDE
+        let read_back = galleon_api::NATIVE_THINKING_OVERRIDE
             .scope(installed, async {
-                clawcrew_api::NATIVE_THINKING_OVERRIDE
+                galleon_api::NATIVE_THINKING_OVERRIDE
                     .try_with(Clone::clone)
                     .ok()
                     .flatten()
@@ -453,7 +453,7 @@ display = "updates"
     #[tokio::test]
     async fn native_thinking_override_returns_none_outside_scope() {
         let read_back = async {
-            clawcrew_api::NATIVE_THINKING_OVERRIDE
+            galleon_api::NATIVE_THINKING_OVERRIDE
                 .try_with(Clone::clone)
                 .ok()
                 .flatten()

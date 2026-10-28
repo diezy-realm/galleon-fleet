@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use serde_json::json;
 
 use crate::sop::SopEngine;
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::tool::{Tool, ToolResult};
 
 /// Lists all loaded SOPs with their triggers, priority, step count, and active runs.
 pub struct SopListTool {

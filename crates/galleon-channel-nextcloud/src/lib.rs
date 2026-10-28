@@ -6,7 +6,7 @@ use sha2::Sha256;
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_config::schema::StreamMode;
 
 /// Maximum message length accepted by Nextcloud Talk (characters, not bytes).
@@ -614,10 +614,10 @@ impl NextcloudTalkChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for NextcloudTalkChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::NextcloudTalk,
+impl ::galleon_api::attribution::Attributable for NextcloudTalkChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::NextcloudTalk,
         )
     }
     fn alias(&self) -> &str {
@@ -961,7 +961,7 @@ mod tests {
 
     #[tokio::test]
     async fn send_draft_returns_none_when_stream_mode_off() {
-        use clawcrew_api::channel::SendMessage;
+        use galleon_api::channel::SendMessage;
         // Default mode is Off — send_draft must short-circuit.
         let channel = NextcloudTalkChannel::new(
             "https://cloud.example.com".into(),
@@ -1589,7 +1589,7 @@ mod tests {
     /// is true of any call and never exercises the wire format.
     #[tokio::test]
     async fn nextcloud_talk_send_uses_signed_bot_api_with_correct_wire_shape() {
-        use clawcrew_api::channel::SendMessage;
+        use galleon_api::channel::SendMessage;
 
         let server = MockServer::start().await;
         Mock::given(method("POST"))

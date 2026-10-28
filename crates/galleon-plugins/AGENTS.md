@@ -9,7 +9,7 @@ bridge. Bridges plugin-exported functions into ClawCrew's `Tool` and
 
 ## What this crate is allowed to depend on
 
-- `clawcrew-api` (traits only — `Tool`, `Channel`, `ToolResult`)
+- `galleon-api` (traits only — `Tool`, `Channel`, `ToolResult`)
 - `wasmtime` (Component Model host)
 - `wasmtime-wasi` and `wasmtime-wasi-http` (WASI Preview 2 host support)
 - `ring` (Ed25519 signatures)

@@ -135,7 +135,7 @@ pub use strangler_runner::{
 };
 
 // Types from other modules that extracted files need
-pub use clawcrew_api::memory_traits::MemoryStrategy;
+pub use galleon_api::memory_traits::MemoryStrategy;
 pub use galleon_config::pairing::PairingCodePolicy;
 pub use galleon_config::schema::Config;
 pub use galleon_tools::canvas::CanvasStore;
@@ -147,7 +147,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
-use clawcrew_api::channel::Channel;
+use galleon_api::channel::Channel;
 use galleon_config::pairing::constant_time_eq;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
@@ -162,7 +162,7 @@ pub(crate) const GW_SESSION_PREFIX: &str = "gw_";
 pub(crate) fn gateway_session_key(session_id: &str) -> String {
     format!(
         "{GW_SESSION_PREFIX}{}",
-        clawcrew_api::session_keys::sanitize_session_key(session_id)
+        galleon_api::session_keys::sanitize_session_key(session_id)
     )
 }
 
@@ -546,7 +546,7 @@ fn sop_webhook_routes() -> Router<AppState> {
 ))]
 pub(crate) fn sender_session_id(
     channel: &str,
-    msg: &clawcrew_api::channel::ChannelMessage,
+    msg: &galleon_api::channel::ChannelMessage,
 ) -> String {
     match &msg.thread_ts {
         Some(thread_id) => format!("{channel}_{thread_id}_{}", msg.sender),
@@ -555,12 +555,12 @@ pub(crate) fn sender_session_id(
 }
 
 #[cfg(feature = "channel-whatsapp-cloud")]
-fn whatsapp_memory_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
+fn whatsapp_memory_key(msg: &galleon_api::channel::ChannelMessage) -> String {
     format!("whatsapp_{}_{}", msg.sender, msg.id)
 }
 
 #[cfg(feature = "channel-linq")]
-fn linq_memory_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
+fn linq_memory_key(msg: &galleon_api::channel::ChannelMessage) -> String {
     format!("linq_{}_{}", msg.sender, msg.id)
 }
 
@@ -570,7 +570,7 @@ fn linq_channel_ref(alias: &str) -> String {
 }
 
 #[cfg(feature = "channel-nextcloud")]
-fn nextcloud_talk_memory_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
+fn nextcloud_talk_memory_key(msg: &galleon_api::channel::ChannelMessage) -> String {
     format!("nextcloud_talk_{}_{}", msg.sender, msg.id)
 }
 
@@ -1150,12 +1150,12 @@ pub async fn run_gateway_chat_with_tools(
         turn_usage.clone(),
         galleon_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
             cost_tracking_context,
-            clawcrew_api::agent::process_message(
+            galleon_api::agent::process_message(
                 Box::new(config),
                 &agent_alias,
                 message,
                 session_id,
-                clawcrew_api::ingress::TurnOrigin::Interactive,
+                galleon_api::ingress::TurnOrigin::Interactive,
             ),
         ),
     ))
@@ -1166,10 +1166,10 @@ pub async fn run_gateway_chat_with_tools(
 #[derive(Debug)]
 pub struct UnconfiguredModelProvider;
 
-impl clawcrew_api::attribution::Attributable for UnconfiguredModelProvider {
-    fn role(&self) -> clawcrew_api::attribution::Role {
-        clawcrew_api::attribution::Role::Provider(clawcrew_api::attribution::ProviderKind::Model(
-            clawcrew_api::attribution::ModelProviderKind::OpenAi,
+impl galleon_api::attribution::Attributable for UnconfiguredModelProvider {
+    fn role(&self) -> galleon_api::attribution::Role {
+        galleon_api::attribution::Role::Provider(galleon_api::attribution::ProviderKind::Model(
+            galleon_api::attribution::ModelProviderKind::OpenAi,
         ))
     }
     fn alias(&self) -> &str {
@@ -1178,7 +1178,7 @@ impl clawcrew_api::attribution::Attributable for UnconfiguredModelProvider {
 }
 
 #[async_trait::async_trait]
-impl clawcrew_api::model_provider::ModelProvider for UnconfiguredModelProvider {
+impl galleon_api::model_provider::ModelProvider for UnconfiguredModelProvider {
     async fn chat_with_system(
         &self,
         _system_prompt: Option<&str>,
@@ -1193,8 +1193,8 @@ impl clawcrew_api::model_provider::ModelProvider for UnconfiguredModelProvider {
 #[cfg(test)]
 mod chat_regression_tests {
     use super::*;
-    use clawcrew_api::agent::{AgentRunner, AgentSession, set_agent_runner};
-    use clawcrew_api::ingress::TurnOrigin;
+    use galleon_api::agent::{AgentRunner, AgentSession, set_agent_runner};
+    use galleon_api::ingress::TurnOrigin;
     use std::sync::{Arc, Mutex};
 
     struct MockChatRunner {

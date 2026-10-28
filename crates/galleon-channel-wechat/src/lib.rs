@@ -4,7 +4,7 @@ use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyInit, block_padding::Pkcs
 use anyhow::Context;
 use async_trait::async_trait;
 use base64::Engine;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_config::pairing::PairingGuard;
 use galleon_config::paths::{normalize_lexical, resolve_under};
 use galleon_config::schema::Config;
@@ -2746,9 +2746,9 @@ impl WeChatChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for WeChatChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Wechat)
+impl ::galleon_api::attribution::Attributable for WeChatChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Wechat)
     }
     fn alias(&self) -> &str {
         &self.alias

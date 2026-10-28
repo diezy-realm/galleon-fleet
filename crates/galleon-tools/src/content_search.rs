@@ -6,7 +6,7 @@ use std::path::Path;
 use std::process::Stdio;
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 
 const MAX_RESULTS: usize = 1000;

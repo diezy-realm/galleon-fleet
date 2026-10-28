@@ -6,7 +6,7 @@ use serde_json::json;
 use crate::sop::approval::{ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome};
 use crate::sop::types::SopRunAction;
 use crate::sop::{SopAuditLogger, SopEngine};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Approve a pending SOP step that is waiting for operator approval.
 pub struct SopApproveTool {

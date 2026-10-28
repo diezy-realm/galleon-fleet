@@ -1484,13 +1484,13 @@ fn is_empty_completion(resp: &ChatResponse) -> bool {
 }
 
 fn is_empty_text_completion(text: &str) -> bool {
-    clawcrew_api::model_provider::strip_think_tags(text).is_empty()
+    galleon_api::model_provider::strip_think_tags(text).is_empty()
 }
 
 fn is_semantic_empty_completion_error(error: &anyhow::Error) -> bool {
     error
         .chain()
-        .any(|cause| cause.is::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>())
+        .any(|cause| cause.is::<galleon_api::model_provider::SemanticEmptyTerminalCompletion>())
 }
 
 /// Extract billing metadata a Reliable terminal error preserves alongside its
@@ -1554,7 +1554,7 @@ impl std::error::Error for ReliableRejectedCompletionUsage {
 pub struct ReliableSemanticEmptyCompletion {
     failures: FailureEvents,
     rejected_usage: Option<ReliableRejectedCompletionUsage>,
-    terminal_cause: clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+    terminal_cause: galleon_api::model_provider::SemanticEmptyTerminalCompletion,
 }
 
 impl std::fmt::Display for ReliableSemanticEmptyCompletion {
@@ -1579,7 +1579,7 @@ fn reliable_terminal_error(
 ) -> anyhow::Error {
     let rejected_attempt_usage = rejected_attempt_usage.or_else(accounted_rejected_attempt_usage);
     if final_cause_is_semantic_empty {
-        let terminal_cause = clawcrew_api::model_provider::SemanticEmptyTerminalCompletion;
+        let terminal_cause = galleon_api::model_provider::SemanticEmptyTerminalCompletion;
         return anyhow::Error::new(ReliableSemanticEmptyCompletion {
             failures: failures.clone(),
             rejected_usage: rejected_attempt_usage.map(|usage| {
@@ -1587,7 +1587,7 @@ fn reliable_terminal_error(
                     usage,
                     failures,
                     anyhow::Error::new(
-                        clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+                        galleon_api::model_provider::SemanticEmptyTerminalCompletion,
                     ),
                 )
             }),
@@ -3848,11 +3848,11 @@ impl ModelProvider for ReliableModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ReliableModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
+impl ::galleon_api::attribution::Attributable for ReliableModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
         match self.model_providers.first() {
-            Some(entry) => ::clawcrew_api::attribution::Attributable::role(entry.provider()),
-            None => ::clawcrew_api::attribution::Role::System,
+            Some(entry) => ::galleon_api::attribution::Attributable::role(entry.provider()),
+            None => ::galleon_api::attribution::Role::System,
         }
     }
 
@@ -3861,7 +3861,7 @@ impl ::clawcrew_api::attribution::Attributable for ReliableModelProvider {
         // as `role()`. Falls back to the wrapper's own configured alias
         // when no inner provider is registered.
         match self.model_providers.first() {
-            Some(entry) => ::clawcrew_api::attribution::Attributable::alias(entry.provider()),
+            Some(entry) => ::galleon_api::attribution::Attributable::alias(entry.provider()),
             None => &self.alias,
         }
     }

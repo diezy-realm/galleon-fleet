@@ -5,10 +5,10 @@ use futures_util::{FutureExt, future::join_all};
 use serde_json::Value;
 use std::panic::AssertUnwindSafe;
 
-use clawcrew_api::channel::ChannelMessage;
-use clawcrew_api::hook::ToolCallHookContext;
-use clawcrew_api::model_provider::{ChatMessage, ChatResponse};
-use clawcrew_api::tool::ToolResult;
+use galleon_api::channel::ChannelMessage;
+use galleon_api::hook::ToolCallHookContext;
+use galleon_api::model_provider::{ChatMessage, ChatResponse};
+use galleon_api::tool::ToolResult;
 
 use super::traits::{HookHandler, HookResult};
 
@@ -461,7 +461,7 @@ impl HookRunner {
 }
 
 #[async_trait::async_trait]
-impl clawcrew_api::hook::ChannelHookRunner for HookRunner {
+impl galleon_api::hook::ChannelHookRunner for HookRunner {
     async fn run_on_message_received(&self, message: ChannelMessage) -> HookResult<ChannelMessage> {
         self.run_on_message_received(message).await
     }

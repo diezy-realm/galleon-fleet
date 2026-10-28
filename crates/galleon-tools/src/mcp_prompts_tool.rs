@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use serde_json::json;
 
 use crate::mcp_client::McpRegistry;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Generic MCP prompt access tool. Routes through `McpRegistry`.
 pub struct McpPromptsTool {
@@ -34,9 +34,9 @@ impl McpPromptsTool {
     }
 }
 
-clawcrew_api::tool_attribution!(
+galleon_api::tool_attribution!(
     McpPromptsTool,
-    ::clawcrew_api::attribution::ToolKind::Plugin
+    ::galleon_api::attribution::ToolKind::Plugin
 );
 
 #[async_trait]

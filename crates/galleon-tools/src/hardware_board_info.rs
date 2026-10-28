@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use serde_json::json;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Static board info (datasheets). Used when probe-rs is unavailable.
 const BOARD_INFO: &[(&str, &str, &str)] = &[

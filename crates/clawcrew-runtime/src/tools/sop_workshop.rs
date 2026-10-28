@@ -7,7 +7,7 @@ use crate::sop::procedural_memory::{
     ProposalDraft, apply_proposal, capture_successful_run, create_proposal, set_proposal_status,
 };
 use crate::sop::{ProposalStatus, SopEngine};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 macro_rules! sop_workshop_actions {
     ($($variant:ident => $wire:literal),+ $(,)?) => {
@@ -80,17 +80,17 @@ impl SopWorkshopTool {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for SopWorkshopTool {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Sop
+impl ::galleon_api::attribution::Attributable for SopWorkshopTool {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Sop
     }
 
     fn alias(&self) -> &str {
         "sop_workshop"
     }
 
-    fn tool_provenance(&self) -> ::clawcrew_api::attribution::ToolProvenance {
-        ::clawcrew_api::attribution::ToolProvenance::Native
+    fn tool_provenance(&self) -> ::galleon_api::attribution::ToolProvenance {
+        ::galleon_api::attribution::ToolProvenance::Native
     }
 }
 
@@ -319,7 +319,7 @@ fn parse_status(status: &str) -> anyhow::Result<ProposalStatus> {
 mod tests {
     use super::*;
     use crate::sop::SopEngine;
-    use clawcrew_api::attribution::{Attributable, ToolProvenance};
+    use galleon_api::attribution::{Attributable, ToolProvenance};
     use galleon_config::schema::SopConfig;
 
     #[test]

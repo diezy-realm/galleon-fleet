@@ -183,7 +183,7 @@ async fn two_sqlite_agents_on_one_install_have_isolated_memory() {
 async fn peer_group_routes_messages_only_within_resolved_peer_set() {
     use serde_json::json;
     use std::sync::Arc;
-    use clawcrew_api::tool::Tool;
+    use galleon_api::tool::Tool;
     use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
     use galleon_config::providers::ChannelRef;
     use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
@@ -279,7 +279,7 @@ async fn peer_group_routes_messages_only_within_resolved_peer_set() {
 async fn peer_group_dotted_channel_refs_remain_alias_scoped_for_dispatch() {
     use serde_json::json;
     use std::sync::Arc;
-    use clawcrew_api::tool::Tool;
+    use galleon_api::tool::Tool;
     use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig};
     use galleon_config::providers::ChannelRef;
     use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};

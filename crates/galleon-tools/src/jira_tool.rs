@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde_json::{Value, json};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::{SecurityPolicy, ToolOperation};
 
 const JIRA_SEARCH_PAGE_SIZE: u32 = 100;

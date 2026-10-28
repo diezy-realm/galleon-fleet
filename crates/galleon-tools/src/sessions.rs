@@ -5,7 +5,7 @@ use serde_json::json;
 use std::collections::BTreeSet;
 use std::fmt::Write;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::policy::ToolOperation;
 use galleon_infra::acp_session_store::{
@@ -92,7 +92,7 @@ impl AcpSessionReadView {
 }
 
 fn current_session_key() -> Option<String> {
-    clawcrew_api::TOOL_LOOP_SESSION_KEY
+    galleon_api::TOOL_LOOP_SESSION_KEY
         .try_with(Clone::clone)
         .ok()
         .flatten()
@@ -514,10 +514,10 @@ fn render_acp_history(session: &AcpSessionData, limit: usize) -> ToolResult {
     );
     for message in tail {
         match message {
-            clawcrew_api::model_provider::ConversationMessage::Chat(chat) => {
+            galleon_api::model_provider::ConversationMessage::Chat(chat) => {
                 let _ = writeln!(output, "[{}] {}", chat.role, chat.content);
             }
-            clawcrew_api::model_provider::ConversationMessage::AssistantToolCalls {
+            galleon_api::model_provider::ConversationMessage::AssistantToolCalls {
                 text,
                 tool_calls,
                 ..
@@ -529,7 +529,7 @@ fn render_acp_history(session: &AcpSessionData, limit: usize) -> ToolResult {
                     let _ = writeln!(output, "[assistant tool_call] {}", call.name);
                 }
             }
-            clawcrew_api::model_provider::ConversationMessage::ToolResults(results) => {
+            galleon_api::model_provider::ConversationMessage::ToolResults(results) => {
                 for result in results {
                     let _ = writeln!(output, "[tool {}] {}", result.tool_name, result.content);
                 }
@@ -683,7 +683,7 @@ impl Tool for SessionsSendTool {
             return Ok(session_not_found(session_id));
         };
 
-        let chat_msg = clawcrew_api::model_provider::ChatMessage::user(message);
+        let chat_msg = galleon_api::model_provider::ChatMessage::user(message);
 
         match self.backend.append(&target_session_key, &chat_msg) {
             Ok(()) => {
@@ -1060,7 +1060,7 @@ mod tests {
     use std::collections::HashMap;
     use std::sync::Mutex;
     use tempfile::TempDir;
-    use clawcrew_api::model_provider::ChatMessage;
+    use galleon_api::model_provider::ChatMessage;
     use galleon_infra::session_backend::SessionMetadata;
     use galleon_infra::session_store::SessionStore;
 
@@ -1543,7 +1543,7 @@ mod tests {
             .unwrap();
 
         let tool = SessionsCurrentTool::new(backend);
-        let result = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let result = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some("gw_test-123".into()), tool.execute(json!({})))
             .await
             .unwrap();
@@ -1574,7 +1574,7 @@ mod tests {
         backend.set_session_name("gw_named", "My Chat").unwrap();
 
         let tool = SessionsCurrentTool::new(backend);
-        let result = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let result = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some("gw_named".into()), tool.execute(json!({})))
             .await
             .unwrap();
@@ -1588,7 +1588,7 @@ mod tests {
         let (_tmp, backend) = test_backend();
         let tool = SessionsCurrentTool::new(backend);
 
-        let result = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let result = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some("gw_unknown".into()), tool.execute(json!({})))
             .await
             .unwrap();
@@ -2021,7 +2021,7 @@ mod tests {
         store
             .append_turn(
                 &current,
-                &[clawcrew_api::model_provider::ConversationMessage::Chat(
+                &[galleon_api::model_provider::ConversationMessage::Chat(
                     ChatMessage::user("current prompt"),
                 )],
             )
@@ -2030,7 +2030,7 @@ mod tests {
         store
             .append_turn(
                 &other,
-                &[clawcrew_api::model_provider::ConversationMessage::Chat(
+                &[galleon_api::model_provider::ConversationMessage::Chat(
                     ChatMessage::assistant("other answer"),
                 )],
             )
@@ -2067,7 +2067,7 @@ mod tests {
         let list_tool = SessionsListTool::with_acp_sessions(backend.clone(), view.clone());
         let history_tool = SessionsHistoryTool::with_acp_sessions(backend, test_security(), view);
 
-        clawcrew_api::TOOL_LOOP_SESSION_KEY
+        galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some(current.clone()), async {
                 let current_result = current_tool.execute(json!({})).await.unwrap();
                 assert!(current_result.success);
@@ -2114,7 +2114,7 @@ mod tests {
         store
             .append_turn(
                 &foreign,
-                &[clawcrew_api::model_provider::ConversationMessage::Chat(
+                &[galleon_api::model_provider::ConversationMessage::Chat(
                     ChatMessage::assistant("foreign retained answer"),
                 )],
             )
@@ -2125,7 +2125,7 @@ mod tests {
         let list = SessionsListTool::with_acp_sessions(backend.clone(), view.clone());
         let history = SessionsHistoryTool::with_acp_sessions(backend, test_security(), view);
 
-        clawcrew_api::TOOL_LOOP_SESSION_KEY
+        galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some(current.clone()), async {
                 let listed = list.execute(json!({})).await.unwrap();
                 assert!(listed.success);
@@ -2181,7 +2181,7 @@ mod tests {
             Arc::new(MetadataBackend::new(inner, vec![old_chat]));
         let tool = SessionsListTool::with_acp_sessions(backend, view);
 
-        let result = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let result = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some(current.clone()), tool.execute(json!({"limit": 1})))
             .await
             .unwrap();
@@ -2196,7 +2196,7 @@ mod tests {
         let (_chat_tmp, backend) = seeded_backend();
         let tool = SessionsListTool::with_acp_sessions(backend, view);
 
-        let result = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let result = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some("telegram__alice".into()), tool.execute(json!({})))
             .await
             .unwrap();
@@ -2214,7 +2214,7 @@ mod tests {
         let send = SessionsSendTool::with_acp_sessions(backend, test_security(), view);
         let unknown = "missing-acp-session";
 
-        clawcrew_api::TOOL_LOOP_SESSION_KEY
+        galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some(current.clone()), async {
                 let foreign_result = history
                     .execute(json!({"session_id": foreign}))
@@ -2276,7 +2276,7 @@ mod tests {
             .unwrap();
         let history = SessionsHistoryTool::with_acp_sessions(backend, test_security(), view);
 
-        let result = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let result = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(
                 Some(current),
                 history.execute(json!({"session_id": chat_uuid})),
@@ -2297,7 +2297,7 @@ mod tests {
         let list = SessionsListTool::with_acp_sessions(backend.clone(), view.clone());
         let history = SessionsHistoryTool::with_acp_sessions(backend, test_security(), view);
 
-        clawcrew_api::TOOL_LOOP_SESSION_KEY
+        galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some(current.clone()), async {
                 let listed = list.execute(json!({})).await.unwrap();
                 assert_eq!(listed.output.matches(&current).count(), 1);
@@ -2325,7 +2325,7 @@ mod tests {
             .unwrap();
         let list = SessionsListTool::with_acp_sessions(backend, view);
 
-        let result = clawcrew_api::TOOL_LOOP_SESSION_KEY
+        let result = galleon_api::TOOL_LOOP_SESSION_KEY
             .scope(Some(current), list.execute(json!({})))
             .await
             .unwrap();

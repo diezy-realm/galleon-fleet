@@ -4,7 +4,7 @@
 //! Lives in `galleon-tools` as a sibling to `channel_room` / `http_request` /
 //! `git_forge`, so runtime tool registration depends only on `galleon-tools`
 //! (the gateway stays the inbound/server edge). The A2A wire types are shared
-//! with the inbound surface via [`clawcrew_api::a2a_wire`].
+//! with the inbound surface via [`galleon_api::a2a_wire`].
 //!
 //! Per the A2ATool RFC: no copied peer
 //! `Vec` is stored in the client or tool handle. Peer definitions, credentials,
@@ -22,12 +22,12 @@ use futures_util::stream::TryStreamExt;
 use parking_lot::{Mutex, RwLock};
 use serde_json::{Value, json};
 
-use clawcrew_api::a2a_wire::{
+use galleon_api::a2a_wire::{
     AgentCard, AgentInterface, JsonRpcResponse, Part, Role, SendMessageParams, SendMessageResponse,
     Task, escape_fence_body, rpc_result,
 };
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool_attribution;
 use galleon_config::schema::Config;
 
 #[cfg(test)]
@@ -626,7 +626,7 @@ fn uuid_v4() -> String {
 /// UUID). The response preserves its origin — the tool output includes a
 /// `response_type` marker so the model can distinguish a direct `Message`
 /// reply from a peer-managed `Task`.
-fn message_to_task(message: clawcrew_api::a2a_wire::Message) -> (Task, bool) {
+fn message_to_task(message: galleon_api::a2a_wire::Message) -> (Task, bool) {
     let msg_id = message.message_id.clone();
     let text = message
         .parts
@@ -634,19 +634,19 @@ fn message_to_task(message: clawcrew_api::a2a_wire::Message) -> (Task, bool) {
         .filter_map(|p| p.as_text().map(|s| s.to_string()))
         .collect::<Vec<_>>()
         .join("\n");
-    let artifact = clawcrew_api::a2a_wire::Artifact {
+    let artifact = galleon_api::a2a_wire::Artifact {
         // Derive from the peer-provided messageId, not a random UUID.
         artifact_id: format!("{msg_id}-artifact"),
         name: None,
         description: None,
-        parts: vec![clawcrew_api::a2a_wire::Part::text_str(text)],
+        parts: vec![galleon_api::a2a_wire::Part::text_str(text)],
     };
     let task = Task {
         // Reuse the peer-provided messageId — not an invented UUID.
         id: msg_id,
         context_id: message.context_id.clone().unwrap_or_default(),
-        status: clawcrew_api::a2a_wire::TaskStatus {
-            state: clawcrew_api::a2a_wire::TaskState::TaskStateCompleted,
+        status: galleon_api::a2a_wire::TaskStatus {
+            state: galleon_api::a2a_wire::TaskState::TaskStateCompleted,
             message: Some(message),
             timestamp: None,
         },
@@ -1031,17 +1031,17 @@ impl A2aHttpClient {
         // data-mutation pass on tool->peer payloads.
         let params = SendMessageParams {
             tenant: endpoint.tenant.clone(),
-            message: clawcrew_api::a2a_wire::Message {
+            message: galleon_api::a2a_wire::Message {
                 message_id: uuid_v4(),
                 context_id: context_id.clone(),
                 task_id: task_id.clone(),
                 role: Role::RoleUser,
-                parts: vec![clawcrew_api::a2a_wire::Part::text_str(message)],
+                parts: vec![galleon_api::a2a_wire::Part::text_str(message)],
                 metadata: None,
                 extensions: vec![],
                 reference_task_ids: vec![],
             },
-            configuration: Some(clawcrew_api::a2a_wire::SendMessageConfiguration {
+            configuration: Some(galleon_api::a2a_wire::SendMessageConfiguration {
                 accepted_output_modes: vec![],
                 history_length: None,
                 return_immediately,
@@ -1745,10 +1745,10 @@ impl A2aCancelTool {
     }
 }
 
-tool_attribution!(A2aDiscoverTool, clawcrew_api::attribution::ToolKind::A2a);
-tool_attribution!(A2aSendTool, clawcrew_api::attribution::ToolKind::A2a);
-tool_attribution!(A2aGetTaskTool, clawcrew_api::attribution::ToolKind::A2a);
-tool_attribution!(A2aCancelTool, clawcrew_api::attribution::ToolKind::A2a);
+tool_attribution!(A2aDiscoverTool, galleon_api::attribution::ToolKind::A2a);
+tool_attribution!(A2aSendTool, galleon_api::attribution::ToolKind::A2a);
+tool_attribution!(A2aGetTaskTool, galleon_api::attribution::ToolKind::A2a);
+tool_attribution!(A2aCancelTool, galleon_api::attribution::ToolKind::A2a);
 
 /// Extract a required string argument, or surface a clear error naming the
 /// missing field.
@@ -1985,8 +1985,8 @@ impl Tool for A2aDiscoverTool {
 }
 
 /// Emit an outbound A2A run event to the observer seam (no-op when unset).
-fn emit_a2a_run_event(peer: &str, task: &clawcrew_api::a2a_wire::Task) {
-    clawcrew_api::a2a_observer::emit_a2a_run_event(&clawcrew_api::a2a_observer::A2aRunEvent {
+fn emit_a2a_run_event(peer: &str, task: &galleon_api::a2a_wire::Task) {
+    galleon_api::a2a_observer::emit_a2a_run_event(&galleon_api::a2a_observer::A2aRunEvent {
         peer: peer.to_string(),
         remote_task_id: task.id.clone(),
         state: task.status.state.clone(),
@@ -2168,7 +2168,7 @@ mod tests {
     #![allow(clippy::err_expect)]
     use super::*;
     use serial_test::serial;
-    use clawcrew_api::a2a_wire::{AgentCard, AgentInterface};
+    use galleon_api::a2a_wire::{AgentCard, AgentInterface};
 
     fn test_route_cache() -> RouteCache {
         Arc::new(Mutex::new(HashMap::new()))

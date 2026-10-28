@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Default execution time for a skill shell command when the manifest does not
 /// set `timeout_secs` (seconds). A skill may raise this via `timeout_secs` in
@@ -65,7 +65,7 @@ const SESSION_ID_ENV_VAR: &str = "CLAWCREW_SESSION_ID";
 /// The session key for the current turn, or `None` when the turn is unscoped
 /// (one-shot / webhook). Empty keys are treated as absent.
 fn get_session_id() -> Option<String> {
-    clawcrew_api::TOOL_LOOP_SESSION_KEY
+    galleon_api::TOOL_LOOP_SESSION_KEY
         .try_with(Clone::clone)
         .ok()
         .flatten()
@@ -282,7 +282,7 @@ impl Tool for SkillShellTool {
 pub struct SkillBuiltinTool {
     tool_name: String,
     tool_description: String,
-    target_tool: Arc<dyn clawcrew_api::tool::Tool>,
+    target_tool: Arc<dyn galleon_api::tool::Tool>,
     locked_args: serde_json::Map<String, serde_json::Value>,
     /// Target schema with the locked keys removed (precomputed at
     /// construction). `Arc`-shared so per-iteration spec assembly hands out
@@ -295,7 +295,7 @@ impl SkillBuiltinTool {
     pub fn new(
         skill_name: &str,
         tool: &crate::skills::SkillTool,
-        target_tool: Arc<dyn clawcrew_api::tool::Tool>,
+        target_tool: Arc<dyn galleon_api::tool::Tool>,
         locked_args: HashMap<String, String>,
     ) -> Self {
         let locked: serde_json::Map<String, serde_json::Value> = locked_args
@@ -373,8 +373,8 @@ impl Tool for SkillBuiltinTool {
     // Hand out the stored schema by `Arc::clone` instead of the trait
     // default's per-call deep clone — specs are rebuilt every agent-loop
     // iteration and elevated skill tools can front MCP-derived schemas.
-    fn spec(&self) -> clawcrew_api::tool::ToolSpec {
-        clawcrew_api::tool::ToolSpec {
+    fn spec(&self) -> galleon_api::tool::ToolSpec {
+        galleon_api::tool::ToolSpec {
             name: self.tool_name.clone(),
             description: self.tool_description.clone(),
             parameters: Arc::clone(&self.advertised_schema),
@@ -409,7 +409,7 @@ mod tests {
     use crate::platform::DockerRuntime;
     use crate::security::{AutonomyLevel, SecurityPolicy};
     use crate::skills::SkillTool;
-    use clawcrew_api::attribution::{Attributable, ToolProvenance};
+    use galleon_api::attribution::{Attributable, ToolProvenance};
     use galleon_config::schema::DockerRuntimeConfig;
 
     fn test_security() -> Arc<SecurityPolicy> {
@@ -767,9 +767,9 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for MockBuiltinTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+    impl ::galleon_api::attribution::Attributable for MockBuiltinTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             &self.name
@@ -832,8 +832,8 @@ mod tests {
     fn skill_builtin_tool_is_extension_even_when_target_is_native() {
         struct NativeMockBuiltinTool(MockBuiltinTool);
 
-        impl ::clawcrew_api::attribution::Attributable for NativeMockBuiltinTool {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
+        impl ::galleon_api::attribution::Attributable for NativeMockBuiltinTool {
+            fn role(&self) -> ::galleon_api::attribution::Role {
                 self.0.role()
             }
 
@@ -1032,9 +1032,9 @@ mod tests {
     struct EchoArgsTool {
         name: String,
     }
-    impl ::clawcrew_api::attribution::Attributable for EchoArgsTool {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+    impl ::galleon_api::attribution::Attributable for EchoArgsTool {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             &self.name

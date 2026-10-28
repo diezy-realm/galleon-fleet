@@ -10,7 +10,7 @@ homepage.workspace = true
 publish = true
 
 [dependencies]
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 anyhow = "1.0"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
 log = "0.4"

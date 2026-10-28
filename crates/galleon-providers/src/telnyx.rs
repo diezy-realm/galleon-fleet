@@ -318,11 +318,11 @@ pub mod models {
     pub const MISTRAL_SMALL: &str = "mistralai/mistral-small";
 }
 
-impl ::clawcrew_api::attribution::Attributable for TelnyxModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Telnyx,
+impl ::galleon_api::attribution::Attributable for TelnyxModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Telnyx,
             ),
         )
     }

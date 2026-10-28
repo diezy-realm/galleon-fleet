@@ -4,7 +4,7 @@ use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 const ARCHIVE_DIRNAME: &str = ".archive";
 const ALLOWED_FILE_PREFIXES: &[&str] = &["references/", "templates/", "scripts/"];

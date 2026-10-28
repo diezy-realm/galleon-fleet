@@ -4,8 +4,8 @@ use crate::ask_user::ChannelMapHandle;
 use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::policy::ToolOperation;
 
@@ -456,10 +456,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for SilentChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for SilentChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {
@@ -505,10 +505,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for RespondingChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for RespondingChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {
@@ -761,10 +761,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for StructuredOnlyChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for StructuredOnlyChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {
@@ -865,10 +865,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for NoDeliveryChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for NoDeliveryChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {

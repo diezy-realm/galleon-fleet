@@ -32,7 +32,7 @@ impl Drop for AbortOnDrop {
 
 pub(crate) async fn finish_sse_stream(
     tx: &tokio::sync::mpsc::Sender<
-        ::clawcrew_api::model_provider::StreamResult<::clawcrew_api::model_provider::StreamEvent>,
+        ::galleon_api::model_provider::StreamResult<::galleon_api::model_provider::StreamEvent>,
     >,
     saw_completion: bool,
     completion_signal: &str,
@@ -46,7 +46,7 @@ pub(crate) async fn finish_sse_stream(
             "stream: SSE parser reached end of stream, emitting Final"
         );
         let _ = tx
-            .send(Ok(::clawcrew_api::model_provider::StreamEvent::Final))
+            .send(Ok(::galleon_api::model_provider::StreamEvent::Final))
             .await;
         return;
     }
@@ -61,7 +61,7 @@ pub(crate) async fn finish_sse_stream(
         "stream: SSE connection closed before completion signal — truncated response, surfacing error"
     );
     let _ = tx
-        .send(Err(::clawcrew_api::model_provider::StreamError::Http(
+        .send(Err(::galleon_api::model_provider::StreamError::Http(
             format!("SSE stream closed before {completion_signal}: response truncated"),
         )))
         .await;
@@ -69,7 +69,7 @@ pub(crate) async fn finish_sse_stream(
 
 #[cfg(test)]
 mod tests {
-    use ::clawcrew_api::model_provider::{StreamError, StreamEvent, StreamResult};
+    use ::galleon_api::model_provider::{StreamError, StreamEvent, StreamResult};
 
     #[tokio::test]
     async fn finish_emits_final_when_completion_seen() {

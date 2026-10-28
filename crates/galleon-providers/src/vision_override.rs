@@ -7,7 +7,7 @@ use super::traits::{
 };
 use async_trait::async_trait;
 use futures_util::stream::BoxStream;
-use clawcrew_api::model_provider::ModelInfo;
+use galleon_api::model_provider::ModelInfo;
 
 /// Transparent decorator for factory-owned provider metadata.
 ///
@@ -105,7 +105,7 @@ impl ModelProvider for VisionOverrideProvider {
         self.inner.default_wire_api()
     }
 
-    fn convert_tools(&self, tools: &[clawcrew_api::tool::ToolSpec]) -> super::traits::ToolsPayload {
+    fn convert_tools(&self, tools: &[galleon_api::tool::ToolSpec]) -> super::traits::ToolsPayload {
         self.inner.convert_tools(tools)
     }
 
@@ -257,8 +257,8 @@ impl ModelProvider for VisionOverrideProvider {
     }
 }
 
-impl clawcrew_api::attribution::Attributable for VisionOverrideProvider {
-    fn role(&self) -> clawcrew_api::attribution::Role {
+impl galleon_api::attribution::Attributable for VisionOverrideProvider {
+    fn role(&self) -> galleon_api::attribution::Role {
         self.inner.role()
     }
     fn alias(&self) -> &str {
@@ -272,8 +272,8 @@ mod tests {
     use crate::dispatch::AccountedChatScope;
     use crate::traits::ProviderCapabilities;
     use std::sync::Arc;
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-    use clawcrew_api::model_provider::ModelPricing;
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::model_provider::ModelPricing;
 
     /// Minimal inner provider that reports vision support and returns a priced
     /// model listing. Everything else falls back to the trait defaults.

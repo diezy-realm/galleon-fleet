@@ -79,9 +79,9 @@ use crate::agent::tool_execution::{
 use crate::security::ingress::{IngressPolicy, ingress_policy};
 use crate::util::truncate_with_ellipsis;
 use anyhow::Result;
-use clawcrew_api::agent::TurnEvent;
-use clawcrew_api::channel::Channel;
-use clawcrew_api::ingress::{IngressContext, IngressDecision};
+use galleon_api::agent::TurnEvent;
+use galleon_api::channel::Channel;
+use galleon_api::ingress::{IngressContext, IngressDecision};
 use galleon_providers::{ChatMessage, ModelProvider};
 use std::collections::HashSet;
 use std::io::Write as _;
@@ -369,11 +369,11 @@ impl DispatchTokenCounter {
         (estimated as f64 * self.calibration_ratio.unwrap_or(1.0)).round() as u64
     }
 
-    fn source(&self) -> clawcrew_api::agent::TokenCountSource {
+    fn source(&self) -> galleon_api::agent::TokenCountSource {
         if self.calibration_ratio.is_some() {
-            clawcrew_api::agent::TokenCountSource::Calibrated
+            galleon_api::agent::TokenCountSource::Calibrated
         } else {
-            clawcrew_api::agent::TokenCountSource::Estimated
+            galleon_api::agent::TokenCountSource::Estimated
         }
     }
 }
@@ -398,7 +398,7 @@ fn record_dispatch_trim(
     budget: usize,
     tokens_before: u64,
     tokens_after: u64,
-    token_source: clawcrew_api::agent::TokenCountSource,
+    token_source: galleon_api::agent::TokenCountSource,
 ) {
     if trim.dropped_messages == 0 {
         return;
@@ -686,17 +686,17 @@ async fn enforce_reported_budget(
                         tokens_before: Some(projected_pre_trim as u64),
                         tokens_after: Some(tokens_after as u64),
                         tokens_before_source: Some(
-                            clawcrew_api::agent::TokenCountSource::Calibrated,
+                            galleon_api::agent::TokenCountSource::Calibrated,
                         ),
                         tokens_after_source: Some(
-                            clawcrew_api::agent::TokenCountSource::Calibrated,
+                            galleon_api::agent::TokenCountSource::Calibrated,
                         ),
                         unsatisfiable_floor: Some(true),
                     })
                     .await;
             }
             observer.record_event(
-                &clawcrew_api::observability_traits::ObserverEvent::HistoryTrimmed {
+                &galleon_api::observability_traits::ObserverEvent::HistoryTrimmed {
                     dropped_messages: structural_drops,
                     kept_turns: floor_turns,
                     reason: crate::i18n::get_required_cli_string("history-trim-reason-budget"),
@@ -706,8 +706,8 @@ async fn enforce_reported_budget(
                     token_budget: Some(context_token_budget as u64),
                     tokens_before: Some(projected_pre_trim as u64),
                     tokens_after: Some(tokens_after as u64),
-                    tokens_before_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
-                    tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
+                    tokens_before_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
+                    tokens_after_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
                     unsatisfiable_floor: Some(true),
                 },
             );
@@ -747,7 +747,7 @@ async fn enforce_reported_budget(
         // provider-reported count of an earlier, larger request.
         let (tokens_before, tokens_before_source) = (
             projected_pre_trim,
-            clawcrew_api::agent::TokenCountSource::Calibrated,
+            galleon_api::agent::TokenCountSource::Calibrated,
         );
         *history = trimmed;
         if let Some(tx) = event_tx {
@@ -764,13 +764,13 @@ async fn enforce_reported_budget(
                     // the post-trim count is the same projection against the
                     // durable retained population.
                     tokens_before_source: Some(tokens_before_source),
-                    tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
+                    tokens_after_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
                     unsatisfiable_floor: None,
                 })
                 .await;
         }
         observer.record_event(
-            &clawcrew_api::observability_traits::ObserverEvent::HistoryTrimmed {
+            &galleon_api::observability_traits::ObserverEvent::HistoryTrimmed {
                 dropped_messages: result.dropped_messages,
                 kept_turns: result.kept_turns,
                 reason: crate::i18n::get_required_cli_string("history-trim-reason-budget"),
@@ -781,7 +781,7 @@ async fn enforce_reported_budget(
                 tokens_before: Some(tokens_before as u64),
                 tokens_after: Some(result.tokens_after as u64),
                 tokens_before_source: Some(tokens_before_source),
-                tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
+                tokens_after_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
                 unsatisfiable_floor: None,
             },
         );
@@ -806,14 +806,14 @@ async fn enforce_reported_budget(
                     token_budget: Some(context_token_budget as u64),
                     tokens_before: Some(projected_pre_trim as u64),
                     tokens_after: Some(tokens_after as u64),
-                    tokens_before_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
-                    tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
+                    tokens_before_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
+                    tokens_after_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
                     unsatisfiable_floor: Some(true),
                 })
                 .await;
         }
         observer.record_event(
-            &clawcrew_api::observability_traits::ObserverEvent::HistoryTrimmed {
+            &galleon_api::observability_traits::ObserverEvent::HistoryTrimmed {
                 dropped_messages: 0,
                 kept_turns: floor_turns,
                 reason: crate::i18n::get_required_cli_string("history-trim-reason-budget"),
@@ -823,8 +823,8 @@ async fn enforce_reported_budget(
                 token_budget: Some(context_token_budget as u64),
                 tokens_before: Some(projected_pre_trim as u64),
                 tokens_after: Some(tokens_after as u64),
-                tokens_before_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
-                tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
+                tokens_before_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
+                tokens_after_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
                 unsatisfiable_floor: Some(true),
             },
         );
@@ -1665,7 +1665,7 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
                     .await;
             }
             observer.record_event(
-                &clawcrew_api::observability_traits::ObserverEvent::HistoryTrimmed {
+                &galleon_api::observability_traits::ObserverEvent::HistoryTrimmed {
                     dropped_messages: trim_result.dropped_messages,
                     kept_turns: trim_result.kept_turns,
                     reason: crate::i18n::get_required_cli_string("history-trim-reason-budget"),
@@ -1709,7 +1709,7 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
                     .await;
             }
             observer.record_event(
-                &clawcrew_api::observability_traits::ObserverEvent::HistoryTrimmed {
+                &galleon_api::observability_traits::ObserverEvent::HistoryTrimmed {
                     dropped_messages: 0,
                     kept_turns: trim_result.kept_turns,
                     reason: crate::i18n::get_required_cli_string("history-trim-reason-budget"),
@@ -1898,7 +1898,7 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
         let chat_result = chat_result.and_then(|response| {
             if response.is_semantically_empty_terminal() {
                 return Err(anyhow::Error::new(
-                    clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+                    galleon_api::model_provider::SemanticEmptyTerminalCompletion,
                 ));
             }
             Ok(response)
@@ -2710,7 +2710,7 @@ pub(crate) struct OwnedAgentExecution {
     /// The shell this step's runtime adapter will spawn, carried so the step's
     /// system prompt reports the same dialect the step will execute under.
     /// `None` for a shell-less runtime.
-    shell_profile: Option<clawcrew_api::runtime_traits::ShellProfile>,
+    shell_profile: Option<galleon_api::runtime_traits::ShellProfile>,
 }
 
 /// Re-assemble `alias`'s per-agent execution context the way a fresh agent turn
@@ -4642,7 +4642,7 @@ mod reported_budget_tests {
         );
         assert_eq!(
             tokens_before_source,
-            clawcrew_api::agent::TokenCountSource::Calibrated,
+            galleon_api::agent::TokenCountSource::Calibrated,
             "tokens_before must be a calibrated estimate of the trimmed population, \
              not the prior provider-reported count"
         );
@@ -4725,7 +4725,7 @@ mod trim_budget_tests {
 #[cfg(test)]
 mod active_route_context_tests {
     use super::*;
-    use clawcrew_api::observability_traits::{ObserverEvent, ObserverMetric};
+    use galleon_api::observability_traits::{ObserverEvent, ObserverMetric};
     use galleon_config::schema::{
         AliasedAgentConfig, Config, CustomModelProviderConfig, ModelProviderConfig,
         RuntimeProfileConfig,
@@ -5016,7 +5016,7 @@ mod active_route_context_tests {
             ResolvedAgentExecution, ResolvedIo, ResolvedModelAccess, ResolvedRuntimeKnobs, ToolLoop,
         };
         use axum::{Json, Router, routing::post};
-        use clawcrew_api::tool::{Tool, ToolResult};
+        use galleon_api::tool::{Tool, ToolResult};
         use galleon_providers::ToolCall;
         use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -5078,10 +5078,10 @@ vision_model_provider = "custom.vision"
         }
         #[async_trait::async_trait]
         impl ModelProvider for TextPrimary {
-            fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
+            fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
                 // Native tool calling so the structured `tool_calls` below are
                 // honored; vision stays false so an image marker forces routing.
-                clawcrew_api::model_provider::ProviderCapabilities {
+                galleon_api::model_provider::ProviderCapabilities {
                     native_tool_calling: true,
                     ..Default::default()
                 }
@@ -5097,7 +5097,7 @@ vision_model_provider = "custom.vision"
             }
             async fn chat(
                 &self,
-                _request: clawcrew_api::model_provider::ChatRequest<'_>,
+                _request: galleon_api::model_provider::ChatRequest<'_>,
                 _model: &str,
                 _t: Option<f64>,
             ) -> Result<ChatResponse> {
@@ -5124,11 +5124,11 @@ vision_model_provider = "custom.vision"
                 }
             }
         }
-        impl clawcrew_api::attribution::Attributable for TextPrimary {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for TextPrimary {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -5157,9 +5157,9 @@ vision_model_provider = "custom.vision"
                 Ok(ToolResult::ok(format!("here it is [IMAGE:{}]", self.path)))
             }
         }
-        impl clawcrew_api::attribution::Attributable for AttachImage {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+        impl galleon_api::attribution::Attributable for AttachImage {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
             }
             fn alias(&self) -> &str {
                 "attach_image"
@@ -5267,7 +5267,7 @@ vision_model_provider = "custom.vision"
             new_messages_out: None,
             image_cache: Some(&mut image_cache),
             memory: None,
-            ingress: clawcrew_api::ingress::IngressContext::agent_direct(),
+            ingress: galleon_api::ingress::IngressContext::agent_direct(),
             agent_alias: Some("coder"),
             turn_id,
         })
@@ -5595,11 +5595,11 @@ mod sop_step_reassembly_tests {
     /// so `chat` is never polled.
     struct ShellCallingProvider;
 
-    impl ::clawcrew_api::attribution::Attributable for ShellCallingProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ShellCallingProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -5622,7 +5622,7 @@ mod sop_step_reassembly_tests {
 
         async fn chat(
             &self,
-            _request: clawcrew_api::model_provider::ChatRequest<'_>,
+            _request: galleon_api::model_provider::ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
         ) -> Result<ChatResponse> {
@@ -5646,7 +5646,7 @@ mod sop_step_reassembly_tests {
         calls: Arc<AtomicUsize>,
     }
 
-    ::clawcrew_api::tool_attribution!(ShellProbe, ::clawcrew_api::attribution::ToolKind::Plugin);
+    ::galleon_api::tool_attribution!(ShellProbe, ::galleon_api::attribution::ToolKind::Plugin);
 
     #[async_trait::async_trait]
     impl crate::tools::Tool for ShellProbe {
@@ -5673,11 +5673,11 @@ mod sop_step_reassembly_tests {
     /// completes in a single iteration without needing any assembled tools.
     struct TextProvider;
 
-    impl ::clawcrew_api::attribution::Attributable for TextProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for TextProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -5700,7 +5700,7 @@ mod sop_step_reassembly_tests {
 
         async fn chat(
             &self,
-            _request: clawcrew_api::model_provider::ChatRequest<'_>,
+            _request: galleon_api::model_provider::ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
         ) -> Result<ChatResponse> {
@@ -5725,11 +5725,11 @@ mod sop_step_reassembly_tests {
         requests: Arc<std::sync::Mutex<Vec<CapturedRequest>>>,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for CaptureProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for CaptureProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -5756,7 +5756,7 @@ mod sop_step_reassembly_tests {
 
         async fn chat(
             &self,
-            request: clawcrew_api::model_provider::ChatRequest<'_>,
+            request: galleon_api::model_provider::ChatRequest<'_>,
             _model: &str,
             temperature: Option<f64>,
         ) -> Result<ChatResponse> {
@@ -5800,7 +5800,7 @@ mod sop_step_reassembly_tests {
             }
         }
 
-        fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {}
+        fn record_metric(&self, _metric: &galleon_api::observability_traits::ObserverMetric) {}
 
         fn name(&self) -> &str {
             "identity-capture"
@@ -5814,7 +5814,7 @@ mod sop_step_reassembly_tests {
     /// A trivially registrable tool for seeding a child registry.
     struct NamedTool(&'static str);
 
-    ::clawcrew_api::tool_attribution!(NamedTool, ::clawcrew_api::attribution::ToolKind::Plugin);
+    ::galleon_api::tool_attribution!(NamedTool, ::galleon_api::attribution::ToolKind::Plugin);
 
     #[async_trait::async_trait]
     impl crate::tools::Tool for NamedTool {
@@ -6493,11 +6493,11 @@ mod sop_step_reassembly_tests {
     /// PARENT's if the leak regresses.
     struct ChildSwitchProvider;
 
-    impl ::clawcrew_api::attribution::Attributable for ChildSwitchProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ChildSwitchProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -6522,7 +6522,7 @@ mod sop_step_reassembly_tests {
         }
         async fn chat(
             &self,
-            _request: clawcrew_api::model_provider::ChatRequest<'_>,
+            _request: galleon_api::model_provider::ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
         ) -> Result<ChatResponse> {
@@ -6546,9 +6546,9 @@ mod sop_step_reassembly_tests {
     /// ambient task-local switch state (see `current_model_switch_state`).
     struct ChildModelSwitchTool;
 
-    ::clawcrew_api::tool_attribution!(
+    ::galleon_api::tool_attribution!(
         ChildModelSwitchTool,
-        ::clawcrew_api::attribution::ToolKind::Plugin
+        ::galleon_api::attribution::ToolKind::Plugin
     );
 
     #[async_trait::async_trait]
@@ -6801,7 +6801,7 @@ mod tool_lifecycle_abandonment_tests {
 
     use super::*;
     use crate::observability::NoopObserver;
-    use clawcrew_api::hook::ToolCallHookContext;
+    use galleon_api::hook::ToolCallHookContext;
     use galleon_providers::{ChatResponse, ToolCall};
     use std::sync::Mutex;
     use std::time::Duration;
@@ -6837,7 +6837,7 @@ mod tool_lifecycle_abandonment_tests {
             &self,
             context: &ToolCallHookContext,
             tool: &str,
-            _result: &clawcrew_api::tool::ToolResult,
+            _result: &galleon_api::tool::ToolResult,
             _duration: Duration,
         ) {
             self.events
@@ -6890,11 +6890,11 @@ mod tool_lifecycle_abandonment_tests {
         responses: Mutex<Vec<ChatResponse>>,
     }
 
-    impl clawcrew_api::attribution::Attributable for ScriptedProvider {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Provider(
-                clawcrew_api::attribution::ProviderKind::Model(
-                    clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl galleon_api::attribution::Attributable for ScriptedProvider {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Provider(
+                galleon_api::attribution::ProviderKind::Model(
+                    galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -6921,7 +6921,7 @@ mod tool_lifecycle_abandonment_tests {
 
         async fn chat(
             &self,
-            _request: clawcrew_api::model_provider::ChatRequest<'_>,
+            _request: galleon_api::model_provider::ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
         ) -> anyhow::Result<ChatResponse> {
@@ -6937,9 +6937,9 @@ mod tool_lifecycle_abandonment_tests {
         name: String,
     }
 
-    impl clawcrew_api::attribution::Attributable for EchoTool {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+    impl galleon_api::attribution::Attributable for EchoTool {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             &self.name
@@ -6977,9 +6977,9 @@ mod tool_lifecycle_abandonment_tests {
         token: CancellationToken,
     }
 
-    impl clawcrew_api::attribution::Attributable for InterruptingTool {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+    impl galleon_api::attribution::Attributable for InterruptingTool {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             &self.name
@@ -7015,9 +7015,9 @@ mod tool_lifecycle_abandonment_tests {
         name: String,
     }
 
-    impl clawcrew_api::attribution::Attributable for FailingTool {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+    impl galleon_api::attribution::Attributable for FailingTool {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             &self.name
@@ -7402,9 +7402,9 @@ mod tool_lifecycle_abandonment_tests {
         name: String,
     }
 
-    impl clawcrew_api::attribution::Attributable for HangingTool {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+    impl galleon_api::attribution::Attributable for HangingTool {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Tool(galleon_api::attribution::ToolKind::Plugin)
         }
         fn alias(&self) -> &str {
             &self.name
@@ -7467,7 +7467,7 @@ mod tool_lifecycle_abandonment_tests {
             &self,
             context: &ToolCallHookContext,
             tool: &str,
-            _result: &clawcrew_api::tool::ToolResult,
+            _result: &galleon_api::tool::ToolResult,
             _duration: Duration,
         ) {
             self.events
@@ -7575,7 +7575,7 @@ mod tool_lifecycle_abandonment_tests {
         // cooperative dispatch still reaches the hook and releases the entry.
         runner
             .fire_tool_call_abandoned(
-                &clawcrew_api::hook::ToolCallHookContext::new("turn-drop:0:0"),
+                &galleon_api::hook::ToolCallHookContext::new("turn-drop:0:0"),
                 "hang_tool",
             )
             .await;

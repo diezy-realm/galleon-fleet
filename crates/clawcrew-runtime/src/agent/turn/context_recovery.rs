@@ -60,7 +60,7 @@ pub(crate) async fn try_recover_context_overflow(
     history: &mut Vec<ChatMessage>,
     e: &anyhow::Error,
     iteration: usize,
-    event_tx: Option<&tokio::sync::mpsc::Sender<clawcrew_api::agent::TurnEvent>>,
+    event_tx: Option<&tokio::sync::mpsc::Sender<galleon_api::agent::TurnEvent>>,
     on_delta: Option<&tokio::sync::mpsc::Sender<super::events::DraftEvent>>,
     observer: &dyn Observer,
     context_limits: galleon_config::schema::ResolvedContextLimits,
@@ -145,7 +145,7 @@ pub(crate) async fn try_recover_context_overflow(
                 .then_some(context_limits.context_token_budget as u64);
             if let Some(tx) = event_tx {
                 let _ = tx
-                    .send(clawcrew_api::agent::TurnEvent::HistoryTrimmed {
+                    .send(galleon_api::agent::TurnEvent::HistoryTrimmed {
                         dropped_messages,
                         kept_turns,
                         reason: reason.clone(),
@@ -153,9 +153,9 @@ pub(crate) async fn try_recover_context_overflow(
                         tokens_before: Some(tokens_now as u64),
                         tokens_after: Some(tokens_after as u64),
                         tokens_before_source: Some(
-                            clawcrew_api::agent::TokenCountSource::Estimated,
+                            galleon_api::agent::TokenCountSource::Estimated,
                         ),
-                        tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Estimated),
+                        tokens_after_source: Some(galleon_api::agent::TokenCountSource::Estimated),
                         unsatisfiable_floor: None,
                     })
                     .await;
@@ -170,8 +170,8 @@ pub(crate) async fn try_recover_context_overflow(
                 token_budget: reported_token_budget,
                 tokens_before: Some(tokens_now as u64),
                 tokens_after: Some(tokens_after as u64),
-                tokens_before_source: Some(clawcrew_api::agent::TokenCountSource::Estimated),
-                tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Estimated),
+                tokens_before_source: Some(galleon_api::agent::TokenCountSource::Estimated),
+                tokens_after_source: Some(galleon_api::agent::TokenCountSource::Estimated),
                 unsatisfiable_floor: None,
             });
             return true;
@@ -368,7 +368,7 @@ mod tests {
         );
         let event = rx.try_recv().expect("recovery must emit a TurnEvent");
         match event {
-            clawcrew_api::agent::TurnEvent::HistoryTrimmed {
+            galleon_api::agent::TurnEvent::HistoryTrimmed {
                 dropped_messages,
                 kept_turns,
                 reason,
@@ -399,8 +399,8 @@ mod tests {
                 assert_eq!(
                     (tokens_before_source, tokens_after_source),
                     (
-                        Some(clawcrew_api::agent::TokenCountSource::Estimated),
-                        Some(clawcrew_api::agent::TokenCountSource::Estimated),
+                        Some(galleon_api::agent::TokenCountSource::Estimated),
+                        Some(galleon_api::agent::TokenCountSource::Estimated),
                     ),
                     "estimate-based recovery counts are marked estimated"
                 );
@@ -444,7 +444,7 @@ mod tests {
         assert!(recovered, "an overflowing history must trim and recover");
         let event = rx.try_recv().expect("recovery must emit a TurnEvent");
         match event {
-            clawcrew_api::agent::TurnEvent::HistoryTrimmed {
+            galleon_api::agent::TurnEvent::HistoryTrimmed {
                 reason,
                 token_budget,
                 ..
@@ -491,7 +491,7 @@ mod tests {
         assert!(recovered, "an overflowing history must trim and recover");
         let event = rx.try_recv().expect("recovery must emit a TurnEvent");
         match event {
-            clawcrew_api::agent::TurnEvent::HistoryTrimmed { token_budget, .. } => {
+            galleon_api::agent::TurnEvent::HistoryTrimmed { token_budget, .. } => {
                 assert_eq!(
                     token_budget, None,
                     "disabled enforcement must not report a 0-token budget as governing"

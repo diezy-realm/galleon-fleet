@@ -6,7 +6,7 @@ use super::report_templates;
 use async_trait::async_trait;
 use serde_json::json;
 use std::collections::HashMap;
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::tool::{Tool, ToolResult};
 
 pub struct ReportTemplateTool;
 

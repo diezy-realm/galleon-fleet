@@ -10,9 +10,9 @@ use base64::Engine as _;
 use futures_util::stream::{self, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-pub use clawcrew_api::model_provider::ModelRefusalError as AnthropicRefusalError;
-use clawcrew_api::model_provider::ThinkingDisplay;
-use clawcrew_api::tool::ToolSpec;
+pub use galleon_api::model_provider::ModelRefusalError as AnthropicRefusalError;
+use galleon_api::model_provider::ThinkingDisplay;
+use galleon_api::tool::ToolSpec;
 use galleon_config::schema::CacheTtl;
 
 /// Anthropic's API documentation lists 1.0 as the default sampling temperature.
@@ -106,7 +106,7 @@ pub struct AnthropicModelProvider {
     /// requests. Note the memo only pays off while the instance lives —
     /// paths that rebuild the provider per call (e.g. the per-iteration
     /// vision route) start it empty each time.
-    schema_cache: clawcrew_api::schema::SchemaCleanCache,
+    schema_cache: galleon_api::schema::SchemaCleanCache,
 }
 
 #[cfg(test)]
@@ -645,14 +645,14 @@ impl AnthropicBuilder {
     }
 
     /// Override the maximum output tokens for API requests. Defaults to
-    /// [`clawcrew_api::model_provider::BASELINE_MAX_TOKENS`] when unset.
+    /// [`galleon_api::model_provider::BASELINE_MAX_TOKENS`] when unset.
     pub fn max_tokens(mut self, max_tokens: u32) -> Self {
         self.max_tokens = Some(max_tokens);
         self
     }
 
     /// Override the HTTP request timeout for LLM API calls. Defaults to
-    /// [`clawcrew_api::model_provider::BASELINE_TIMEOUT_SECS`] when unset.
+    /// [`galleon_api::model_provider::BASELINE_TIMEOUT_SECS`] when unset.
     pub fn timeout_secs(mut self, timeout_secs: u64) -> Self {
         self.timeout_secs = Some(timeout_secs);
         self
@@ -680,13 +680,13 @@ impl AnthropicBuilder {
             base_url: self.base_url.unwrap_or_else(|| BASE_URL.to_string()),
             max_tokens: self
                 .max_tokens
-                .unwrap_or(clawcrew_api::model_provider::BASELINE_MAX_TOKENS),
+                .unwrap_or(galleon_api::model_provider::BASELINE_MAX_TOKENS),
             timeout_secs: self
                 .timeout_secs
-                .unwrap_or(clawcrew_api::model_provider::BASELINE_TIMEOUT_SECS),
+                .unwrap_or(galleon_api::model_provider::BASELINE_TIMEOUT_SECS),
             server_fallback_models: self.server_fallback_models,
             cache_ttl: self.cache_ttl.unwrap_or_default(),
-            schema_cache: clawcrew_api::schema::SchemaCleanCache::new(),
+            schema_cache: galleon_api::schema::SchemaCleanCache::new(),
         }
     }
 }
@@ -845,7 +845,7 @@ impl AnthropicModelProvider {
                 // instance (memoized), then `Arc`-shared into every request body.
                 input_schema: self.schema_cache.clean_shared(
                     &tool.parameters,
-                    clawcrew_api::schema::CleaningStrategy::Anthropic,
+                    galleon_api::schema::CleaningStrategy::Anthropic,
                 ),
                 cache_control: None,
             })
@@ -2104,7 +2104,7 @@ impl AnthropicModelProvider {
     fn require_terminal_text(parsed: ProviderChatResponse) -> anyhow::Result<String> {
         if parsed.is_semantically_empty_terminal() {
             return Err(anyhow::Error::new(
-                clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+                galleon_api::model_provider::SemanticEmptyTerminalCompletion,
             ));
         }
         parsed.text.ok_or_else(|| {
@@ -2232,7 +2232,7 @@ impl AnthropicModelProvider {
     /// meet budget_tokens minimum when needed).
     fn resolve_thinking(
         &self,
-        thinking: Option<clawcrew_api::model_provider::NativeThinkingParams>,
+        thinking: Option<galleon_api::model_provider::NativeThinkingParams>,
         temperature: Option<f64>,
         model: &str,
     ) -> (Option<f64>, Option<NativeThinkingConfig>, u32) {
@@ -2843,7 +2843,7 @@ impl ModelProvider for AnthropicModelProvider {
 
         // Check for tool_choice override from the agent loop (e.g. "any"
         // to force tool use for hardware requests).
-        let tool_choice_override = clawcrew_api::TOOL_CHOICE_OVERRIDE
+        let tool_choice_override = galleon_api::TOOL_CHOICE_OVERRIDE
             .try_with(Clone::clone)
             .ok()
             .flatten();
@@ -3061,7 +3061,7 @@ impl ModelProvider for AnthropicModelProvider {
             Self::apply_cache_to_last_message(&mut messages, self.cache_ttl);
         }
 
-        let tool_choice_override = clawcrew_api::TOOL_CHOICE_OVERRIDE
+        let tool_choice_override = galleon_api::TOOL_CHOICE_OVERRIDE
             .try_with(Clone::clone)
             .ok()
             .flatten();
@@ -3343,11 +3343,11 @@ impl ModelProvider for AnthropicModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for AnthropicModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Anthropic,
+impl ::galleon_api::attribution::Attributable for AnthropicModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Anthropic,
             ),
         )
     }

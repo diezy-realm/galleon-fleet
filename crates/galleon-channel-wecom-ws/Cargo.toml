@@ -13,7 +13,7 @@ publish = true
 workspace = true
 
 [dependencies]
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-config = { workspace = true, features = ["ws-transport"] }
 galleon-spawn.workspace = true
 galleon-log.workspace = true

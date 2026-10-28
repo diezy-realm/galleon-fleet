@@ -1,6 +1,6 @@
 use std::sync::Arc;
-use clawcrew_api::memory_traits::{Memory, MemoryStrategy};
-use clawcrew_api::model_provider::ModelProvider;
+use galleon_api::memory_traits::{Memory, MemoryStrategy};
+use galleon_api::model_provider::ModelProvider;
 
 /// Default turn consolidation and governance strategy for long-term memory.
 pub struct DefaultMemoryStrategy {

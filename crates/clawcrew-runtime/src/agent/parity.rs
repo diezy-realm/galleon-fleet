@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use tokio::sync::mpsc;
-use clawcrew_api::ingress::IngressContext;
+use galleon_api::ingress::IngressContext;
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::schema::Config;
 use galleon_providers::ChatMessage;

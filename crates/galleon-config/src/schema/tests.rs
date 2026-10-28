@@ -1142,10 +1142,10 @@ use super::*;
             allowed_agents: vec!["*".to_string()],
             allowed_tools: vec!["calculator".to_string()],
             grants: HashMap::from([(
-                clawcrew_api::grants::Resource::Sessions,
+                galleon_api::grants::Resource::Sessions,
                 vec![
-                    clawcrew_api::grants::Verb::Create,
-                    clawcrew_api::grants::Verb::Read,
+                    galleon_api::grants::Verb::Create,
+                    galleon_api::grants::Verb::Read,
                 ],
             )]),
             ..PermissionProfileConfig::default()
@@ -1463,7 +1463,7 @@ use super::*;
 
     #[::core::prelude::v1::test]
     fn permission_profile_resolves_to_deny_by_default_grants() {
-        use clawcrew_api::grants::{Resource, Verb};
+        use galleon_api::grants::{Resource, Verb};
         let resolved = auth_operator_profile().resolve();
         assert!(!resolved.admin);
         assert!(resolved.permits(Resource::Sessions, Verb::Read));
@@ -1512,8 +1512,8 @@ clawcrew-operators = "operator"
         config.validate().expect("parsed auth config validates");
         let resolved = config.permission_profiles["operator"].resolve();
         assert!(resolved.permits(
-            clawcrew_api::grants::Resource::Tools,
-            clawcrew_api::grants::Verb::Execute
+            galleon_api::grants::Resource::Tools,
+            galleon_api::grants::Verb::Execute
         ));
         assert_eq!(
             config.oidc["corp"].profile_map["clawcrew-operators"],

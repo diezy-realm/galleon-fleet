@@ -11,8 +11,8 @@ use anyhow::Result;
 use futures_util::StreamExt;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
-use clawcrew_api::agent::TurnEvent;
-use clawcrew_api::model_provider::StreamEvent;
+use galleon_api::agent::TurnEvent;
+use galleon_api::model_provider::StreamEvent;
 use galleon_config::schema::StreamReasoningMode;
 use galleon_providers::{ChatMessage, ChatRequest, ModelProvider, ProviderDispatch, ToolCall};
 
@@ -47,7 +47,7 @@ pub(crate) async fn consume_provider_streaming_response(
         ChatRequest {
             messages,
             tools: request_tools,
-            thinking: clawcrew_api::NATIVE_THINKING_OVERRIDE
+            thinking: galleon_api::NATIVE_THINKING_OVERRIDE
                 .try_with(Clone::clone)
                 .ok()
                 .flatten(),
@@ -158,7 +158,7 @@ pub(crate) async fn consume_provider_streaming_response(
                     // suppression-buffered output nobody received.
                     let mut usage = outcome.usage;
                     if usage.is_none()
-                        && let clawcrew_api::model_provider::StreamError::ModelRefusal(refusal) =
+                        && let galleon_api::model_provider::StreamError::ModelRefusal(refusal) =
                             &err
                     {
                         usage = refusal.usage.as_deref().cloned();
@@ -374,7 +374,7 @@ mod tests {
     use super::*;
     use async_trait::async_trait;
     use futures_util::stream::BoxStream;
-    use clawcrew_api::model_provider::StreamChunk;
+    use galleon_api::model_provider::StreamChunk;
     use galleon_providers::ToolCall;
     use galleon_providers::traits::{
         ChatResponse, ProviderCapabilities, StreamOptions, StreamResult, TokenUsage,
@@ -390,11 +390,11 @@ mod tests {
         cancel_after_visible_output: bool,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ToolThenTextProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ToolThenTextProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -403,11 +403,11 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for EmptyStreamProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for EmptyStreamProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -416,11 +416,11 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ReasoningProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ReasoningProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -430,11 +430,11 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for CancelAfterUsageProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for CancelAfterUsageProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -598,11 +598,11 @@ mod tests {
     /// plus a transient readable delta, in that order, then text.
     struct ThinkingSplitProvider;
 
-    impl ::clawcrew_api::attribution::Attributable for ThinkingSplitProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ThinkingSplitProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1064,11 +1064,11 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for MarkerTestProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MarkerTestProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1190,11 +1190,11 @@ mod tests {
     /// which must NOT count as visible output.
     struct MarkerOnlyThenErrorProvider;
 
-    impl ::clawcrew_api::attribution::Attributable for MarkerOnlyThenErrorProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MarkerOnlyThenErrorProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1250,7 +1250,7 @@ mod tests {
         ) -> BoxStream<'static, StreamResult<StreamEvent>> {
             let events: Vec<StreamResult<StreamEvent>> = vec![
                 Ok(StreamEvent::TextDelta(StreamChunk::delta("<eom>"))),
-                Err(::clawcrew_api::model_provider::StreamError::ModelProvider(
+                Err(::galleon_api::model_provider::StreamError::ModelProvider(
                     "provider exploded after marker-only delta".into(),
                 )),
             ];
@@ -1395,11 +1395,11 @@ mod tests {
     /// streamed live or was buffered until completion.
     struct LiveMarkerTimingProvider;
 
-    impl ::clawcrew_api::attribution::Attributable for LiveMarkerTimingProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for LiveMarkerTimingProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1522,14 +1522,14 @@ mod tests {
     }
 
     struct VisibleOutputThenRefusalProvider {
-        refusal: clawcrew_api::model_provider::ModelRefusalError,
+        refusal: galleon_api::model_provider::ModelRefusalError,
     }
 
-    impl ::clawcrew_api::attribution::Attributable for VisibleOutputThenRefusalProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Anthropic,
+    impl ::galleon_api::attribution::Attributable for VisibleOutputThenRefusalProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Anthropic,
                 ),
             )
         }
@@ -1576,7 +1576,7 @@ mod tests {
                 Ok(StreamEvent::TextDelta(StreamChunk::delta(
                     "Visible partial text before refusal",
                 ))),
-                Err(clawcrew_api::model_provider::StreamError::ModelRefusal(
+                Err(galleon_api::model_provider::StreamError::ModelRefusal(
                     Box::new(refusal),
                 )),
             ]))
@@ -1592,7 +1592,7 @@ mod tests {
             cache_creation_input_tokens: None,
         };
         let provider = VisibleOutputThenRefusalProvider {
-            refusal: clawcrew_api::model_provider::ModelRefusalError {
+            refusal: galleon_api::model_provider::ModelRefusalError {
                 requested_model: "claude-sonnet-4-6".to_string(),
                 category: Some("hate".to_string()),
                 usage: Some(Box::new(refusal_usage)),
@@ -1636,9 +1636,9 @@ mod tests {
             .terminal_cause()
             .expect("typed terminal cause must be retained");
         let refusal = cause_err
-            .downcast_ref::<clawcrew_api::model_provider::StreamError>()
+            .downcast_ref::<galleon_api::model_provider::StreamError>()
             .and_then(|e| match e {
-                clawcrew_api::model_provider::StreamError::ModelRefusal(r) => Some(r),
+                galleon_api::model_provider::StreamError::ModelRefusal(r) => Some(r),
                 _ => None,
             })
             .expect("terminal cause must contain the typed ModelRefusal");

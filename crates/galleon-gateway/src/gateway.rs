@@ -42,9 +42,9 @@ pub async fn run_gateway(
     config: crate::Config,
     external_event_tx: Option<tokio::sync::broadcast::Sender<serde_json::Value>>,
     reload_controls: Option<galleon_infra::gateway_controls::GatewayReloadControls>,
-    tui_registry: Option<std::sync::Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
+    tui_registry: Option<std::sync::Arc<dyn galleon_api::runtime_traits::TuiConnectionRegistry>>,
     canvas_store: Option<crate::CanvasStore>,
-    sop_runner: Option<std::sync::Arc<dyn clawcrew_api::sop::SopRunner>>,
+    sop_runner: Option<std::sync::Arc<dyn galleon_api::sop::SopRunner>>,
     readiness: Option<galleon_infra::gateway_controls::GatewayReadinessReporter>,
 ) -> Result<()> {
     Box::pin(run_gateway_with_plugin_webhooks(
@@ -58,7 +58,7 @@ pub async fn run_gateway(
         sop_runner,
         GatewaySupervision::new(
             readiness,
-            std::sync::Arc::new(clawcrew_api::webhook::PluginWebhookRegistry::new()),
+            std::sync::Arc::new(galleon_api::webhook::PluginWebhookRegistry::new()),
         ),
     ))
     .await
@@ -73,9 +73,9 @@ pub async fn run_gateway_with_plugin_webhooks(
     config: crate::Config,
     external_event_tx: Option<tokio::sync::broadcast::Sender<serde_json::Value>>,
     reload_controls: Option<galleon_infra::gateway_controls::GatewayReloadControls>,
-    tui_registry: Option<std::sync::Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
+    tui_registry: Option<std::sync::Arc<dyn galleon_api::runtime_traits::TuiConnectionRegistry>>,
     canvas_store: Option<crate::CanvasStore>,
-    sop_runner: Option<std::sync::Arc<dyn clawcrew_api::sop::SopRunner>>,
+    sop_runner: Option<std::sync::Arc<dyn galleon_api::sop::SopRunner>>,
     supervision: GatewaySupervision,
 ) -> Result<()> {
     let state = AppState::from_config_and_controls(

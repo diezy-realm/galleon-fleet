@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_infra::net_guard::{Nat64Prefix, PrivateNetworkAccess, ResolvedDestination};
 
 /// Maximum response body size (1 MB).
@@ -260,7 +260,7 @@ mod tests {
     use super::*;
     use crate::skills::SkillTool;
     use serde_json::json;
-    use clawcrew_api::attribution::{Attributable, ToolProvenance};
+    use galleon_api::attribution::{Attributable, ToolProvenance};
 
     fn sample_http_tool() -> SkillTool {
         let mut args = HashMap::new();

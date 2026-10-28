@@ -237,7 +237,7 @@ pub(crate) async fn call_provider(
                             let streamed_refusal = stream_err
                                 .downcast_ref::<StreamErrorWithUsage>()
                                 .and_then(|error| match &error.source {
-                                    clawcrew_api::model_provider::StreamError::ModelRefusal(
+                                    galleon_api::model_provider::StreamError::ModelRefusal(
                                         refusal,
                                     ) => Some((**refusal).clone()),
                                     _ => None,
@@ -246,7 +246,7 @@ pub(crate) async fn call_provider(
                                     stream_err.chain().find_map(|cause| {
                                         cause
                                             .downcast_ref::<
-                                                clawcrew_api::model_provider::ModelRefusalError,
+                                                galleon_api::model_provider::ModelRefusalError,
                                             >()
                                             .cloned()
                                     })
@@ -292,7 +292,7 @@ pub(crate) async fn call_provider(
                             let request = ChatRequest {
                                 messages: prepared_messages,
                                 tools: request_tools,
-                                thinking: clawcrew_api::NATIVE_THINKING_OVERRIDE
+                                thinking: galleon_api::NATIVE_THINKING_OVERRIDE
                                     .try_with(Clone::clone)
                                     .ok()
                                     .flatten(),
@@ -354,7 +354,7 @@ pub(crate) async fn call_provider(
                 ChatRequest {
                     messages: prepared_messages,
                     tools: request_tools,
-                    thinking: clawcrew_api::NATIVE_THINKING_OVERRIDE
+                    thinking: galleon_api::NATIVE_THINKING_OVERRIDE
                         .try_with(Clone::clone)
                         .ok()
                         .flatten(),
@@ -431,7 +431,7 @@ mod payload_capture_tests {
     use super::announce_llm_request;
     use crate::observability::NoopObserver;
     use async_trait::async_trait;
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
     use galleon_config::schema::{PacingConfig, StreamReasoningMode};
     use galleon_log::LogConfig;
     use galleon_providers::{ChatMessage, ModelProvider};
@@ -686,8 +686,8 @@ mod streaming_fallback_tests {
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use tokio::net::TcpListener;
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-    use clawcrew_api::model_provider::{ModelRefusalError, StreamError, StreamEvent};
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::model_provider::{ModelRefusalError, StreamError, StreamEvent};
     use galleon_config::schema::PacingConfig;
     use galleon_providers::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
     use galleon_providers::reliable::ReliableModelProvider;
@@ -851,7 +851,7 @@ mod streaming_fallback_tests {
                         cache_creation_input_tokens: None,
                     })),
                     Ok(StreamEvent::TextDelta(
-                        clawcrew_api::model_provider::StreamChunk::reasoning("private reasoning"),
+                        galleon_api::model_provider::StreamChunk::reasoning("private reasoning"),
                     )),
                     Ok(StreamEvent::Final),
                 ])
@@ -1131,7 +1131,7 @@ mod streaming_fallback_tests {
         ) -> BoxStream<'static, StreamResult<StreamEvent>> {
             Box::pin(futures_util::stream::iter(vec![
                 Ok(StreamEvent::TextDelta(
-                    clawcrew_api::model_provider::StreamChunk::delta("visible"),
+                    galleon_api::model_provider::StreamChunk::delta("visible"),
                 )),
                 Err(galleon_providers::traits::StreamError::ModelProvider(
                     "503 Service Unavailable".to_string(),
@@ -1224,7 +1224,7 @@ mod streaming_fallback_tests {
             event_rx
                 .try_recv()
                 .expect("reasoning event must be forwarded once"),
-            clawcrew_api::agent::TurnEvent::Thinking { delta }
+            galleon_api::agent::TurnEvent::Thinking { delta }
                 if delta == "private reasoning"
         ));
         assert!(
@@ -1375,7 +1375,7 @@ mod streaming_fallback_tests {
             .await
             .expect("visible chunk must be delivered")
         {
-            clawcrew_api::agent::TurnEvent::Chunk { delta } => assert_eq!(delta, "visible"),
+            galleon_api::agent::TurnEvent::Chunk { delta } => assert_eq!(delta, "visible"),
             other => panic!("expected visible chunk, got {other:?}"),
         }
         let interrupted = error

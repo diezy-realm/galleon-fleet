@@ -20,7 +20,7 @@ pub mod writer;
 #[doc(hidden)]
 pub mod __private {
     pub use ::chrono;
-    pub use ::clawcrew_api;
+    pub use ::galleon_api;
     pub use ::serde_json;
     pub use ::tracing;
     pub use ::uuid;

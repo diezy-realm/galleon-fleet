@@ -32,10 +32,10 @@ const WELL_KNOWN_AGENT_CARD_PATH: &str = "/.well-known/agent-card.json";
 
 // Card DTOs (`AgentInterface`/`AgentCapabilities`/`AgentSkill`/`AgentCard`)
 // and Task/Message DTOs live in the shared wire-model source
-// `clawcrew_api::a2a_wire`, used by both this inbound surface and the
+// `galleon_api::a2a_wire`, used by both this inbound surface and the
 // outbound client in `galleon-tools`. Re-exported here so the gateway's
 // existing construction sites keep working under `crate::a2a::AgentCard`.
-pub use clawcrew_api::a2a_wire::{AgentCapabilities, AgentCard, AgentInterface, AgentSkill};
+pub use galleon_api::a2a_wire::{AgentCapabilities, AgentCard, AgentInterface, AgentSkill};
 
 /// Runtime gateway endpoint used for A2A advertisement when the operator starts
 /// the gateway with CLI host/port overrides. This is created from the listener
@@ -373,7 +373,7 @@ async fn handle_alias_card(
 /// other methods return a JSON-RPC method-not-found.
 ///
 /// This is the router-side request parser (fields private to this module).
-/// The shared `clawcrew_api::a2a_wire::JsonRpcRequest` is the outbound
+/// The shared `galleon_api::a2a_wire::JsonRpcRequest` is the outbound
 /// construction shape; they are intentionally separate so the router keeps
 /// its parse-only surface.
 #[derive(Debug, Deserialize)]
@@ -389,13 +389,13 @@ pub(crate) struct JsonRpcRequest {
 
 // Task/Message DTOs (`SendMessageParams`/`Message`/`Part`/`Artifact`/
 // `TaskStatus`/`Task`/`Role`/`TaskState`/`SendMessageResponse`) come from the
-// shared v1.0 wire-model `clawcrew_api::a2a_wire`. Inbound constructs
+// shared v1.0 wire-model `galleon_api::a2a_wire`. Inbound constructs
 // responses from them; outbound deserializes peer responses from the same
 // types. Re-exported under `crate::a2a::` aliases matching the old outbound
 // names so the construction sites below compile unchanged: `OutTask` →
 // `Task`, `OutArtifact` → `Artifact`, `OutPart` → `Part`,
 // `OutTaskStatus` → `TaskStatus`.
-pub use clawcrew_api::a2a_wire::{
+pub use galleon_api::a2a_wire::{
     Artifact, Message, Part, Role, SendMessageParams, SendMessageResponse, Task, TaskState,
     TaskStatus,
 };

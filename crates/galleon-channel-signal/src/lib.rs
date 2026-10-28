@@ -35,7 +35,7 @@
 //! Everything else is a faithful port. No production path uses `unwrap`/`expect`
 //! on fallible IO; errors propagate via `anyhow::Result` + `?`.
 
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     ApprovalSource, AttributedApprovalResponse, Channel, ChannelApprovalRequest,
     ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
@@ -519,9 +519,9 @@ impl SignalChannel {
     }
 }
 
-impl clawcrew_api::attribution::Attributable for SignalChannel {
-    fn role(&self) -> clawcrew_api::attribution::Role {
-        clawcrew_api::attribution::Role::Channel(clawcrew_api::attribution::ChannelKind::Signal)
+impl galleon_api::attribution::Attributable for SignalChannel {
+    fn role(&self) -> galleon_api::attribution::Role {
+        galleon_api::attribution::Role::Channel(galleon_api::attribution::ChannelKind::Signal)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -833,9 +833,9 @@ mod tests {
         assert_eq!(dyn_ch.name(), "signal");
         assert_eq!(ch.alias(), "signal_test_alias");
         assert!(matches!(
-            clawcrew_api::attribution::Attributable::role(&ch),
-            clawcrew_api::attribution::Role::Channel(
-                clawcrew_api::attribution::ChannelKind::Signal
+            galleon_api::attribution::Attributable::role(&ch),
+            galleon_api::attribution::Role::Channel(
+                galleon_api::attribution::ChannelKind::Signal
             )
         ));
     }

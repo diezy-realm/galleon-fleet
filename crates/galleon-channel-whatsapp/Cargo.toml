@@ -26,7 +26,7 @@ whatsapp-web = [
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-config.workspace = true
 galleon-log.workspace = true
 galleon-spawn.workspace = true

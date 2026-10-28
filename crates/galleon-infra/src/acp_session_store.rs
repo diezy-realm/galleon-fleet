@@ -5,8 +5,8 @@ use chrono::{DateTime, Utc};
 use parking_lot::Mutex;
 use rusqlite::{Connection, OptionalExtension, params};
 use std::path::Path;
-use clawcrew_api::model_provider::{ChatMessage, ConversationMessage, ToolCall, ToolResultMessage};
-use clawcrew_api::plan::PlanEntry;
+use galleon_api::model_provider::{ChatMessage, ConversationMessage, ToolCall, ToolResultMessage};
+use galleon_api::plan::PlanEntry;
 use galleon_log::{Action, EventOutcome};
 
 /// Internal discriminator for `acp_tool_calls.event_kind`. The 'in' row
@@ -1496,7 +1496,7 @@ fn parse_ts(s: &str, field: &'static str, session_uuid: &str) -> DateTime<Utc> {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_api::model_provider::{ChatMessage, ToolCall, ToolResultMessage};
+    use galleon_api::model_provider::{ChatMessage, ToolCall, ToolResultMessage};
 
     fn open_store() -> (TempDir, AcpSessionStore) {
         let tmp = TempDir::new().unwrap();
@@ -1613,7 +1613,7 @@ mod tests {
 
     #[test]
     fn set_and_get_plan_round_trips() {
-        use clawcrew_api::plan::{PlanEntry, PlanPriority, PlanStatus};
+        use galleon_api::plan::{PlanEntry, PlanPriority, PlanStatus};
         let (_tmp, store) = open_store();
         store
             .create_session("sess-plan", "alpha", "/tmp/proj")
@@ -1694,7 +1694,7 @@ mod tests {
         let old = vec![
             ConversationMessage::AssistantToolCalls {
                 text: Some(String::new()),
-                tool_calls: vec![clawcrew_api::model_provider::ToolCall {
+                tool_calls: vec![galleon_api::model_provider::ToolCall {
                     id: "call-1".into(),
                     name: "old_tool".into(),
                     arguments: "{}".into(),
@@ -1703,7 +1703,7 @@ mod tests {
                 reasoning_content: None,
             },
             ConversationMessage::ToolResults(vec![
-                clawcrew_api::model_provider::ToolResultMessage {
+                galleon_api::model_provider::ToolResultMessage {
                     tool_call_id: "call-1".into(),
                     content: "old result".into(),
                     tool_name: "old_tool".into(),
@@ -1750,7 +1750,7 @@ mod tests {
                 &[
                     ConversationMessage::AssistantToolCalls {
                         text: Some(String::new()),
-                        tool_calls: vec![clawcrew_api::model_provider::ToolCall {
+                        tool_calls: vec![galleon_api::model_provider::ToolCall {
                             id: "call-2".into(),
                             name: "new_tool".into(),
                             arguments: "{}".into(),
@@ -1759,7 +1759,7 @@ mod tests {
                         reasoning_content: None,
                     },
                     ConversationMessage::ToolResults(vec![
-                        clawcrew_api::model_provider::ToolResultMessage {
+                        galleon_api::model_provider::ToolResultMessage {
                             tool_call_id: "call-2".into(),
                             content: "new result".into(),
                             tool_name: "new_tool".into(),

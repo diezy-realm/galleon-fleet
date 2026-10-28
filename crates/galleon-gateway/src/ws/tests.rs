@@ -660,7 +660,7 @@ async fn ws_back_channel_registers_under_the_ingress_identity() {
         Arc::new(parking_lot::RwLock::new(std::collections::HashMap::new()));
     handle.write().insert(
         WS_CHANNEL_KEY.to_string(),
-        approval_channel as Arc<dyn clawcrew_api::channel::Channel>,
+        approval_channel as Arc<dyn galleon_api::channel::Channel>,
     );
 
     // Interactive tools resolve the back-channel by the agent's channel
@@ -1921,8 +1921,8 @@ fn usage_event(
     output_tokens: Option<u64>,
     cost_usd: Option<f64>,
     accepted: bool,
-) -> clawcrew_api::agent::TurnEvent {
-    clawcrew_api::agent::TurnEvent::Usage {
+) -> galleon_api::agent::TurnEvent {
+    galleon_api::agent::TurnEvent::Usage {
         input_tokens,
         cached_input_tokens,
         output_tokens,

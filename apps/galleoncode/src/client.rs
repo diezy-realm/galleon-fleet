@@ -3328,7 +3328,7 @@ pub struct CatalogModelsResult {
 }
 
 /// Per-token USD pricing strings as emitted by the catalog RPC. Field names
-/// match `clawcrew_api::model_provider::ModelPricing`; only the rates the
+/// match `galleon_api::model_provider::ModelPricing`; only the rates the
 /// cost-rate sheet consumes are kept.
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]

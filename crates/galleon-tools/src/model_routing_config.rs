@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::fs;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::schema::{ClassificationRule, Config, DelegateTargetConfig, ModelRouteConfig};
 use galleon_providers::ProviderDispatch;

@@ -4,9 +4,9 @@ use super::serial::SerialTransport;
 use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
+use galleon_api::tool_attribution;
 
 tool_attribution!(HardwareCapabilitiesTool, ToolKind::Plugin);
 

@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use regex::Regex;
 use std::sync::Arc;
 use tokio::time::{Duration, timeout};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 
 pub use galleon_config::scattered_types::BrowserDelegateConfig;

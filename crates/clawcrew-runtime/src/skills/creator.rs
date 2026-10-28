@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use std::path::PathBuf;
-use clawcrew_api::model_provider::{ChatMessage, ChatRequest, ModelProvider};
+use galleon_api::model_provider::{ChatMessage, ChatRequest, ModelProvider};
 use galleon_config::schema::SkillCreationConfig;
 use galleon_memory::embeddings::EmbeddingProvider;
 use galleon_memory::vector::cosine_similarity;
@@ -1248,11 +1248,11 @@ tags = ["auto-generated"]
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MockModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }

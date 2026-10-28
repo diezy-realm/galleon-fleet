@@ -250,7 +250,7 @@ mod tests {
         }
 
         #[async_trait::async_trait]
-        impl clawcrew_api::runtime_traits::AcpSessionRunner for MockAcpRunner {
+        impl galleon_api::runtime_traits::AcpSessionRunner for MockAcpRunner {
             async fn run_session(
                 &self,
                 mut input_rx: tokio::sync::mpsc::Receiver<String>,

@@ -3,7 +3,7 @@
 use crate::util_helpers::truncate_with_ellipsis;
 use async_trait::async_trait;
 use serde_json::json;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::CloudOpsConfig;
 
 /// Read-only cloud operations advisory tool.

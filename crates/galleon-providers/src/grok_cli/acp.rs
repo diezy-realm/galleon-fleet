@@ -14,7 +14,7 @@ use std::time::Duration;
 use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
 use tokio::time::timeout;
-use clawcrew_api::jsonrpc::{
+use galleon_api::jsonrpc::{
     ACP_PROTOCOL_VERSION, JSONRPC_VERSION, JsonRpcError, JsonRpcRequest, JsonRpcResponse,
     error_codes::METHOD_NOT_FOUND, field,
 };

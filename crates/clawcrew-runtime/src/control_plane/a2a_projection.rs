@@ -1,14 +1,14 @@
 //! Project outbound A2A run events onto the canonical control plane (P0.1).
 //!
 //! The A2A tools live in `galleon-tools`, below the runtime control plane.
-//! They emit [`A2aRunEvent`]s through the `clawcrew_api::a2a_observer` seam; the
+//! They emit [`A2aRunEvent`]s through the `galleon_api::a2a_observer` seam; the
 //! observer installed here projects each event onto `TaskRegistry` as a
 //! `TaskKind::A2a` task (registered on first sight, settled when terminal).
 
 use std::sync::Arc;
 
-use clawcrew_api::a2a_observer::{A2aRunEvent, A2aRunObserver, set_a2a_run_observer};
-use clawcrew_api::a2a_wire::TaskState;
+use galleon_api::a2a_observer::{A2aRunEvent, A2aRunObserver, set_a2a_run_observer};
+use galleon_api::a2a_wire::TaskState;
 
 use super::{ControlPlaneHandle, TaskKind, TaskStatus, control_plane, producer};
 

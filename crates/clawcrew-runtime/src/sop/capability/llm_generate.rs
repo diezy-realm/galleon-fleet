@@ -24,7 +24,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use serde_json::{Map, Value, json};
-use clawcrew_api::model_provider::{ChatResponse, ModelProvider};
+use galleon_api::model_provider::{ChatResponse, ModelProvider};
 use galleon_providers::ProviderDispatch;
 
 use super::types::{CapabilityContext, CapabilityInfo, CapabilityResult, SopCapability};
@@ -250,7 +250,7 @@ impl LlmGenerateAdapter for ProviderLlmAdapter {
 mod tests {
     use super::*;
     use std::sync::Mutex;
-    use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
+    use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
 
     struct RecordingLlm {
         calls: Mutex<Vec<(Option<String>, String)>>,
@@ -270,7 +270,7 @@ mod tests {
 
         fn generate_typed(&self, _system: Option<&str>, _prompt: &str) -> Result<String> {
             Err(anyhow::Error::new(
-                clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+                galleon_api::model_provider::SemanticEmptyTerminalCompletion,
             ))
         }
     }
@@ -287,7 +287,7 @@ mod tests {
             _temperature: Option<f64>,
         ) -> Result<String> {
             Err(anyhow::Error::new(
-                clawcrew_api::model_provider::SemanticEmptyTerminalCompletion,
+                galleon_api::model_provider::SemanticEmptyTerminalCompletion,
             ))
         }
     }
@@ -579,7 +579,7 @@ mod tests {
             .expect_err("the provider's typed terminal error must survive the bridge");
 
         assert!(error.chain().any(|cause| {
-            cause.is::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>()
+            cause.is::<galleon_api::model_provider::SemanticEmptyTerminalCompletion>()
         }));
     }
 }

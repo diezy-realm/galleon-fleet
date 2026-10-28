@@ -578,7 +578,7 @@ mod e2e_tests {
     use crate::{
         Action, Event, EventOutcome, subscribe_or_install, try_install_capture_subscriber,
     };
-    use ::clawcrew_api::attribution::{Attributable, ChannelKind, Role};
+    use ::galleon_api::attribution::{Attributable, ChannelKind, Role};
 
     /// Synthetic Attributable test fixture standing in for a real
     /// channel impl. Keeps the test free of every channel impl's

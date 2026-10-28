@@ -6,8 +6,8 @@ use std::time::Duration;
 use crate::agent::loop_::scrub_for_export;
 use crate::agent::turn::redact::scrub_credentials_value;
 use crate::hooks::traits::{HookHandler, HookResult};
-use clawcrew_api::hook::ToolCallHookContext;
-use clawcrew_api::tool::ToolResult;
+use galleon_api::hook::ToolCallHookContext;
+use galleon_api::tool::ToolResult;
 use galleon_config::schema::WebhookAuditConfig;
 
 fn validate_webhook_url(url: &str) -> Result<(), String> {

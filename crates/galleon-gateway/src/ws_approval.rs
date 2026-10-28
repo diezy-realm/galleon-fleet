@@ -9,8 +9,8 @@ use async_trait::async_trait;
 use parking_lot::Mutex;
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
-use clawcrew_api::agent::TurnEvent;
-use clawcrew_api::channel::{
+use galleon_api::agent::TurnEvent;
+use galleon_api::channel::{
     ApprovalSource, AttributedApprovalResponse, Channel, ChannelApprovalRequest,
     ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
@@ -47,10 +47,10 @@ impl WsApprovalChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for WsApprovalChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for WsApprovalChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {

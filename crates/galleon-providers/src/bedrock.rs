@@ -10,7 +10,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::sync::{Arc, Mutex};
-use clawcrew_api::tool::ToolSpec;
+use galleon_api::tool::ToolSpec;
 #[cfg(windows)]
 use galleon_config::platform::native::windows_std_cmd_shell_command;
 
@@ -760,7 +760,7 @@ impl BedrockBuilder {
     }
 
     /// Override the maximum output tokens for API requests. Defaults to
-    /// [`clawcrew_api::model_provider::BASELINE_MAX_TOKENS`] when unset.
+    /// [`galleon_api::model_provider::BASELINE_MAX_TOKENS`] when unset.
     pub fn max_tokens(mut self, max_tokens: u32) -> Self {
         self.max_tokens = Some(max_tokens);
         self
@@ -785,7 +785,7 @@ impl BedrockBuilder {
             auth,
             max_tokens: self
                 .max_tokens
-                .unwrap_or(clawcrew_api::model_provider::BASELINE_MAX_TOKENS),
+                .unwrap_or(galleon_api::model_provider::BASELINE_MAX_TOKENS),
             cred_cache: Mutex::new(None),
         }
     }
@@ -804,7 +804,7 @@ impl BedrockBuilder {
             auth,
             max_tokens: self
                 .max_tokens
-                .unwrap_or(clawcrew_api::model_provider::BASELINE_MAX_TOKENS),
+                .unwrap_or(galleon_api::model_provider::BASELINE_MAX_TOKENS),
             cred_cache: Mutex::new(None),
         }
     }
@@ -1731,11 +1731,11 @@ impl ModelProvider for BedrockModelProvider {
 
 // ── Tests ───────────────────────────────────────────────────────
 
-impl ::clawcrew_api::attribution::Attributable for BedrockModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Bedrock,
+impl ::galleon_api::attribution::Attributable for BedrockModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Bedrock,
             ),
         )
     }
@@ -1913,7 +1913,7 @@ mod tests {
         let model_provider = BedrockModelProvider {
             alias: "test".to_string(),
             auth: None,
-            max_tokens: clawcrew_api::model_provider::BASELINE_MAX_TOKENS,
+            max_tokens: galleon_api::model_provider::BASELINE_MAX_TOKENS,
             cred_cache: Mutex::new(None),
         };
         let result = model_provider
@@ -2478,7 +2478,7 @@ mod tests {
         let model_provider = BedrockModelProvider {
             alias: "test".to_string(),
             auth: None,
-            max_tokens: clawcrew_api::model_provider::BASELINE_MAX_TOKENS,
+            max_tokens: galleon_api::model_provider::BASELINE_MAX_TOKENS,
             cred_cache: Mutex::new(None),
         };
         let result = model_provider.warmup().await;
@@ -2490,7 +2490,7 @@ mod tests {
         let model_provider = BedrockModelProvider {
             alias: "test".to_string(),
             auth: None,
-            max_tokens: clawcrew_api::model_provider::BASELINE_MAX_TOKENS,
+            max_tokens: galleon_api::model_provider::BASELINE_MAX_TOKENS,
             cred_cache: Mutex::new(None),
         };
         let caps = model_provider.capabilities();
@@ -2851,7 +2851,7 @@ credential_process=some-command
         let model_provider = BedrockModelProvider {
             alias: "test".to_string(),
             auth: None,
-            max_tokens: clawcrew_api::model_provider::BASELINE_MAX_TOKENS,
+            max_tokens: galleon_api::model_provider::BASELINE_MAX_TOKENS,
             cred_cache: Mutex::new(None),
         };
         assert!(model_provider.cached_credentials().is_none());
@@ -2863,7 +2863,7 @@ credential_process=some-command
         let model_provider = BedrockModelProvider {
             alias: "test".to_string(),
             auth: None,
-            max_tokens: clawcrew_api::model_provider::BASELINE_MAX_TOKENS,
+            max_tokens: galleon_api::model_provider::BASELINE_MAX_TOKENS,
             cred_cache: Mutex::new(Some(make_creds(Some(future)))),
         };
         let cached = model_provider.cached_credentials();
@@ -2877,7 +2877,7 @@ credential_process=some-command
         let model_provider = BedrockModelProvider {
             alias: "test".to_string(),
             auth: None,
-            max_tokens: clawcrew_api::model_provider::BASELINE_MAX_TOKENS,
+            max_tokens: galleon_api::model_provider::BASELINE_MAX_TOKENS,
             cred_cache: Mutex::new(Some(make_creds(Some(past)))),
         };
         assert!(model_provider.cached_credentials().is_none());
@@ -2889,7 +2889,7 @@ credential_process=some-command
         let model_provider = BedrockModelProvider {
             alias: "test".to_string(),
             auth: None,
-            max_tokens: clawcrew_api::model_provider::BASELINE_MAX_TOKENS,
+            max_tokens: galleon_api::model_provider::BASELINE_MAX_TOKENS,
             cred_cache: Mutex::new(None),
         };
         assert!(model_provider.cached_credentials().is_none());

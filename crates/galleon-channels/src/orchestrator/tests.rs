@@ -55,7 +55,7 @@ fn content_safety_neutralizes_marker_injection() {
 #[test]
 fn shared_room_history_keeps_the_speaker_for_any_channel() {
     let msg = ChannelMessage {
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
         ..ChannelMessage::new("1", "alice", "-100200300", "I'll deploy", "telegram", 0)
     };
 
@@ -79,7 +79,7 @@ use tempfile::TempDir;
 
 #[test]
 fn channel_ingress_context_does_not_invent_missing_identity() {
-    use clawcrew_api::ingress::{SourceClass, Transport, TrustClass, TurnOrigin};
+    use galleon_api::ingress::{SourceClass, Transport, TrustClass, TurnOrigin};
 
     let msg = ChannelMessage {
         channel: "telegram".into(),
@@ -216,7 +216,7 @@ fn announcement_arm_supports_delivery(dispatch: &str, key: &str) -> bool {
     [format!("\"{key}\" => {{"), format!("\"{key}\" |")]
         .iter()
         .find_map(|marker| source_block_after(dispatch, marker, "        "))
-        .is_some_and(|arm| arm.contains("clawcrew_api::channel::Channel::send("))
+        .is_some_and(|arm| arm.contains("galleon_api::channel::Channel::send("))
 }
 
 fn assert_channel_surface_disposition(
@@ -376,7 +376,7 @@ fn server_side_safeguard_keeps_same_family_ordinary_leg_visible() {
 
 #[test]
 fn channel_terminal_cause_precedes_transient_hint_from_earlier_attempt() {
-    let error = anyhow::Error::new(clawcrew_api::model_provider::SemanticEmptyTerminalCompletion)
+    let error = anyhow::Error::new(galleon_api::model_provider::SemanticEmptyTerminalCompletion)
         .context("earlier attempt returned HTTP 503 unavailable");
 
     let delivered = channel_user_error_message(&error, "safe fallback");
@@ -566,7 +566,7 @@ fn matrix_single_message_streaming_resolves_from_matrix_alias_only() {
         matrix_tool_argument_hint(
             "delegate",
             &serde_json::json!({"agent": "ops"}),
-            Some(clawcrew_api::attribution::ToolProvenance::Native),
+            Some(galleon_api::attribution::ToolProvenance::Native),
             single_policy
         ),
         None,
@@ -594,7 +594,7 @@ fn matrix_tool_argument_policy_keeps_safe_defaults_and_honors_explicit_opt_in() 
         matrix_tool_argument_hint(
             "delegate",
             &arguments,
-            Some(clawcrew_api::attribution::ToolProvenance::Native),
+            Some(galleon_api::attribution::ToolProvenance::Native),
             &[],
         )
         .as_deref(),
@@ -616,7 +616,7 @@ fn matrix_tool_argument_policy_keeps_safe_defaults_and_honors_explicit_opt_in() 
         matrix_tool_argument_hint(
             "delegate",
             &arguments,
-            Some(clawcrew_api::attribution::ToolProvenance::Native),
+            Some(galleon_api::attribution::ToolProvenance::Native),
             &policy,
         )
         .as_deref(),
@@ -635,7 +635,7 @@ fn matrix_tool_argument_policy_keeps_unknown_tools_name_only_by_default() {
 
 #[test]
 fn matrix_safe_policy_keeps_extension_and_unresolved_name_collisions_name_only() {
-    use clawcrew_api::attribution::ToolProvenance;
+    use galleon_api::attribution::ToolProvenance;
     use galleon_config::schema::{
         StreamToolArgumentBase as Base, StreamToolArgumentEntry as Entry,
     };
@@ -679,8 +679,8 @@ fn matrix_safe_policy_keeps_extension_and_unresolved_name_collisions_name_only()
 
 #[test]
 fn matrix_tool_progress_uses_the_same_subject_for_start_and_completion() {
-    use clawcrew_api::attribution::ToolProvenance;
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::attribution::ToolProvenance;
+    use galleon_api::channel::StreamDelta;
 
     let config = Config::default();
     let arguments = serde_json::json!({"agent": "sysadmin", "prompt": "private"});
@@ -714,8 +714,8 @@ fn matrix_tool_progress_uses_the_same_subject_for_start_and_completion() {
 
 #[test]
 fn matrix_tool_progress_recursively_redacts_explicit_composite_arguments() {
-    use clawcrew_api::attribution::ToolProvenance;
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::attribution::ToolProvenance;
+    use galleon_api::channel::StreamDelta;
     use galleon_config::schema::{
         MatrixConfig, StreamToolArgumentBase as Base, StreamToolArgumentEntry as Entry,
     };
@@ -811,8 +811,8 @@ fn matrix_tool_progress_recursively_redacts_explicit_composite_arguments() {
 
 #[test]
 fn matrix_tool_progress_treats_carried_extension_or_missing_provenance_as_untrusted() {
-    use clawcrew_api::attribution::ToolProvenance;
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::attribution::ToolProvenance;
+    use galleon_api::channel::StreamDelta;
 
     let config = Config::default();
     let arguments = serde_json::json!({"action": "navigate"});
@@ -853,7 +853,7 @@ fn matrix_tool_progress_treats_carried_extension_or_missing_provenance_as_untrus
 
 #[test]
 fn matrix_tool_progress_scrubs_and_flattens_unresolved_tool_names() {
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::channel::StreamDelta;
 
     const CANONICAL_TOKEN: &str = "ghp_abcdefghijklmnopqrstuvwxyz1234567890";
 
@@ -903,7 +903,7 @@ fn matrix_tool_progress_scrubs_and_flattens_unresolved_tool_names() {
 
 #[test]
 fn matrix_status_progress_scrubs_standalone_secret_patterns() {
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::channel::StreamDelta;
 
     let token = "ghp_abcdefghijklmnopqrstuvwxyz1234567890";
     let progress = matrix_progress_text(
@@ -919,7 +919,7 @@ fn matrix_status_progress_scrubs_standalone_secret_patterns() {
 
 #[test]
 fn matrix_tool_progress_scrubs_secret_pattern_assembled_across_components() {
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::channel::StreamDelta;
 
     // Neither component alone is a complete PEM span. The final Matrix
     // egress scrub must therefore see their assembled progress line.
@@ -944,7 +944,7 @@ fn matrix_tool_progress_scrubs_secret_pattern_assembled_across_components() {
 
 #[test]
 fn matrix_single_message_pending_splits_reasoning_after_tool_progress() {
-    use clawcrew_api::channel::REASONING_FULL_PREFIX;
+    use galleon_api::channel::REASONING_FULL_PREFIX;
 
     let mut pending = Vec::new();
     for idx in 0..10 {
@@ -977,7 +977,7 @@ fn matrix_single_message_pending_splits_reasoning_after_tool_progress() {
 
 #[test]
 fn matrix_single_message_pending_keeps_separator_between_reasoning_entries() {
-    use clawcrew_api::channel::REASONING_FULL_PREFIX;
+    use galleon_api::channel::REASONING_FULL_PREFIX;
 
     let mut pending = Vec::new();
     push_matrix_single_message_pending(
@@ -1003,7 +1003,7 @@ fn matrix_single_message_pending_keeps_separator_between_reasoning_entries() {
 
 #[test]
 fn matrix_single_message_pending_keeps_complete_reasoning_until_matrix_event_fitting() {
-    use clawcrew_api::channel::REASONING_FULL_PREFIX;
+    use galleon_api::channel::REASONING_FULL_PREFIX;
 
     let mut pending = Vec::new();
     let max_bytes = format!("{REASONING_FULL_PREFIX}abcd").len();
@@ -1029,7 +1029,7 @@ fn matrix_single_message_pending_keeps_complete_reasoning_until_matrix_event_fit
 
 #[test]
 fn matrix_single_message_pending_limit_counts_visible_lines_not_events() {
-    use clawcrew_api::channel::REASONING_FULL_PREFIX;
+    use galleon_api::channel::REASONING_FULL_PREFIX;
 
     let mut pending = Vec::new();
     push_matrix_single_message_pending(
@@ -1062,7 +1062,7 @@ fn matrix_single_message_pending_limit_counts_visible_lines_not_events() {
 
 #[test]
 fn matrix_single_message_pending_does_not_downgrade_thinking_round() {
-    use clawcrew_api::channel::thinking_status_text;
+    use galleon_api::channel::thinking_status_text;
 
     let mut pending = Vec::new();
     push_matrix_single_message_pending(
@@ -1101,7 +1101,7 @@ fn matrix_single_message_pending_does_not_downgrade_thinking_round() {
 
 #[test]
 fn matrix_single_message_pending_preserves_reasoning_matching_thinking_status() {
-    use clawcrew_api::channel::{StreamDelta, thinking_status_text};
+    use galleon_api::channel::{StreamDelta, thinking_status_text};
 
     let config = Config::default();
     let status = matrix_progress_text(
@@ -1135,9 +1135,9 @@ struct SlowBatchChannel {
     delay: Duration,
 }
 
-impl ::clawcrew_api::attribution::Attributable for SlowBatchChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Matrix)
+impl ::galleon_api::attribution::Attributable for SlowBatchChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Matrix)
     }
 
     fn alias(&self) -> &str {
@@ -1157,7 +1157,7 @@ impl Channel for SlowBatchChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -1176,7 +1176,7 @@ impl Channel for SlowBatchChannel {
 
 #[tokio::test]
 async fn matrix_single_message_progress_coalesces_slow_flush() {
-    use clawcrew_api::channel::{REASONING_FULL_PREFIX, StreamDelta};
+    use galleon_api::channel::{REASONING_FULL_PREFIX, StreamDelta};
 
     let batches = Arc::new(tokio::sync::Mutex::new(Vec::<Vec<String>>::new()));
     let channel: Arc<dyn Channel> = Arc::new(SlowBatchChannel {
@@ -1360,8 +1360,8 @@ temperature = 0.3
     );
 }
 
-use clawcrew_api::observability_traits::NoopObserver;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::observability_traits::NoopObserver;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Minimal mock Channel returning a configurable `name()` so the
 /// channel-registry routing tests can simulate two aliases of the
@@ -1373,14 +1373,14 @@ struct NamedMockChannel {
 
 #[derive(Default)]
 struct ModelPickerRecordingChannel {
-    requests: tokio::sync::Mutex<Vec<clawcrew_api::channel::ChannelModelPickerRequest>>,
+    requests: tokio::sync::Mutex<Vec<galleon_api::channel::ChannelModelPickerRequest>>,
     sent_messages: tokio::sync::Mutex<Vec<String>>,
 }
 
-impl ::clawcrew_api::attribution::Attributable for ModelPickerRecordingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Telegram,
+impl ::galleon_api::attribution::Attributable for ModelPickerRecordingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Telegram,
         )
     }
 
@@ -1395,7 +1395,7 @@ impl Channel for ModelPickerRecordingChannel {
         "telegram"
     }
 
-    async fn send(&self, message: &clawcrew_api::channel::SendMessage) -> anyhow::Result<()> {
+    async fn send(&self, message: &galleon_api::channel::SendMessage) -> anyhow::Result<()> {
         self.sent_messages
             .lock()
             .await
@@ -1405,24 +1405,24 @@ impl Channel for ModelPickerRecordingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
 
     async fn present_model_picker(
         &self,
-        request: &clawcrew_api::channel::ChannelModelPickerRequest,
+        request: &galleon_api::channel::ChannelModelPickerRequest,
     ) -> anyhow::Result<bool> {
         self.requests.lock().await.push(request.clone());
         Ok(true)
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for NamedMockChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for NamedMockChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -1435,12 +1435,12 @@ impl Channel for NamedMockChannel {
     fn name(&self) -> &str {
         self.name
     }
-    async fn send(&self, _message: &clawcrew_api::channel::SendMessage) -> anyhow::Result<()> {
+    async fn send(&self, _message: &galleon_api::channel::SendMessage) -> anyhow::Result<()> {
         Ok(())
     }
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -1455,10 +1455,10 @@ struct MentionMockChannel {
     mention: &'static str,
 }
 
-impl ::clawcrew_api::attribution::Attributable for MentionMockChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Discord,
+impl ::galleon_api::attribution::Attributable for MentionMockChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Discord,
         )
     }
     fn alias(&self) -> &str {
@@ -1474,12 +1474,12 @@ impl Channel for MentionMockChannel {
     fn self_addressed_mention(&self) -> Option<String> {
         Some(self.mention.to_string())
     }
-    async fn send(&self, _message: &clawcrew_api::channel::SendMessage) -> anyhow::Result<()> {
+    async fn send(&self, _message: &galleon_api::channel::SendMessage) -> anyhow::Result<()> {
         Ok(())
     }
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -1489,8 +1489,8 @@ fn mention_mock(name: &'static str, mention: &'static str) -> Arc<dyn Channel> {
     Arc::new(MentionMockChannel { name, mention })
 }
 
-fn channel_message(channel: &str, alias: Option<&str>) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn channel_message(channel: &str, alias: Option<&str>) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         id: "m1".into(),
         sender: "u1".into(),
         reply_target: "r1".into(),
@@ -1770,7 +1770,7 @@ fn router_test_ctx() -> Arc<ChannelRuntimeContext> {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -2704,7 +2704,7 @@ fn channel_runtime_context_for_defaults_test(
             galleon_config::schema::MemoryConfig::default(),
             clawcrew_dir.to_path_buf(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -3174,7 +3174,7 @@ fn compact_sender_history_keeps_recent_truncated_messages() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -3261,7 +3261,7 @@ fn append_sender_turn_stores_single_turn_per_call() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -3371,7 +3371,7 @@ fn rollback_orphan_user_turn_removes_only_latest_matching_user_turn() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -3483,7 +3483,7 @@ fn rollback_orphan_user_turn_also_removes_from_session_store() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -3584,7 +3584,7 @@ fn should_rollback_failed_user_turn_ignores_stream_idle_timeouts() {
 }
 
 fn breadcrumb_text() -> String {
-    clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string()
+    galleon_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string()
 }
 
 #[test]
@@ -4191,11 +4191,11 @@ impl ModelProvider for DummyModelProvider {
         Ok("ok".to_string())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for DummyModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for DummyModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -4236,11 +4236,11 @@ impl ModelProvider for FormatErrorModelProvider {
         Ok("ok".to_string())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for FormatErrorModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for FormatErrorModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -4276,11 +4276,11 @@ impl ModelProvider for TransientErrorModelProvider {
 }
 
 #[cfg(feature = "channel-email")]
-impl ::clawcrew_api::attribution::Attributable for TransientErrorModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for TransientErrorModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -4320,11 +4320,11 @@ impl ModelProvider for QuerySecretErrorModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for QuerySecretErrorModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for QuerySecretErrorModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -4388,10 +4388,10 @@ impl SendMessageRecordingChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for SendMessageRecordingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for SendMessageRecordingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4444,7 +4444,7 @@ impl Channel for SendMessageRecordingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -4457,9 +4457,9 @@ struct ThreadingRecordingChannel {
 }
 
 #[cfg(feature = "channel-email")]
-impl ::clawcrew_api::attribution::Attributable for ThreadingRecordingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Email)
+impl ::galleon_api::attribution::Attributable for ThreadingRecordingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Email)
     }
 
     fn alias(&self) -> &str {
@@ -4481,7 +4481,7 @@ impl Channel for ThreadingRecordingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -4501,7 +4501,7 @@ fn email_wire(message: &SendMessage) -> String {
 }
 
 enum PendingApprovalOutcome {
-    Response(Option<clawcrew_api::channel::AttributedApprovalResponse>),
+    Response(Option<galleon_api::channel::AttributedApprovalResponse>),
     Error,
 }
 
@@ -4544,7 +4544,7 @@ struct DraftRecordingChannel {
     sent_messages: tokio::sync::Mutex<Vec<String>>,
     draft_messages: tokio::sync::Mutex<Vec<String>>,
     progress_messages: tokio::sync::Mutex<Vec<String>>,
-    lifecycle_events: tokio::sync::Mutex<Vec<clawcrew_api::channel::ProgressEvent>>,
+    lifecycle_events: tokio::sync::Mutex<Vec<galleon_api::channel::ProgressEvent>>,
     finalized_messages: tokio::sync::Mutex<Vec<String>>,
     cancelled_drafts: tokio::sync::Mutex<Vec<String>>,
     delivery_events: tokio::sync::Mutex<Vec<&'static str>>,
@@ -4645,10 +4645,10 @@ struct HangingSendChannel {
     send_attempts: AtomicUsize,
 }
 
-impl ::clawcrew_api::attribution::Attributable for HangingSendChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for HangingSendChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4670,7 +4670,7 @@ impl Channel for HangingSendChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -4694,10 +4694,10 @@ struct WhatsAppRecordingChannel {
     sent_messages: tokio::sync::Mutex<Vec<String>>,
 }
 
-impl ::clawcrew_api::attribution::Attributable for TelegramRecordingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for TelegramRecordingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4705,10 +4705,10 @@ impl ::clawcrew_api::attribution::Attributable for TelegramRecordingChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for SlowBusyChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for SlowBusyChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4732,7 +4732,7 @@ impl Channel for TelegramRecordingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -4774,7 +4774,7 @@ impl Channel for SlowBusyChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -4788,10 +4788,10 @@ impl Channel for SlowBusyChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for SlackRecordingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for SlackRecordingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4815,7 +4815,7 @@ impl Channel for SlackRecordingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -4829,10 +4829,10 @@ impl Channel for SlackRecordingChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for WhatsAppRecordingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for WhatsAppRecordingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4856,7 +4856,7 @@ impl Channel for WhatsAppRecordingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -4870,10 +4870,10 @@ impl Channel for WhatsAppRecordingChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for RecordingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for RecordingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4881,10 +4881,10 @@ impl ::clawcrew_api::attribution::Attributable for RecordingChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for PendingApprovalChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for PendingApprovalChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
 
@@ -4893,10 +4893,10 @@ impl ::clawcrew_api::attribution::Attributable for PendingApprovalChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for FailingSendChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for FailingSendChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4904,10 +4904,10 @@ impl ::clawcrew_api::attribution::Attributable for FailingSendChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for InputOnlyNoopChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for InputOnlyNoopChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4915,10 +4915,10 @@ impl ::clawcrew_api::attribution::Attributable for InputOnlyNoopChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for DraftRecordingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for DraftRecordingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -4926,9 +4926,9 @@ impl ::clawcrew_api::attribution::Attributable for DraftRecordingChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ExpiringTypingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Matrix)
+impl ::galleon_api::attribution::Attributable for ExpiringTypingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Matrix)
     }
 
     fn alias(&self) -> &str {
@@ -4948,7 +4948,7 @@ impl Channel for ExpiringTypingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -4986,7 +4986,7 @@ impl Channel for FailingSendChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -5005,7 +5005,7 @@ impl Channel for InputOnlyNoopChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -5039,7 +5039,7 @@ impl Channel for DraftRecordingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -5150,7 +5150,7 @@ impl Channel for DraftRecordingChannel {
         &self,
         _recipient: &str,
         _message_id: &str,
-        event: clawcrew_api::channel::ProgressEvent,
+        event: galleon_api::channel::ProgressEvent,
     ) -> anyhow::Result<()> {
         self.lifecycle_events.lock().await.push(event);
         Ok(())
@@ -5164,17 +5164,17 @@ pub(crate) trait TestHookHandler: Send + Sync {
     }
     async fn on_message_received(
         &self,
-        msg: clawcrew_api::channel::ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<clawcrew_api::channel::ChannelMessage> {
-        clawcrew_api::hook::HookResult::Continue(msg)
+        msg: galleon_api::channel::ChannelMessage,
+    ) -> galleon_api::hook::HookResult<galleon_api::channel::ChannelMessage> {
+        galleon_api::hook::HookResult::Continue(msg)
     }
     async fn on_message_sending(
         &self,
         channel: String,
         recipient: String,
         content: String,
-    ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
-        clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
+    ) -> galleon_api::hook::HookResult<(String, String, String)> {
+        galleon_api::hook::HookResult::Continue((channel, recipient, content))
     }
     async fn on_message_sent(&self, _channel: &str, _recipient: &str, _content: &str) {}
 }
@@ -5194,20 +5194,20 @@ impl TestHookRunner {
 }
 
 #[async_trait::async_trait]
-impl clawcrew_api::hook::ChannelHookRunner for TestHookRunner {
+impl galleon_api::hook::ChannelHookRunner for TestHookRunner {
     async fn run_on_message_received(
         &self,
-        mut message: clawcrew_api::channel::ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<clawcrew_api::channel::ChannelMessage> {
+        mut message: galleon_api::channel::ChannelMessage,
+    ) -> galleon_api::hook::HookResult<galleon_api::channel::ChannelMessage> {
         for handler in &self.handlers {
             match handler.on_message_received(message).await {
-                clawcrew_api::hook::HookResult::Continue(m) => message = m,
-                clawcrew_api::hook::HookResult::Cancel(reason) => {
-                    return clawcrew_api::hook::HookResult::Cancel(reason);
+                galleon_api::hook::HookResult::Continue(m) => message = m,
+                galleon_api::hook::HookResult::Cancel(reason) => {
+                    return galleon_api::hook::HookResult::Cancel(reason);
                 }
             }
         }
-        clawcrew_api::hook::HookResult::Continue(message)
+        galleon_api::hook::HookResult::Continue(message)
     }
 
     async fn run_on_message_sending(
@@ -5215,23 +5215,23 @@ impl clawcrew_api::hook::ChannelHookRunner for TestHookRunner {
         mut channel: String,
         mut recipient: String,
         mut content: String,
-    ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
+    ) -> galleon_api::hook::HookResult<(String, String, String)> {
         for handler in &self.handlers {
             match handler
                 .on_message_sending(channel, recipient, content)
                 .await
             {
-                clawcrew_api::hook::HookResult::Continue((c, r, cnt)) => {
+                galleon_api::hook::HookResult::Continue((c, r, cnt)) => {
                     channel = c;
                     recipient = r;
                     content = cnt;
                 }
-                clawcrew_api::hook::HookResult::Cancel(reason) => {
-                    return clawcrew_api::hook::HookResult::Cancel(reason);
+                galleon_api::hook::HookResult::Cancel(reason) => {
+                    return galleon_api::hook::HookResult::Cancel(reason);
                 }
             }
         }
-        clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
+        galleon_api::hook::HookResult::Continue((channel, recipient, content))
     }
 
     async fn run_on_message_sent(&self, channel: &str, recipient: &str, content: &str) {
@@ -5278,7 +5278,7 @@ impl Channel for RecordingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -5342,7 +5342,7 @@ impl Channel for PendingApprovalChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -5360,8 +5360,8 @@ impl Channel for PendingApprovalChannel {
     async fn request_approval_attributed(
         &self,
         _recipient: &str,
-        _request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+        _request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         self.approval_started.notify_one();
         self.approval_release.notified().await;
         match &self.outcome {
@@ -5377,7 +5377,7 @@ fn test_runtime_ctx_with_config_agent_and_provider_ref(
     prompt_config: galleon_config::schema::Config,
     agent_cfg: galleon_config::schema::AliasedAgentConfig,
     model_provider_ref: &str,
-    hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
+    hooks: Option<Arc<dyn galleon_api::hook::ChannelHookRunner>>,
 ) -> Arc<ChannelRuntimeContext> {
     test_runtime_ctx_with_observer(
         channel,
@@ -5400,7 +5400,7 @@ fn test_runtime_ctx_with_observer_and_tools(
     prompt_config: galleon_config::schema::Config,
     agent_cfg: galleon_config::schema::AliasedAgentConfig,
     model_provider_ref: &str,
-    hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
+    hooks: Option<Arc<dyn galleon_api::hook::ChannelHookRunner>>,
     observer: Arc<dyn Observer>,
     tools: Vec<Box<dyn Tool>>,
 ) -> Arc<ChannelRuntimeContext> {
@@ -5425,7 +5425,7 @@ fn test_runtime_ctx_with_observer_and_tools(
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             tools,
         )),
         observer,
@@ -5479,7 +5479,7 @@ fn test_runtime_ctx_with_observer_and_tools(
 #[cfg(feature = "channel-matrix")]
 pub(crate) async fn process_message_with_dummy_provider(
     channel: Arc<dyn Channel>,
-    msg: clawcrew_api::channel::ChannelMessage,
+    msg: galleon_api::channel::ChannelMessage,
     prompt_config: galleon_config::schema::Config,
 ) {
     let runtime_ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
@@ -5499,7 +5499,7 @@ fn test_runtime_ctx_with_observer(
     prompt_config: galleon_config::schema::Config,
     agent_cfg: galleon_config::schema::AliasedAgentConfig,
     model_provider_ref: &str,
-    hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
+    hooks: Option<Arc<dyn galleon_api::hook::ChannelHookRunner>>,
     observer: Arc<dyn Observer>,
 ) -> Arc<ChannelRuntimeContext> {
     let mut channels_by_name = HashMap::new();
@@ -5518,7 +5518,7 @@ fn test_runtime_ctx_with_observer(
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer,
@@ -5573,7 +5573,7 @@ type MessageSentEvents = Arc<tokio::sync::Mutex<Vec<(String, String, String)>>>;
 
 fn recording_message_sent_runner() -> (
     MessageSentEvents,
-    Arc<dyn clawcrew_api::hook::ChannelHookRunner>,
+    Arc<dyn galleon_api::hook::ChannelHookRunner>,
 ) {
     let hook_events = Arc::new(tokio::sync::Mutex::new(Vec::new()));
     let mut hook_runner = TestHookRunner::new();
@@ -5583,8 +5583,8 @@ fn recording_message_sent_runner() -> (
     (hook_events, Arc::new(hook_runner))
 }
 
-fn message_sent_hook_test_message() -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn message_sent_hook_test_message() -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         id: "msg-1".to_string(),
         sender: "alice".to_string(),
         reply_target: "chat-42".to_string(),
@@ -5623,7 +5623,7 @@ async fn successful_draft_turn_ends_with_finalizing_lifecycle() {
     let events = channel_impl.lifecycle_events.lock().await.clone();
     assert_eq!(
         events.last(),
-        Some(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
+        Some(&galleon_api::channel::ProgressEvent::FinalizingResponse),
         "a completed turn must end on FinalizingResponse, got {events:?}"
     );
 }
@@ -5648,7 +5648,7 @@ async fn cancelled_draft_turn_does_not_emit_finalizing_lifecycle() {
 
     let events = channel_impl.lifecycle_events.lock().await.clone();
     assert!(
-        !events.contains(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
+        !events.contains(&galleon_api::channel::ProgressEvent::FinalizingResponse),
         "a cancelled turn must not emit FinalizingResponse, got {events:?}"
     );
 }
@@ -5672,7 +5672,7 @@ async fn failed_draft_turn_does_not_emit_finalizing_lifecycle() {
 
     let events = channel_impl.lifecycle_events.lock().await.clone();
     assert!(
-        !events.contains(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
+        !events.contains(&galleon_api::channel::ProgressEvent::FinalizingResponse),
         "a failed turn must not emit FinalizingResponse, got {events:?}"
     );
 }
@@ -5704,7 +5704,7 @@ async fn process_channel_message_emits_running_tool_and_post_tool_planning() {
     let running_tool = events
             .iter()
             .position(|event| {
-                *event == clawcrew_api::channel::ProgressEvent::RunningTool
+                *event == galleon_api::channel::ProgressEvent::RunningTool
             })
             .unwrap_or_else(|| {
                 panic!(
@@ -5712,16 +5712,16 @@ async fn process_channel_message_emits_running_tool_and_post_tool_planning() {
                 )
             });
     assert!(
-        events[..running_tool].contains(&clawcrew_api::channel::ProgressEvent::WaitingOnModel),
+        events[..running_tool].contains(&galleon_api::channel::ProgressEvent::WaitingOnModel),
         "the model wait must precede the tool run, got {events:?}"
     );
     assert!(
-        events[running_tool + 1..].contains(&clawcrew_api::channel::ProgressEvent::Planning),
+        events[running_tool + 1..].contains(&galleon_api::channel::ProgressEvent::Planning),
         "the post-tool hand-back must re-enter Planning, got {events:?}"
     );
     assert_eq!(
         events.last(),
-        Some(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
+        Some(&galleon_api::channel::ProgressEvent::FinalizingResponse),
         "a completed turn must end on FinalizingResponse, got {events:?}"
     );
 }
@@ -5754,12 +5754,12 @@ async fn process_channel_message_cancellation_cancels_the_draft() {
     );
     let events = channel_impl.lifecycle_events.lock().await.clone();
     assert!(
-        !events.contains(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
+        !events.contains(&galleon_api::channel::ProgressEvent::FinalizingResponse),
         "a cancelled turn must not emit FinalizingResponse, got {events:?}"
     );
     assert_eq!(
         events.first(),
-        Some(&clawcrew_api::channel::ProgressEvent::Received),
+        Some(&galleon_api::channel::ProgressEvent::Received),
         "the turn must still have announced receipt, got {events:?}"
     );
 }
@@ -5787,11 +5787,11 @@ async fn process_channel_message_turn_error_cancels_the_draft() {
     );
     let events = channel_impl.lifecycle_events.lock().await.clone();
     assert!(
-        !events.contains(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
+        !events.contains(&galleon_api::channel::ProgressEvent::FinalizingResponse),
         "a failed turn must not emit FinalizingResponse, got {events:?}"
     );
     assert!(
-        events.contains(&clawcrew_api::channel::ProgressEvent::WaitingOnModel),
+        events.contains(&galleon_api::channel::ProgressEvent::WaitingOnModel),
         "the failure happened at the provider, so the model wait must have been shown: {events:?}"
     );
 }
@@ -5889,11 +5889,11 @@ impl ModelProvider for CancelMidTurnModelProvider {
         unreachable!("parked future never resumes")
     }
 }
-impl ::clawcrew_api::attribution::Attributable for CancelMidTurnModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for CancelMidTurnModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6428,11 +6428,11 @@ impl ModelProvider for SlowModelProvider {
         Ok(format!("echo: {message}"))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for SlowModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for SlowModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6455,11 +6455,11 @@ impl ModelProvider for NoReplyModelProvider {
         Ok("NO_REPLY[INFO]: nothing to add".to_string())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for NoReplyModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for NoReplyModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6482,11 +6482,11 @@ impl ModelProvider for NoReplyRefusedModelProvider {
         Ok("NO_REPLY[REFUSE]: prompt injection attempt".to_string())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for NoReplyRefusedModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for NoReplyRefusedModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6509,11 +6509,11 @@ impl ModelProvider for NoReplyFailedModelProvider {
         Ok("NO_REPLY[FAIL]: requested URL 404s".to_string())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for NoReplyFailedModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for NoReplyFailedModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6566,11 +6566,11 @@ impl ModelProvider for ToolCallingModelProvider {
         }
     }
 }
-impl ::clawcrew_api::attribution::Attributable for ToolCallingModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ToolCallingModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6609,8 +6609,8 @@ impl ModelProvider for NarratingNativeToolProvider {
         Ok("ok".to_string())
     }
 
-    fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-        clawcrew_api::model_provider::ProviderCapabilities {
+    fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+        galleon_api::model_provider::ProviderCapabilities {
             native_tool_calling: true,
             vision: false,
             prompt_caching: false,
@@ -6648,11 +6648,11 @@ impl ModelProvider for NarratingNativeToolProvider {
 }
 
 #[cfg(feature = "channel-telegram")]
-impl ::clawcrew_api::attribution::Attributable for NarratingNativeToolProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for NarratingNativeToolProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6694,8 +6694,8 @@ impl ModelProvider for LeakingNarratingToolProvider {
         Ok("ok".to_string())
     }
 
-    fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-        clawcrew_api::model_provider::ProviderCapabilities {
+    fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+        galleon_api::model_provider::ProviderCapabilities {
             native_tool_calling: true,
             vision: false,
             prompt_caching: false,
@@ -6735,11 +6735,11 @@ impl ModelProvider for LeakingNarratingToolProvider {
 }
 
 #[cfg(feature = "channel-telegram")]
-impl ::clawcrew_api::attribution::Attributable for LeakingNarratingToolProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for LeakingNarratingToolProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6771,8 +6771,8 @@ impl TestHookHandler for RewritingSendHook {
         channel: String,
         recipient: String,
         _content: String,
-    ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
-        clawcrew_api::hook::HookResult::Continue((
+    ) -> galleon_api::hook::HookResult<(String, String, String)> {
+        galleon_api::hook::HookResult::Continue((
             channel,
             recipient,
             HOOK_REWRITTEN_NARRATION.to_string(),
@@ -6800,11 +6800,11 @@ impl TestHookHandler for CancellingSendHook {
         channel: String,
         recipient: String,
         content: String,
-    ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
+    ) -> galleon_api::hook::HookResult<(String, String, String)> {
         if self.calls.fetch_add(1, Ordering::SeqCst) == 0 {
-            clawcrew_api::hook::HookResult::Cancel("suppress first narration".to_string())
+            galleon_api::hook::HookResult::Cancel("suppress first narration".to_string())
         } else {
-            clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
+            galleon_api::hook::HookResult::Continue((channel, recipient, content))
         }
     }
 }
@@ -6829,9 +6829,9 @@ impl TestHookHandler for RecordingSendHook {
         channel: String,
         recipient: String,
         content: String,
-    ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
+    ) -> galleon_api::hook::HookResult<(String, String, String)> {
         self.seen.lock().push(content.clone());
-        clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
+        galleon_api::hook::HookResult::Continue((channel, recipient, content))
     }
 }
 
@@ -6876,11 +6876,11 @@ impl ModelProvider for SessionsCurrentModelProvider {
         }
     }
 }
-impl ::clawcrew_api::attribution::Attributable for SessionsCurrentModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for SessionsCurrentModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6919,11 +6919,11 @@ impl ModelProvider for ToolCallingAliasModelProvider {
         }
     }
 }
-impl ::clawcrew_api::attribution::Attributable for ToolCallingAliasModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ToolCallingAliasModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -6958,11 +6958,11 @@ BTC is currently around $65,000 based on latest tool output."#
             .to_string())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for RawToolArtifactModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for RawToolArtifactModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -7012,11 +7012,11 @@ impl ModelProvider for IterativeToolModelProvider {
         }
     }
 }
-impl ::clawcrew_api::attribution::Attributable for IterativeToolModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for IterativeToolModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -7062,11 +7062,11 @@ impl ModelProvider for HistoryCaptureModelProvider {
         self.vision
     }
 }
-impl ::clawcrew_api::attribution::Attributable for HistoryCaptureModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for HistoryCaptureModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -7090,7 +7090,7 @@ async fn passive_context_records_history_without_channel_or_model_side_effects()
         None,
     );
 
-    let passive_msg = clawcrew_api::channel::ChannelMessage {
+    let passive_msg = galleon_api::channel::ChannelMessage {
         id: "passive-1".into(),
         sender: "bob".into(),
         reply_target: "group-1@g.us".into(),
@@ -7098,7 +7098,7 @@ async fn passive_context_records_history_without_channel_or_model_side_effects()
         channel: "whatsapp".into(),
         timestamp: 1,
         passive_context: true,
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
         ..Default::default()
     };
 
@@ -7123,13 +7123,13 @@ async fn passive_context_records_history_without_channel_or_model_side_effects()
     assert_eq!(channel_impl.start_typing_calls.load(Ordering::SeqCst), 0);
     assert_eq!(channel_impl.stop_typing_calls.load(Ordering::SeqCst), 0);
 
-    let active_msg = clawcrew_api::channel::ChannelMessage {
+    let active_msg = galleon_api::channel::ChannelMessage {
         id: "active-1".into(),
         sender: "alice".into(),
         content: "what is the release codename?".into(),
         timestamp: 2,
         passive_context: false,
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
         ..passive_msg.clone()
     };
     assert_eq!(
@@ -7174,26 +7174,26 @@ struct MockSopDispatcher {
     gate_resolutions: AtomicUsize,
     request_route: Mutex<Option<String>>,
     escalation_route: Mutex<Option<String>>,
-    run_status: Arc<Mutex<Option<clawcrew_api::sop::SopRunStatus>>>,
+    run_status: Arc<Mutex<Option<galleon_api::sop::SopRunStatus>>>,
 }
 
 #[async_trait::async_trait]
-impl clawcrew_api::sop::SopFanInDispatcher for MockSopDispatcher {
+impl galleon_api::sop::SopFanInDispatcher for MockSopDispatcher {
     async fn dispatch_untrusted(
         &self,
-        _source: clawcrew_api::sop::SopTriggerSource,
+        _source: galleon_api::sop::SopTriggerSource,
         _topic: Option<&str>,
         _payload: Option<&str>,
         _target_sop: Option<&str>,
         _dedup: Option<(String, bool)>,
-    ) -> clawcrew_api::sop::SopFanInResult {
+    ) -> galleon_api::sop::SopFanInResult {
         self.dispatched_count.fetch_add(1, Ordering::SeqCst);
-        clawcrew_api::sop::SopFanInResult::default()
+        galleon_api::sop::SopFanInResult::default()
     }
 
     async fn resolve_gate(
         &self,
-        msg: &clawcrew_api::channel::ChannelMessage,
+        msg: &galleon_api::channel::ChannelMessage,
         gate_prompt_channels: &[std::sync::Arc<dyn Channel>],
         gate_channel_route_keys: &[String],
     ) -> bool {
@@ -7253,13 +7253,13 @@ impl clawcrew_api::sop::SopFanInDispatcher for MockSopDispatcher {
         if (matches_req || matches_esc || matches_key) && reference_matches {
             self.gate_resolutions.fetch_add(1, Ordering::SeqCst);
             *self.run_status.lock().unwrap_or_else(|e| e.into_inner()) =
-                Some(clawcrew_api::sop::SopRunStatus::Running);
+                Some(galleon_api::sop::SopRunStatus::Running);
             let status_arc = Arc::clone(&self.run_status);
             galleon_spawn::spawn!(async move {
                 tokio::task::yield_now().await;
                 tokio::time::sleep(Duration::from_millis(15)).await;
                 *status_arc.lock().unwrap_or_else(|e| e.into_inner()) =
-                    Some(clawcrew_api::sop::SopRunStatus::Failed);
+                    Some(galleon_api::sop::SopRunStatus::Failed);
             });
             for ch in gate_prompt_channels {
                 let _ = ch.finalize_gate_prompt("det-1-0001", "Approved").await;
@@ -7287,12 +7287,12 @@ async fn passive_context_does_not_reach_the_worker_sop_dispatch() {
     );
     let runtime_ctx = Arc::new(ChannelRuntimeContext {
         sop_dispatcher: Some(
-            Arc::clone(&dispatcher) as Arc<dyn clawcrew_api::sop::SopFanInDispatcher>
+            Arc::clone(&dispatcher) as Arc<dyn galleon_api::sop::SopFanInDispatcher>
         ),
         ..(*base).clone()
     });
 
-    let passive_msg = clawcrew_api::channel::ChannelMessage {
+    let passive_msg = galleon_api::channel::ChannelMessage {
         id: "passive-1".into(),
         sender: "bob".into(),
         reply_target: "-1001234567890".into(),
@@ -7300,7 +7300,7 @@ async fn passive_context_does_not_reach_the_worker_sop_dispatch() {
         channel: "telegram".into(),
         timestamp: 1,
         passive_context: true,
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
         ..Default::default()
     };
     process_channel_message(
@@ -7316,7 +7316,7 @@ async fn passive_context_does_not_reach_the_worker_sop_dispatch() {
         "passive observation must not start an SOP run"
     );
 
-    let active_msg = clawcrew_api::channel::ChannelMessage {
+    let active_msg = galleon_api::channel::ChannelMessage {
         id: "active-1".into(),
         sender: "alice".into(),
         content: "what is the release codename?".into(),
@@ -7369,11 +7369,11 @@ impl ModelProvider for DelayedHistoryCaptureModelProvider {
         Ok(format!("response-{call_index}"))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for DelayedHistoryCaptureModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for DelayedHistoryCaptureModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -7384,12 +7384,12 @@ impl ::clawcrew_api::attribution::Attributable for DelayedHistoryCaptureModelPro
 
 struct MockPriceTool;
 
-impl ::clawcrew_api::attribution::Attributable for MockPriceTool {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+impl ::galleon_api::attribution::Attributable for MockPriceTool {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
     }
     fn alias(&self) -> &str {
-        <Self as ::clawcrew_api::tool::Tool>::name(self)
+        <Self as ::galleon_api::tool::Tool>::name(self)
     }
 }
 
@@ -7425,11 +7425,11 @@ impl ModelProvider for ModelCaptureModelProvider {
         Ok("ok".to_string())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for ModelCaptureModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ModelCaptureModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -7494,11 +7494,11 @@ impl ModelProvider for ModelSwitchRequestProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ModelSwitchRequestProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ModelSwitchRequestProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -7543,11 +7543,11 @@ impl ModelProvider for PrecheckProbeModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for PrecheckProbeModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for PrecheckProbeModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -7597,9 +7597,9 @@ impl Tool for MockPriceTool {
 /// Minimal fixed-name tool for allowlist-filter coverage.
 struct NamedMockTool(&'static str);
 
-impl ::clawcrew_api::attribution::Attributable for NamedMockTool {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Tool(::clawcrew_api::attribution::ToolKind::Plugin)
+impl ::galleon_api::attribution::Attributable for NamedMockTool {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Tool(::galleon_api::attribution::ToolKind::Plugin)
     }
     fn alias(&self) -> &str {
         self.0
@@ -7633,7 +7633,7 @@ fn peer_prompt_test_context(
     channels_by_name: HashMap<String, Arc<dyn Channel>>,
     provider_impl: Arc<HistoryCaptureModelProvider>,
     prompt_config: Arc<Config>,
-    tools_registry: Arc<clawcrew_api::tool::ScopedToolRegistry>,
+    tools_registry: Arc<galleon_api::tool::ScopedToolRegistry>,
 ) -> Arc<ChannelRuntimeContext> {
     Arc::new(ChannelRuntimeContext {
         channels_by_name: Arc::new(channels_by_name),
@@ -7723,7 +7723,7 @@ async fn process_channel_message_executes_tool_calls_instead_of_sending_raw_json
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -7782,7 +7782,7 @@ async fn process_channel_message_executes_tool_calls_instead_of_sending_raw_json
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "chat-42".to_string(),
@@ -7881,7 +7881,7 @@ async fn multi_message_narration_reaches_telegram_before_approval_prompt() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -7940,7 +7940,7 @@ async fn multi_message_narration_reaches_telegram_before_approval_prompt() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "123".to_string(),
@@ -8067,7 +8067,7 @@ async fn multi_message_narration_applies_leak_detection_before_send() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -8126,7 +8126,7 @@ async fn multi_message_narration_applies_leak_detection_before_send() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "123".to_string(),
@@ -8238,7 +8238,7 @@ async fn multi_message_narration_applies_send_hook_before_send() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -8297,7 +8297,7 @@ async fn multi_message_narration_applies_send_hook_before_send() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "123".to_string(),
@@ -8418,7 +8418,7 @@ async fn multi_message_approval_narration_crosses_outbound_hook_once() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -8477,7 +8477,7 @@ async fn multi_message_approval_narration_crosses_outbound_hook_once() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "123".to_string(),
@@ -8530,10 +8530,10 @@ async fn each_completed_narration_turn_crosses_outbound_hook_once() {
     // outbound hook fires before any channel flush, so what the channel does
     // with the flushed text is irrelevant to counting hook crossings.
     struct NoopFlushChannel;
-    impl ::clawcrew_api::attribution::Attributable for NoopFlushChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for NoopFlushChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {
@@ -8550,7 +8550,7 @@ async fn each_completed_narration_turn_crosses_outbound_hook_once() {
         }
         async fn listen(
             &self,
-            _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+            _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
         ) -> anyhow::Result<()> {
             Ok(())
         }
@@ -8617,10 +8617,10 @@ async fn each_completed_narration_turn_crosses_outbound_hook_once() {
 #[tokio::test]
 async fn multi_message_split_credential_across_turns_is_not_reconstructable() {
     struct NoopFlushChannel;
-    impl ::clawcrew_api::attribution::Attributable for NoopFlushChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for NoopFlushChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {
@@ -8637,7 +8637,7 @@ async fn multi_message_split_credential_across_turns_is_not_reconstructable() {
         }
         async fn listen(
             &self,
-            _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+            _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
         ) -> anyhow::Result<()> {
             Ok(())
         }
@@ -8707,10 +8707,10 @@ async fn multi_message_split_credential_across_turns_is_not_reconstructable() {
 #[tokio::test]
 async fn cross_turn_leak_uses_hook_created_guarded_fragment() {
     struct NoopFlushChannel;
-    impl ::clawcrew_api::attribution::Attributable for NoopFlushChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for NoopFlushChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {
@@ -8727,7 +8727,7 @@ async fn cross_turn_leak_uses_hook_created_guarded_fragment() {
         }
         async fn listen(
             &self,
-            _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+            _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
         ) -> anyhow::Result<()> {
             Ok(())
         }
@@ -8750,15 +8750,15 @@ async fn cross_turn_leak_uses_hook_created_guarded_fragment() {
             channel: String,
             recipient: String,
             content: String,
-        ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
+        ) -> galleon_api::hook::HookResult<(String, String, String)> {
             if self.calls.fetch_add(1, Ordering::SeqCst) == 0 {
-                clawcrew_api::hook::HookResult::Continue((
+                galleon_api::hook::HookResult::Continue((
                     channel,
                     recipient,
                     "AKIAABCDEFGH".to_string(),
                 ))
             } else {
-                clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
+                galleon_api::hook::HookResult::Continue((channel, recipient, content))
             }
         }
     }
@@ -8822,10 +8822,10 @@ async fn cross_turn_leak_uses_hook_created_guarded_fragment() {
 #[tokio::test]
 async fn cross_turn_clean_turn_after_redacted_credential_is_unchanged() {
     struct NoopFlushChannel;
-    impl ::clawcrew_api::attribution::Attributable for NoopFlushChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for NoopFlushChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {
@@ -8842,7 +8842,7 @@ async fn cross_turn_clean_turn_after_redacted_credential_is_unchanged() {
         }
         async fn listen(
             &self,
-            _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+            _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
         ) -> anyhow::Result<()> {
             Ok(())
         }
@@ -8972,7 +8972,7 @@ async fn multi_message_cancelled_narration_is_not_resurrected_by_a_later_flush()
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -9031,7 +9031,7 @@ async fn multi_message_cancelled_narration_is_not_resurrected_by_a_later_flush()
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "123".to_string(),
@@ -9102,7 +9102,7 @@ async fn process_channel_message_scopes_sender_session_key_for_sessions_current_
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(
                 galleon_tools::sessions::SessionsCurrentTool::new(Arc::clone(&session_store)),
             )],
@@ -9164,7 +9164,7 @@ async fn process_channel_message_scopes_sender_session_key_for_sessions_current_
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-42".to_string(),
@@ -9209,7 +9209,7 @@ async fn process_channel_message_renders_trailing_tool_receipts_block_when_enabl
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -9274,7 +9274,7 @@ async fn process_channel_message_renders_trailing_tool_receipts_block_when_enabl
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-42".to_string(),
@@ -9353,7 +9353,7 @@ async fn process_channel_message_keeps_tool_progress_and_receipts_out_of_voice()
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-42".to_string(),
@@ -9423,7 +9423,7 @@ async fn process_channel_message_keeps_provider_init_failure_notice_out_of_voice
         "test-provider",
         None,
     );
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "msg-1".to_string(),
         sender: "alice".to_string(),
         reply_target: "chat-42".to_string(),
@@ -9488,7 +9488,7 @@ async fn process_channel_message_omits_receipts_block_when_disabled() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -9552,7 +9552,7 @@ async fn process_channel_message_omits_receipts_block_when_disabled() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-42".to_string(),
@@ -9598,7 +9598,7 @@ async fn process_channel_message_disabled_receipt_generator_emits_no_receipts_an
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -9658,7 +9658,7 @@ async fn process_channel_message_disabled_receipt_generator_emits_no_receipts_an
 
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-42".to_string(),
@@ -9732,7 +9732,7 @@ async fn process_channel_message_telegram_does_not_persist_tool_summary_prefix()
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -9791,7 +9791,7 @@ async fn process_channel_message_telegram_does_not_persist_tool_summary_prefix()
 
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-telegram-tool-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-telegram".to_string(),
@@ -9853,7 +9853,7 @@ async fn process_channel_message_strips_unexecuted_tool_json_artifacts_from_repl
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -9912,7 +9912,7 @@ async fn process_channel_message_strips_unexecuted_tool_json_artifacts_from_repl
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-raw-json".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-raw".to_string(),
@@ -9959,7 +9959,7 @@ async fn process_channel_message_executes_tool_calls_with_alias_tags() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -10018,7 +10018,7 @@ async fn process_channel_message_executes_tool_calls_with_alias_tags() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-2".to_string(),
             sender: "bob".to_string(),
             reply_target: "chat-84".to_string(),
@@ -10085,7 +10085,7 @@ async fn process_channel_message_handles_models_command_without_llm_call() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -10144,7 +10144,7 @@ async fn process_channel_message_handles_models_command_without_llm_call() {
 
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-cmd-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -10235,7 +10235,7 @@ async fn process_channel_message_uses_route_override_provider_and_model() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -10294,7 +10294,7 @@ async fn process_channel_message_uses_route_override_provider_and_model() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-routed-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -10401,7 +10401,7 @@ async fn process_channel_message_persists_model_switch_with_route_credential() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![model_switch_tool],
         )),
         observer: observer.clone(),
@@ -10460,7 +10460,7 @@ async fn process_channel_message_persists_model_switch_with_route_credential() {
 
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-switch-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -10529,7 +10529,7 @@ async fn process_channel_message_persists_model_switch_with_route_credential() {
         .load(Ordering::SeqCst);
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-switch-2".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -10611,7 +10611,7 @@ async fn process_channel_message_uses_classifier_provider_for_precheck_model_sel
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-classifier-provider".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-precheck".to_string(),
@@ -10680,7 +10680,7 @@ async fn process_channel_message_precheck_log_uses_span_attribution_not_attrs() 
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-precheck-log".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-precheck-log".to_string(),
@@ -10768,7 +10768,7 @@ async fn process_channel_message_skips_reply_intent_classifier_when_agent_preche
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-precheck-disabled".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-precheck-disabled".to_string(),
@@ -10822,7 +10822,7 @@ async fn process_channel_message_precheck_timeout_fails_open_to_reply() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-precheck-timeout".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-precheck-timeout".to_string(),
@@ -10877,7 +10877,7 @@ async fn process_channel_message_prefers_cached_default_provider_instance() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -10936,7 +10936,7 @@ async fn process_channel_message_prefers_cached_default_provider_instance() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-default-provider-cache".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -10978,7 +10978,7 @@ async fn process_channel_message_respects_configured_max_tool_iterations_above_d
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -11040,7 +11040,7 @@ async fn process_channel_message_respects_configured_max_tool_iterations_above_d
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-iter-success".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-iter-success".to_string(),
@@ -11089,7 +11089,7 @@ async fn process_channel_message_reports_configured_max_tool_iterations_limit() 
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(MockPriceTool)],
         )),
         observer: Arc::new(NoopObserver),
@@ -11151,7 +11151,7 @@ async fn process_channel_message_reports_configured_max_tool_iterations_limit() 
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-iter-fail".to_string(),
             sender: "bob".to_string(),
             reply_target: "chat-iter-fail".to_string(),
@@ -11267,9 +11267,9 @@ impl Memory for NoopMemory {
         Ok(Vec::new())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for NoopMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::InMemory)
+impl ::galleon_api::attribution::Attributable for NoopMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::InMemory)
     }
     fn alias(&self) -> &str {
         "NoopMemory"
@@ -11375,9 +11375,9 @@ impl Memory for RecallMemory {
         self.recall(query, limit, session_id, since, until).await
     }
 }
-impl ::clawcrew_api::attribution::Attributable for RecallMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::InMemory)
+impl ::galleon_api::attribution::Attributable for RecallMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::InMemory)
     }
     fn alias(&self) -> &str {
         "RecallMemory"
@@ -11407,11 +11407,11 @@ impl ModelProvider for ConcurrencyTrackingProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ConcurrencyTrackingProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for ConcurrencyTrackingProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -11526,11 +11526,11 @@ impl ModelProvider for GatedCallSequenceProvider {
         Ok(format!("response-{call_index}"))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for GatedCallSequenceProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for GatedCallSequenceProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -11576,14 +11576,14 @@ async fn message_dispatch_serializes_slack_root_and_thread_followup() {
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
     ));
     // Root message of the thread: its own ts is the history anchor.
-    tx.send(clawcrew_api::channel::ChannelMessage {
+    tx.send(galleon_api::channel::ChannelMessage {
         id: "1741234567.100001".into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -11603,7 +11603,7 @@ async fn message_dispatch_serializes_slack_root_and_thread_followup() {
         .await
         .expect("root turn must gate in the provider");
     // Follow-up in the same thread: same history, distinct scope id.
-    tx.send(clawcrew_api::channel::ChannelMessage {
+    tx.send(galleon_api::channel::ChannelMessage {
         id: "1741234567.200002".into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -11712,7 +11712,7 @@ async fn message_dispatch_thread_stop_reports_a_folded_followup() {
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
@@ -11721,7 +11721,7 @@ async fn message_dispatch_thread_stop_reports_a_folded_followup() {
 
     let thread = "1741234567.100001";
     let message =
-        |id: &str, content: &str, scope: Option<&str>| clawcrew_api::channel::ChannelMessage {
+        |id: &str, content: &str, scope: Option<&str>| galleon_api::channel::ChannelMessage {
             id: id.into(),
             sender: "alice".into(),
             reply_target: "C123".into(),
@@ -11849,13 +11849,13 @@ async fn message_dispatch_thread_stop_cancels_followup_not_root_of_same_history(
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
     ));
-    tx.send(clawcrew_api::channel::ChannelMessage {
+    tx.send(galleon_api::channel::ChannelMessage {
         id: "1741234567.100001".into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -11875,7 +11875,7 @@ async fn message_dispatch_thread_stop_cancels_followup_not_root_of_same_history(
         .await
         .expect("root turn must gate in the provider");
     // Follow-up in the same thread queues behind the root.
-    tx.send(clawcrew_api::channel::ChannelMessage {
+    tx.send(galleon_api::channel::ChannelMessage {
         id: "1741234567.200002".into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -11899,7 +11899,7 @@ async fn message_dispatch_thread_stop_cancels_followup_not_root_of_same_history(
     let stop_sent = galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
     tokio::time::timeout(Duration::from_secs(2), async {
         loop {
-            tx.send(clawcrew_api::channel::ChannelMessage {
+            tx.send(galleon_api::channel::ChannelMessage {
                 id: "1741234567.300003".into(),
                 sender: "alice".into(),
                 reply_target: "C123".into(),
@@ -12009,7 +12009,7 @@ async fn message_dispatch_slack_top_level_stop_retires_pending_payload_of_thread
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
@@ -12018,7 +12018,7 @@ async fn message_dispatch_slack_top_level_stop_retires_pending_payload_of_thread
     // Top-level: no `thread_ts` from Slack, so the channel implementation
     // anchors the thread on the message's own timestamp and leaves the
     // interruption scope sender-wide.
-    let top_level = |id: &str, content: &str| clawcrew_api::channel::ChannelMessage {
+    let top_level = |id: &str, content: &str| galleon_api::channel::ChannelMessage {
         id: id.into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -12052,7 +12052,7 @@ async fn message_dispatch_slack_top_level_stop_retires_pending_payload_of_thread
     })
     .await
     .expect("a pending debounce payload must be visible to /stop");
-    tx.send(clawcrew_api::channel::ChannelMessage {
+    tx.send(galleon_api::channel::ChannelMessage {
         id: "1741234567.400004".into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -12142,7 +12142,7 @@ async fn message_dispatch_stop_keeps_a_live_bucket_of_another_scope_on_the_same_
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
@@ -12152,7 +12152,7 @@ async fn message_dispatch_stop_keeps_a_live_bucket_of_another_scope_on_the_same_
     // the interruption scope sender-wide; a reply carries the root's id as
     // both its thread anchor and its scope id.
     let slack_message = |id: &str, thread: &str, content: &str, scope: Option<&str>| {
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: id.into(),
             sender: "alice".into(),
             reply_target: "C123".into(),
@@ -12306,14 +12306,14 @@ async fn message_dispatch_slack_thread_stop_preserves_a_debouncing_root_bucket()
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
     ));
     let slack_message = |id: &str, thread: &str, content: &str, scope: Option<&str>| {
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: id.into(),
             sender: "alice".into(),
             reply_target: "C123".into(),
@@ -12432,14 +12432,14 @@ async fn message_dispatch_runtime_command_retires_the_bucket_it_superseded() {
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
     ));
     // One thread lane: every message below keys the same debounce bucket.
-    let thread_message = |id: &str, content: &str| clawcrew_api::channel::ChannelMessage {
+    let thread_message = |id: &str, content: &str| galleon_api::channel::ChannelMessage {
         id: id.into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -12544,7 +12544,7 @@ async fn message_dispatch_processes_messages_in_parallel() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -12601,8 +12601,8 @@ async fn message_dispatch_processes_messages_in_parallel() {
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(4);
-    tx.send(clawcrew_api::channel::ChannelMessage {
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(4);
+    tx.send(galleon_api::channel::ChannelMessage {
         id: "1".to_string(),
         sender: "alice".to_string(),
         reply_target: "alice".to_string(),
@@ -12619,7 +12619,7 @@ async fn message_dispatch_processes_messages_in_parallel() {
     })
     .await
     .unwrap();
-    tx.send(clawcrew_api::channel::ChannelMessage {
+    tx.send(galleon_api::channel::ChannelMessage {
         id: "2".to_string(),
         sender: "bob".to_string(),
         reply_target: "bob".to_string(),
@@ -12681,7 +12681,7 @@ async fn message_dispatch_interrupts_in_flight_telegram_request_and_preserves_co
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -12738,9 +12738,9 @@ async fn message_dispatch_interrupts_in_flight_telegram_request_and_preserves_co
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -12758,7 +12758,7 @@ async fn message_dispatch_interrupts_in_flight_telegram_request_and_preserves_co
         .await
         .unwrap();
         tokio::time::sleep(Duration::from_millis(40)).await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-2".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -12833,7 +12833,7 @@ async fn passive_stop_command_does_not_cancel_another_participants_turn() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -12890,9 +12890,9 @@ async fn passive_stop_command_does_not_cancel_another_participants_turn() {
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -12910,7 +12910,7 @@ async fn passive_stop_command_does_not_cancel_another_participants_turn() {
         .await
         .unwrap();
         tokio::time::sleep(Duration::from_millis(40)).await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-2".to_string(),
             sender: "bob".to_string(),
             reply_target: "chat-1".to_string(),
@@ -12978,7 +12978,7 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -13039,9 +13039,9 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -13049,7 +13049,7 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
             channel: "telegram".into(),
             channel_alias: None,
             timestamp: 1,
-            conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+            conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
             thread_ts: None,
             interruption_scope_id: None,
             attachments: vec![],
@@ -13060,7 +13060,7 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
         .await
         .unwrap();
         tokio::time::sleep(Duration::from_millis(40)).await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-2".to_string(),
             sender: "bob".to_string(),
             reply_target: "chat-1".to_string(),
@@ -13068,7 +13068,7 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
             channel: "telegram".into(),
             channel_alias: None,
             timestamp: 2,
-            conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+            conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
             thread_ts: None,
             interruption_scope_id: None,
             attachments: vec![],
@@ -13128,7 +13128,7 @@ async fn message_dispatch_interrupts_in_flight_slack_request_and_preserves_conte
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -13185,9 +13185,9 @@ async fn message_dispatch_interrupts_in_flight_slack_request_and_preserves_conte
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "U123".to_string(),
             reply_target: "C123".to_string(),
@@ -13205,7 +13205,7 @@ async fn message_dispatch_interrupts_in_flight_slack_request_and_preserves_conte
         .await
         .unwrap();
         tokio::time::sleep(Duration::from_millis(40)).await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-2".to_string(),
             sender: "U123".to_string(),
             reply_target: "C123".to_string(),
@@ -13325,7 +13325,7 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -13375,10 +13375,10 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_provider = Arc::clone(&provider_impl);
     let send_task = galleon_spawn::spawn!(async move {
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "15555550123".to_string(),
             reply_target: "15555550123".to_string(),
@@ -13396,7 +13396,7 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
         .await
         .unwrap();
         wait_for_provider_call(&send_provider, "enabled first").await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-2".to_string(),
             sender: "15555550123".to_string(),
             reply_target: "15555550123".to_string(),
@@ -13414,7 +13414,7 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
         .await
         .unwrap();
         wait_for_provider_call(&send_provider, "disabled first").await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-3".to_string(),
             sender: "15555550123".to_string(),
             reply_target: "15555550123".to_string(),
@@ -13432,7 +13432,7 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
         .await
         .unwrap();
         wait_for_provider_call(&send_provider, "enabled second").await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-4".to_string(),
             sender: "15555550123".to_string(),
             reply_target: "15555550123".to_string(),
@@ -13541,7 +13541,7 @@ async fn message_dispatch_interrupt_scope_is_same_sender_same_chat() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -13598,9 +13598,9 @@ async fn message_dispatch_interrupt_scope_is_same_sender_same_chat() {
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-a".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -13618,7 +13618,7 @@ async fn message_dispatch_interrupt_scope_is_same_sender_same_chat() {
         .await
         .unwrap();
         tokio::time::sleep(Duration::from_millis(30)).await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "msg-b".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-2".to_string(),
@@ -13668,7 +13668,7 @@ async fn process_channel_message_cancels_scoped_typing_task() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -13727,7 +13727,7 @@ async fn process_channel_message_cancels_scoped_typing_task() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "typing-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-typing".to_string(),
@@ -13776,7 +13776,7 @@ async fn matrix_single_message_typing_stops_before_draft_delivery() {
     );
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "typing-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-typing".to_string(),
@@ -13973,7 +13973,7 @@ async fn matrix_multi_message_preserves_draft_before_typing_lifecycle() {
     );
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "multi-typing-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-typing".to_string(),
@@ -14046,7 +14046,7 @@ async fn approval_typing_channel_forwards_turn_flush_surface() {
 
 #[tokio::test]
 async fn approval_wait_pauses_typing_and_only_approval_resumes_it() {
-    use clawcrew_api::channel::{
+    use galleon_api::channel::{
         ApprovalSource, AttributedApprovalResponse, ChannelApprovalRequest, ChannelApprovalResponse,
     };
 
@@ -14183,7 +14183,7 @@ async fn process_channel_message_adds_and_swaps_reactions() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -14242,7 +14242,7 @@ async fn process_channel_message_adds_and_swaps_reactions() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "react-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-react".to_string(),
@@ -14304,7 +14304,7 @@ async fn process_channel_message_no_reply_clears_early_ack() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -14362,7 +14362,7 @@ async fn process_channel_message_no_reply_clears_early_ack() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "noreply-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-noreply".to_string(),
@@ -14428,7 +14428,7 @@ async fn process_channel_message_no_reply_refused_sends_notice() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -14486,7 +14486,7 @@ async fn process_channel_message_no_reply_refused_sends_notice() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "noreply-refused-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-noreply-refused".to_string(),
@@ -14544,7 +14544,7 @@ async fn process_channel_message_no_reply_failed_sends_notice() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -14602,7 +14602,7 @@ async fn process_channel_message_no_reply_failed_sends_notice() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "noreply-failed-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-noreply-failed".to_string(),
@@ -14660,7 +14660,7 @@ async fn process_channel_message_no_reply_notice_sent_when_reactions_disabled() 
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -14718,7 +14718,7 @@ async fn process_channel_message_no_reply_notice_sent_when_reactions_disabled() 
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "noreply-refused-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-noreply-refused".to_string(),
@@ -14759,7 +14759,7 @@ async fn process_channel_message_no_reply_notice_sent_when_reactions_disabled() 
 // on what actually gets sent, without needing a live channel.
 #[test]
 fn build_no_reply_notice_preserves_reply_target_thread_in_reply_to_subject_and_suppresses_voice() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "notice-src-msg".to_string(),
         sender: "alice".to_string(),
         reply_target: "chat-notice-target".to_string(),
@@ -14820,7 +14820,7 @@ async fn process_channel_message_no_reply_refused_marker_reflects_delivered_noti
         None,
     );
 
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "noreply-refused-marker-msg".to_string(),
         sender: "alice".to_string(),
         reply_target: "chat-noreply-refused-marker".to_string(),
@@ -14881,7 +14881,7 @@ async fn process_channel_message_no_reply_refused_marker_does_not_claim_delivery
         None,
     );
 
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "noreply-refused-failure-msg".to_string(),
         sender: "alice".to_string(),
         reply_target: "chat-noreply-refused-failure".to_string(),
@@ -14940,7 +14940,7 @@ async fn process_channel_message_no_reply_input_only_channel_does_not_claim_deli
         "test-provider",
         None,
     );
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "noreply-input-only-msg".to_string(),
         sender: "alice".to_string(),
         reply_target: "input-only-source".to_string(),
@@ -14988,10 +14988,10 @@ struct AckTimingChannel {
     ack_elapsed_ms: tokio::sync::Mutex<Option<u128>>,
 }
 
-impl ::clawcrew_api::attribution::Attributable for AckTimingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for AckTimingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -15054,7 +15054,7 @@ async fn process_channel_message_acks_before_slow_model_completes() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -15112,7 +15112,7 @@ async fn process_channel_message_acks_before_slow_model_completes() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "ack-msg".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-ack".to_string(),
@@ -15159,7 +15159,7 @@ fn channel_notify_observer_truncates_utf8_arguments_safely() {
         .expect("should produce non-char-boundary data at byte index 120");
 
     observer.record_event(
-        &clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
+        &galleon_api::observability_traits::ObserverEvent::ToolCallStart {
             parent_agent_alias: None,
             tool: "file_write".to_string(),
             tool_call_id: None,
@@ -15189,7 +15189,7 @@ fn channel_notify_observer_caps_long_path_argument() {
     let payload = serde_json::json!({ "path": &long_path }).to_string();
 
     observer.record_event(
-        &clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
+        &galleon_api::observability_traits::ObserverEvent::ToolCallStart {
             parent_agent_alias: None,
             tool: "file_read".to_string(),
             tool_call_id: None,
@@ -15233,7 +15233,7 @@ fn channel_notify_observer_without_sender_marks_tools_without_emitting() {
     };
 
     observer.record_event(
-        &clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
+        &galleon_api::observability_traits::ObserverEvent::ToolCallStart {
             parent_agent_alias: None,
             tool: "file_read".to_string(),
             tool_call_id: None,
@@ -15257,7 +15257,7 @@ async fn channel_notify_observer_drops_on_full_channel() {
         tools_used: AtomicBool::new(false),
     };
 
-    let mk_event = || clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
+    let mk_event = || galleon_api::observability_traits::ObserverEvent::ToolCallStart {
         parent_agent_alias: None,
         tool: "file_read".to_string(),
         tool_call_id: None,
@@ -15292,7 +15292,7 @@ async fn channel_notify_observer_drops_on_full_channel() {
 
 #[test]
 fn conversation_memory_key_uses_message_id() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "msg_abc123".into(),
         sender: "U123".into(),
         reply_target: "C456".into(),
@@ -15313,7 +15313,7 @@ fn conversation_memory_key_uses_message_id() {
 
 #[test]
 fn followup_thread_id_prefers_thread_ts() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "slack_C123_1741234567.123456".into(),
         sender: "U123".into(),
         reply_target: "C123".into(),
@@ -15337,7 +15337,7 @@ fn followup_thread_id_prefers_thread_ts() {
 
 #[test]
 fn followup_thread_id_falls_back_to_message_id() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "msg_abc123".into(),
         sender: "U123".into(),
         reply_target: "C456".into(),
@@ -15358,7 +15358,7 @@ fn followup_thread_id_falls_back_to_message_id() {
 
 #[test]
 fn followup_thread_id_does_not_open_matrix_thread_for_root_message() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "$event:server".into(),
         sender: "@alice:server".into(),
         reply_target: "!room:server".into(),
@@ -15379,7 +15379,7 @@ fn followup_thread_id_does_not_open_matrix_thread_for_root_message() {
 
 #[test]
 fn matrix_root_conversation_history_key_omits_event_id() {
-    let first = clawcrew_api::channel::ChannelMessage {
+    let first = galleon_api::channel::ChannelMessage {
         id: "$first:server".into(),
         sender: "@alice:server".into(),
         reply_target: "!room:server".into(),
@@ -15394,7 +15394,7 @@ fn matrix_root_conversation_history_key_omits_event_id() {
 
         ..Default::default()
     };
-    let second = clawcrew_api::channel::ChannelMessage {
+    let second = galleon_api::channel::ChannelMessage {
         id: "$second:server".into(),
         content: "send it again".into(),
         timestamp: 2,
@@ -15409,7 +15409,7 @@ fn matrix_root_conversation_history_key_omits_event_id() {
 
 #[test]
 fn matrix_self_anchored_root_history_key_omits_event_id() {
-    let first = clawcrew_api::channel::ChannelMessage {
+    let first = galleon_api::channel::ChannelMessage {
         id: "$first:server".into(),
         sender: "@alice:server".into(),
         reply_target: "!room:server".into(),
@@ -15424,7 +15424,7 @@ fn matrix_self_anchored_root_history_key_omits_event_id() {
 
         ..Default::default()
     };
-    let second = clawcrew_api::channel::ChannelMessage {
+    let second = galleon_api::channel::ChannelMessage {
         id: "$second:server".into(),
         content: "hello".into(),
         timestamp: 2,
@@ -15441,7 +15441,7 @@ fn matrix_self_anchored_root_history_key_omits_event_id() {
 
 #[test]
 fn matrix_thread_follow_up_shares_root_session_key() {
-    let root = clawcrew_api::channel::ChannelMessage {
+    let root = galleon_api::channel::ChannelMessage {
         id: "$root:server".into(),
         sender: "@alice:server".into(),
         reply_target: "!room:server".into(),
@@ -15456,7 +15456,7 @@ fn matrix_thread_follow_up_shares_root_session_key() {
 
         ..Default::default()
     };
-    let follow_up = clawcrew_api::channel::ChannelMessage {
+    let follow_up = galleon_api::channel::ChannelMessage {
         id: "$reply:server".into(),
         content: "thread reply".into(),
         timestamp: 2,
@@ -15473,7 +15473,7 @@ fn matrix_thread_follow_up_shares_root_session_key() {
 
 #[test]
 fn reply_target_conversation_scope_omits_sender_from_history_key() {
-    let first = clawcrew_api::channel::ChannelMessage {
+    let first = galleon_api::channel::ChannelMessage {
         id: "msg-1".into(),
         sender: "alice".into(),
         reply_target: "123456@g.us".into(),
@@ -15481,10 +15481,10 @@ fn reply_target_conversation_scope_omits_sender_from_history_key() {
         channel: "whatsapp".into(),
         channel_alias: Some("main".into()),
         timestamp: 1,
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
         ..Default::default()
     };
-    let second = clawcrew_api::channel::ChannelMessage {
+    let second = galleon_api::channel::ChannelMessage {
         id: "msg-2".into(),
         sender: "bob".into(),
         content: "follow up".into(),
@@ -15500,7 +15500,7 @@ fn reply_target_conversation_scope_omits_sender_from_history_key() {
 
 #[test]
 fn reply_target_conversation_history_key_uses_room_scope() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "msg_wecom_ws".into(),
         sender: "clawcrew_user".into(),
         reply_target: "group--room-1".into(),
@@ -15512,7 +15512,7 @@ fn reply_target_conversation_history_key_uses_room_scope() {
         interruption_scope_id: Some("group--room-1".into()),
         attachments: vec![],
         subject: None,
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
 
         ..Default::default()
     };
@@ -15539,7 +15539,7 @@ fn shared_topic_message(sender: &str, id: &str, content: &str) -> ChannelMessage
         channel_alias: Some("default".into()),
         timestamp: 1,
         thread_ts: Some("77".into()),
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::ReplyTarget,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::ReplyTarget,
 
         ..Default::default()
     }
@@ -15598,7 +15598,7 @@ async fn shared_session_debounce_never_collapses_distinct_senders() {
 #[test]
 fn sender_scope_debounce_key_matches_history_key() {
     let mut msg = shared_topic_message("alice", "m1", "hi");
-    msg.conversation_scope = clawcrew_api::channel::ChannelConversationScope::Sender;
+    msg.conversation_scope = galleon_api::channel::ChannelConversationScope::Sender;
     assert_eq!(
         message_debounce_key(conversation_history_key(&msg), &msg),
         conversation_history_key(&msg)
@@ -15629,7 +15629,7 @@ fn shared_session_history_preserves_alice_then_bob_attribution() {
     // Default sender-scoped Telegram turns stay unlabelled (no behavior
     // change when per_user_session = true).
     let mut solo = shared_topic_message("alice", "m3", "just me here");
-    solo.conversation_scope = clawcrew_api::channel::ChannelConversationScope::Sender;
+    solo.conversation_scope = galleon_api::channel::ChannelConversationScope::Sender;
     let solo_turn =
         timestamped_channel_user_history_content(&solo, WHATSAPP_CURRENT_GROUP_MESSAGE_LABEL);
     assert!(
@@ -15641,7 +15641,7 @@ fn shared_session_history_preserves_alice_then_bob_attribution() {
     let mut wa = shared_topic_message("carol", "m4", "wa message");
     wa.channel = "whatsapp".into();
     wa.reply_target = "12036302@g.us".into();
-    wa.conversation_scope = clawcrew_api::channel::ChannelConversationScope::Sender;
+    wa.conversation_scope = galleon_api::channel::ChannelConversationScope::Sender;
     let wa_turn =
         timestamped_channel_user_history_content(&wa, WHATSAPP_CURRENT_GROUP_MESSAGE_LABEL);
     assert!(
@@ -15737,7 +15737,7 @@ async fn shared_session_concurrent_turns_persist_deterministic_order() {
     let history_key = conversation_history_key(&alice);
     assert_eq!(history_key, conversation_history_key(&bob));
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         // Bob arrives while Alice's model call is still in flight.
@@ -15816,7 +15816,7 @@ async fn shared_session_new_message_interrupts_only_same_sender() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -15873,7 +15873,7 @@ async fn shared_session_new_message_interrupts_only_same_sender() {
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "alice first"))
             .await
@@ -15931,7 +15931,7 @@ async fn shared_session_stop_cancels_only_own_senders_task() {
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let sent_probe = Arc::clone(&channel_impl);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "please think slowly"))
@@ -16024,7 +16024,7 @@ async fn shared_session_queued_turn_holds_no_execution_permit() {
         conversation_history_key(&carol)
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         tx.send(bob).await.unwrap();
@@ -16071,7 +16071,7 @@ async fn shared_session_stop_cancels_a_queued_turn_before_it_starts() {
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "slow one"))
             .await
@@ -16136,7 +16136,7 @@ async fn shared_session_stop_cancels_active_turn_despite_queued_follow_up() {
         None,
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "active slow turn"))
             .await
@@ -16208,11 +16208,11 @@ impl ModelProvider for GatedModelProvider {
         Ok(format!("echo: {message}"))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for GatedModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for GatedModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -16246,7 +16246,7 @@ async fn shared_session_full_backlog_refuses_excess_messages() {
     // execution, plus overflow that must be refused.
     let flood = CONVERSATION_LANE_BACKLOG_LIMIT + 3;
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let release_gate = Arc::clone(&gate);
     let send_task = galleon_spawn::spawn!(async move {
         for i in 0..flood {
@@ -16725,7 +16725,7 @@ async fn shared_session_new_resets_the_whole_conversation() {
 
     let history_key = conversation_history_key(&shared_topic_message("alice", "m0", ""));
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "context before reset"))
             .await
@@ -16808,7 +16808,7 @@ async fn shared_session_debounce_extension_keeps_receive_order() {
     let alice_first = shared_topic_message("alice", "m1", "first part");
     let history_key = conversation_history_key(&alice_first);
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice_first).await.unwrap();
         // Bob opens a later bucket…
@@ -16868,14 +16868,14 @@ struct AttachmentRecordingTurnRunner {
 }
 
 #[async_trait::async_trait]
-impl clawcrew_api::channel::ChannelTurnRunner for AttachmentRecordingTurnRunner {
+impl galleon_api::channel::ChannelTurnRunner for AttachmentRecordingTurnRunner {
     async fn run_channel_turn(
         &self,
-        ctx: clawcrew_api::channel::ChannelTurnContext,
-        _history: &mut Vec<clawcrew_api::model_provider::ChatMessage>,
-    ) -> clawcrew_api::channel::ChannelTurnResult {
+        ctx: galleon_api::channel::ChannelTurnContext,
+        _history: &mut Vec<galleon_api::model_provider::ChatMessage>,
+    ) -> galleon_api::channel::ChannelTurnResult {
         self.captured_messages.lock().unwrap().push(ctx.msg.clone());
-        clawcrew_api::channel::ChannelTurnResult::Completed("ok".to_string())
+        galleon_api::channel::ChannelTurnResult::Completed("ok".to_string())
     }
 }
 
@@ -16883,7 +16883,7 @@ fn test_runtime_ctx_with_turn_runner(
     channel: Arc<dyn Channel>,
     model_provider: Arc<dyn ModelProvider>,
     prompt_config: galleon_config::schema::Config,
-    turn_runner: Arc<dyn clawcrew_api::channel::ChannelTurnRunner>,
+    turn_runner: Arc<dyn galleon_api::channel::ChannelTurnRunner>,
 ) -> Arc<ChannelRuntimeContext> {
     let mut channels_by_name = HashMap::new();
     channels_by_name.insert(channel.name().to_string(), channel);
@@ -16901,7 +16901,7 @@ fn test_runtime_ctx_with_turn_runner(
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -16980,7 +16980,7 @@ async fn debounced_messages_preserve_all_attachments() {
     );
 
     let mut m1 = shared_topic_message("alice", "m1", "first part");
-    m1.attachments = vec![clawcrew_api::media::MediaAttachment {
+    m1.attachments = vec![galleon_api::media::MediaAttachment {
         file_name: "att1.jpg".to_string(),
         data: vec![1, 2, 3],
         mime_type: Some("image/jpeg".to_string()),
@@ -16988,7 +16988,7 @@ async fn debounced_messages_preserve_all_attachments() {
     }];
 
     let mut m2 = shared_topic_message("alice", "m2", "second part");
-    m2.attachments = vec![clawcrew_api::media::MediaAttachment {
+    m2.attachments = vec![galleon_api::media::MediaAttachment {
         file_name: "att2.png".to_string(),
         data: vec![4, 5, 6],
         mime_type: Some("image/png".to_string()),
@@ -16996,14 +16996,14 @@ async fn debounced_messages_preserve_all_attachments() {
     }];
 
     let mut m3 = shared_topic_message("alice", "m3", "third part");
-    m3.attachments = vec![clawcrew_api::media::MediaAttachment {
+    m3.attachments = vec![galleon_api::media::MediaAttachment {
         file_name: "att3.pdf".to_string(),
         data: vec![7, 8, 9],
         mime_type: Some("application/pdf".to_string()),
         marker: None,
     }];
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(m1).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -17063,7 +17063,7 @@ async fn debounced_messages_without_attachments_succeed_normally() {
     let m1 = shared_topic_message("alice", "m1", "text 1");
     let m2 = shared_topic_message("alice", "m2", "text 2");
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(m1).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -17109,12 +17109,12 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
     );
 
     // 5 messages, each with 3 attachments = 15 total (each individual message <= 10).
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(16);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(16);
     let send_task = galleon_spawn::spawn!(async move {
         for i in 0..5 {
             let mut msg = shared_topic_message("alice", &format!("m{i}"), &format!("part {i}"));
             msg.attachments = (0..3)
-                .map(|j| clawcrew_api::media::MediaAttachment {
+                .map(|j| galleon_api::media::MediaAttachment {
                     file_name: format!("file_{i}_{j}.png"),
                     data: vec![1, 2, 3],
                     mime_type: Some("image/png".to_string()),
@@ -17145,7 +17145,7 @@ fn enforce_attachment_limits_validates_count_and_bytes() {
 
     // 10 attachments is valid
     msg.attachments = (0..10)
-        .map(|i| clawcrew_api::media::MediaAttachment {
+        .map(|i| galleon_api::media::MediaAttachment {
             file_name: format!("f{i}.txt"),
             data: vec![0; 10],
             mime_type: Some("text/plain".to_string()),
@@ -17155,7 +17155,7 @@ fn enforce_attachment_limits_validates_count_and_bytes() {
     assert!(enforce_attachment_limits(&msg).is_ok());
 
     // 11 attachments exceeds count
-    msg.attachments.push(clawcrew_api::media::MediaAttachment {
+    msg.attachments.push(galleon_api::media::MediaAttachment {
         file_name: "f11.txt".to_string(),
         data: vec![0; 10],
         mime_type: Some("text/plain".to_string()),
@@ -17169,7 +17169,7 @@ fn enforce_attachment_limits_validates_count_and_bytes() {
     // Reset to 1 attachment with bytes over 50MB
     let over_limit = (MAX_ATTACHMENT_BYTES_PER_TURN + 1) as usize;
     let mut large_msg = shared_topic_message("alice", "m2", "large");
-    large_msg.attachments = vec![clawcrew_api::media::MediaAttachment {
+    large_msg.attachments = vec![galleon_api::media::MediaAttachment {
         file_name: "big.bin".to_string(),
         data: vec![0; over_limit],
         mime_type: None,
@@ -17285,7 +17285,7 @@ async fn shared_session_sequential_debounce_buckets_both_run() {
     let first = shared_topic_message("alice", "m1", "first bucket");
     let history_key = conversation_history_key(&first);
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(first).await.unwrap();
         // Well past the debounce window: the first bucket has fired and
@@ -17348,10 +17348,10 @@ impl TestHookHandler for RoomMergeHook {
     async fn on_message_received(
         &self,
         mut message: ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
+    ) -> galleon_api::hook::HookResult<ChannelMessage> {
         message.reply_target = "-1001234:77".into();
         message.thread_ts = Some("77".into());
-        clawcrew_api::hook::HookResult::Continue(message)
+        galleon_api::hook::HookResult::Continue(message)
     }
 }
 
@@ -17366,13 +17366,13 @@ impl TestHookHandler for DelayedRoomMergeHook {
     async fn on_message_received(
         &self,
         mut message: ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
+    ) -> galleon_api::hook::HookResult<ChannelMessage> {
         if message.content.contains("slow hook") {
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
         message.reply_target = "-1001234:77".into();
         message.thread_ts = Some("77".into());
-        clawcrew_api::hook::HookResult::Continue(message)
+        galleon_api::hook::HookResult::Continue(message)
     }
 }
 
@@ -17390,7 +17390,7 @@ impl TestHookHandler for ContentRoutedMergeHook {
     async fn on_message_received(
         &self,
         mut message: ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
+    ) -> galleon_api::hook::HookResult<ChannelMessage> {
         if message.content.contains("slow hook") {
             tokio::time::sleep(Duration::from_millis(100)).await;
             message.reply_target = "-1007777:70".into();
@@ -17399,7 +17399,7 @@ impl TestHookHandler for ContentRoutedMergeHook {
             message.reply_target = "-1008888:80".into();
             message.thread_ts = Some("80".into());
         }
-        clawcrew_api::hook::HookResult::Continue(message)
+        galleon_api::hook::HookResult::Continue(message)
     }
 }
 
@@ -17414,11 +17414,11 @@ impl TestHookHandler for SlowOnlyHook {
     async fn on_message_received(
         &self,
         message: ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
+    ) -> galleon_api::hook::HookResult<ChannelMessage> {
         if message.content.contains("slow hook") {
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
-        clawcrew_api::hook::HookResult::Continue(message)
+        galleon_api::hook::HookResult::Continue(message)
     }
 }
 
@@ -17688,7 +17688,7 @@ impl TestHookHandler for CancellationChainLaneHook {
     async fn on_message_received(
         &self,
         mut message: ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
+    ) -> galleon_api::hook::HookResult<ChannelMessage> {
         if message.id == "m2"
             && let Some((entered, release)) = self.hold_m2.as_ref()
         {
@@ -17702,7 +17702,7 @@ impl TestHookHandler for CancellationChainLaneHook {
         };
         message.reply_target = room.into();
         message.thread_ts = Some(topic.into());
-        clawcrew_api::hook::HookResult::Continue(message)
+        galleon_api::hook::HookResult::Continue(message)
     }
 }
 
@@ -17771,11 +17771,11 @@ impl ModelProvider for GatedProbeModelProvider {
         Ok(format!("done for message_id={id}"))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for GatedProbeModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for GatedProbeModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -17794,10 +17794,10 @@ struct WindDownGateChannel {
     m1_wind_down_release: tokio::sync::Notify,
 }
 
-impl ::clawcrew_api::attribution::Attributable for WindDownGateChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for WindDownGateChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -17821,7 +17821,7 @@ impl Channel for WindDownGateChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -18239,11 +18239,11 @@ impl TestHookHandler for PanicOnceRoomMergeHook {
     async fn on_message_received(
         &self,
         message: ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
+    ) -> galleon_api::hook::HookResult<ChannelMessage> {
         if !self.panicked.swap(true, Ordering::SeqCst) {
             panic!("synthetic inbound hook panic");
         }
-        clawcrew_api::hook::HookResult::Continue(message)
+        galleon_api::hook::HookResult::Continue(message)
     }
 }
 
@@ -18384,7 +18384,7 @@ async fn shared_session_hook_rerouted_turns_share_one_lane() {
         "the pre-hook keys must differ, otherwise the test proves nothing"
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         // Bob's message arrives while Alice's model call is in flight.
@@ -18528,8 +18528,8 @@ fn scope_test_msg(
     sender: &str,
     channel_id: &str,
     thread: Option<&str>,
-) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: channel_id.into(),
         channel: "discord".into(),
@@ -18802,8 +18802,8 @@ fn channel_runtime_context_with_peer_groups(
     ctx
 }
 
-fn agent_scope_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn agent_scope_msg(sender: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: "chan-1".into(),
         channel: "discord".into(),
@@ -18814,8 +18814,8 @@ fn agent_scope_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
     }
 }
 
-fn user_scope_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn user_scope_msg(sender: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: "chan-1".into(),
         channel: "discord".into(),
@@ -18883,8 +18883,8 @@ fn mirror_peer_group(
 /// A Matrix reply is addressed to `!room:server`, while the peer group
 /// names `@user:server`. Resolving the modality here — where the inbound
 /// sender is still in hand — is what makes a user-ID voice group work.
-fn matrix_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn matrix_msg(sender: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: "!room:server".into(),
         channel: "matrix".into(),
@@ -18896,8 +18896,8 @@ fn matrix_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
 
 /// The same message as a voice note: the Matrix inbound handler sets
 /// `voice_origin` from the event's own MSC3245 flag.
-fn matrix_voice_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn matrix_voice_msg(sender: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         voice_origin: true,
         ..matrix_msg(sender)
     }
@@ -18908,8 +18908,8 @@ fn matrix_voice_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
 /// the sender is still in hand. Telegram's `send` treats `force_voice` as
 /// voice-*only* and drops the text reply, which is the channel's existing
 /// behaviour for a configured voice peer.
-fn telegram_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn telegram_msg(sender: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: "123456789".into(),
         channel: "telegram".into(),
@@ -19046,8 +19046,8 @@ fn a_private_telegram_chat_matches_the_numeric_peer_identity() {
 fn telegram_group_message(
     sender: &str,
     platform_sender_id: &str,
-) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         id: "msg-1".to_string(),
         sender: sender.to_string(),
         platform_sender_id: Some(platform_sender_id.to_string()),
@@ -19240,11 +19240,11 @@ impl ModelProvider for SendViaTextRoutingProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for SendViaTextRoutingProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for SendViaTextRoutingProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -19290,8 +19290,8 @@ async fn telegram_explicit_text_override_stays_text_on_delivery() {
 
 /// A Matrix room message from a sender the mirror group names, as the
 /// inbound handler forwards it.
-fn matrix_room_message(sender: &str, voice_origin: bool) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn matrix_room_message(sender: &str, voice_origin: bool) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         id: "$event-1:server".to_string(),
         timestamp: 1,
         voice_origin,
@@ -19923,8 +19923,8 @@ fn channel_agent_scope_admins_empty_agents_list_means_channel_wide() {
     assert_eq!(for_y, vec!["alice".to_string()]);
 }
 
-fn webhook_agent_scope_msg(sender: &str, alias: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn webhook_agent_scope_msg(sender: &str, alias: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: "chan-1".into(),
         channel: "webhook".into(),
@@ -20058,8 +20058,8 @@ fn agent_scope_msg_with_channel(
     sender: &str,
     channel: &str,
     alias: &str,
-) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: "chan-1".into(),
         channel: channel.into(),
@@ -20077,8 +20077,8 @@ fn agent_scope_msg_with_channel(
 // silently re-open the hole — every helper-only test would still pass
 // while the gate was bypassed.
 
-fn scope_user_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn scope_user_msg(sender: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: "chan-1".into(),
         channel: "discord".into(),
@@ -20089,8 +20089,8 @@ fn scope_user_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
     }
 }
 
-fn scope_agent_msg(sender: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn scope_agent_msg(sender: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         sender: sender.into(),
         reply_target: "chan-1".into(),
         channel: "discord".into(),
@@ -20116,7 +20116,7 @@ async fn bare_model_picker_command_uses_current_session_route() {
         model: "claude-sonnet-4-5".into(),
         api_key: None,
     }]);
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "message-7".into(),
         sender: "test_user".into(),
         platform_sender_id: Some("123".into()),
@@ -20174,7 +20174,7 @@ async fn model_picker_selection_command_keeps_existing_session_semantics() {
         model: "claude-sonnet-4-5".into(),
         api_key: None,
     }]);
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "message-8".into(),
         sender: "test_user".into(),
         reply_target: "chat-42".into(),
@@ -20236,8 +20236,8 @@ async fn message_dispatch_debounce_preserves_model_picker_selection_command() {
     ctx.channels_by_name = Arc::new(channels_by_name);
     let runtime_ctx = Arc::new(ctx);
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(4);
-    let ordinary = clawcrew_api::channel::ChannelMessage {
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(4);
+    let ordinary = galleon_api::channel::ChannelMessage {
         id: "ordinary-1".into(),
         sender: "test_user".into(),
         platform_sender_id: Some("123".into()),
@@ -20251,7 +20251,7 @@ async fn message_dispatch_debounce_preserves_model_picker_selection_command() {
     // Mirror `TelegramChannel::model_picker_selection_message`: an
     // ordinary ChannelMessage whose content is the `/model <hint>`
     // control command, arriving while `ordinary` is still pending.
-    let selection = clawcrew_api::channel::ChannelMessage {
+    let selection = galleon_api::channel::ChannelMessage {
         id: "telegram_model_picker_selection".into(),
         content: "/model fast".into(),
         timestamp: 2,
@@ -20336,7 +20336,7 @@ async fn message_dispatch_late_revoked_model_picker_selection_stays_inert() {
     ctx.channels_by_name = Arc::new(channels_by_name);
     let runtime_ctx = Arc::new(ctx);
 
-    let selection = clawcrew_api::channel::ChannelMessage {
+    let selection = galleon_api::channel::ChannelMessage {
         id: "telegram_model_picker_selection_revoked".into(),
         sender: "test_user".into(),
         platform_sender_id: Some("123".into()),
@@ -20352,7 +20352,7 @@ async fn message_dispatch_late_revoked_model_picker_selection_stays_inert() {
     let _delivery_ack = crate::model_picker_delivery::register(&selection.id);
     crate::model_picker_delivery::revoke(&selection.id);
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     tx.send(selection.clone()).await.unwrap();
     drop(tx);
     run_message_dispatch_loop(rx, AgentRouter::single(runtime_ctx.clone()), 4).await;
@@ -20390,9 +20390,9 @@ impl TestHookHandler for CancelInboundMessageHook {
 
     async fn on_message_received(
         &self,
-        _message: clawcrew_api::channel::ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<clawcrew_api::channel::ChannelMessage> {
-        clawcrew_api::hook::HookResult::Cancel("blocked by test hook".to_string())
+        _message: galleon_api::channel::ChannelMessage,
+    ) -> galleon_api::hook::HookResult<galleon_api::channel::ChannelMessage> {
+        galleon_api::hook::HookResult::Cancel("blocked by test hook".to_string())
     }
 }
 
@@ -20410,10 +20410,10 @@ impl TestHookHandler for RewriteInboundMessageIdHook {
 
     async fn on_message_received(
         &self,
-        mut message: clawcrew_api::channel::ChannelMessage,
-    ) -> clawcrew_api::hook::HookResult<clawcrew_api::channel::ChannelMessage> {
+        mut message: galleon_api::channel::ChannelMessage,
+    ) -> galleon_api::hook::HookResult<galleon_api::channel::ChannelMessage> {
         message.id = "hook-rewritten-picker-selection-id".to_string();
-        clawcrew_api::hook::HookResult::Continue(message)
+        galleon_api::hook::HookResult::Continue(message)
     }
 }
 
@@ -20482,8 +20482,8 @@ fn picker_dispatch_context(
 }
 
 #[cfg(feature = "channel-telegram")]
-fn picker_selection_message(id: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn picker_selection_message(id: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         id: id.into(),
         sender: "test_user".into(),
         platform_sender_id: Some("123".into()),
@@ -20556,7 +20556,7 @@ async fn message_dispatch_hook_cancel_reclaims_revoked_model_picker_selection() 
     crate::model_picker_delivery::revoke(&selection.id);
     assert!(crate::model_picker_delivery::is_registered(&selection.id));
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     tx.send(selection.clone()).await.unwrap();
     drop(tx);
     run_message_dispatch_loop(rx, AgentRouter::single(runtime_ctx.clone()), 4).await;
@@ -20603,7 +20603,7 @@ async fn message_dispatch_hook_cancel_releases_waiting_model_picker_callback() {
     let mut delivery_ack = crate::model_picker_delivery::register(&selection.id);
     delivery_ack.mark_enqueued();
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     tx.send(selection.clone()).await.unwrap();
     drop(tx);
     run_message_dispatch_loop(rx, AgentRouter::single(runtime_ctx.clone()), 4).await;
@@ -20787,7 +20787,7 @@ async fn runtime_command_late_revoked_model_picker_selection_does_not_mutate_rou
         model: "claude-sonnet-4-5".into(),
         api_key: None,
     }]);
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "telegram_model_picker_selection_revoked_past_gate".into(),
         sender: "test_user".into(),
         reply_target: "chat-42".into(),
@@ -21014,7 +21014,7 @@ async fn telegram_model_picker_username_change_updates_only_current_sender_sessi
     let picker_routes = picker_config
         .model_routes
         .iter()
-        .map(|route| clawcrew_api::channel::ChannelModelPickerRoute {
+        .map(|route| galleon_api::channel::ChannelModelPickerRoute {
             hint: route.hint.clone(),
             model_provider: route.model_provider.clone(),
             model: route.model.clone(),
@@ -21030,7 +21030,7 @@ async fn telegram_model_picker_username_change_updates_only_current_sender_sessi
         .with_persistence(Arc::new(RwLock::new(picker_config)))
         .with_api_base(server.uri()),
     );
-    let picker_request = clawcrew_api::channel::ChannelModelPickerRequest {
+    let picker_request = galleon_api::channel::ChannelModelPickerRequest {
         requesting_user: "original_user".into(),
         requesting_user_id: "123".into(),
         reply_target: "-10042:9".into(),
@@ -21641,7 +21641,7 @@ fn runtime_model_switch_rejects_ambiguous_bare_family() {
 
 #[test]
 fn reply_intent_precheck_uses_structured_addressing_signal() {
-    let marker_only = clawcrew_api::channel::ChannelMessage {
+    let marker_only = galleon_api::channel::ChannelMessage {
         content: "[WeCom group message addressed to this bot via @danya]\n@danya say hi".into(),
         channel: "wecom_ws".into(),
         explicitly_addressed: false,
@@ -21650,7 +21650,7 @@ fn reply_intent_precheck_uses_structured_addressing_signal() {
     assert!(!should_bypass_reply_intent_precheck(&marker_only, false));
     assert!(should_bypass_reply_intent_precheck(&marker_only, true));
 
-    let addressed = clawcrew_api::channel::ChannelMessage {
+    let addressed = galleon_api::channel::ChannelMessage {
         explicitly_addressed: true,
         ..marker_only
     };
@@ -21659,7 +21659,7 @@ fn reply_intent_precheck_uses_structured_addressing_signal() {
 
 #[test]
 fn conversation_memory_key_is_unique_per_message() {
-    let msg1 = clawcrew_api::channel::ChannelMessage {
+    let msg1 = galleon_api::channel::ChannelMessage {
         id: "msg_1".into(),
         sender: "U123".into(),
         reply_target: "C456".into(),
@@ -21674,7 +21674,7 @@ fn conversation_memory_key_is_unique_per_message() {
 
         ..Default::default()
     };
-    let msg2 = clawcrew_api::channel::ChannelMessage {
+    let msg2 = galleon_api::channel::ChannelMessage {
         id: "msg_2".into(),
         sender: "U123".into(),
         reply_target: "C456".into(),
@@ -21701,7 +21701,7 @@ async fn autosave_keys_preserve_multiple_conversation_facts() {
     let tmp = TempDir::new().unwrap();
     let mem = SqliteMemory::new("test", tmp.path()).unwrap();
 
-    let msg1 = clawcrew_api::channel::ChannelMessage {
+    let msg1 = galleon_api::channel::ChannelMessage {
         id: "msg_1".into(),
         sender: "U123".into(),
         reply_target: "C456".into(),
@@ -21716,7 +21716,7 @@ async fn autosave_keys_preserve_multiple_conversation_facts() {
 
         ..Default::default()
     };
-    let msg2 = clawcrew_api::channel::ChannelMessage {
+    let msg2 = galleon_api::channel::ChannelMessage {
         id: "msg_2".into(),
         sender: "U123".into(),
         reply_target: "C456".into(),
@@ -21778,7 +21778,7 @@ async fn render_for_sessions(
 async fn autosaved_conversation_memory_is_recalled_by_sender_scope() {
     let tmp = TempDir::new().unwrap();
     let mem = SqliteMemory::new("test", tmp.path()).unwrap();
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "msg_1".into(),
         sender: "U123".into(),
         reply_target: "C456".into(),
@@ -21818,7 +21818,7 @@ async fn autosaved_conversation_memory_is_recalled_by_sender_scope() {
 async fn autosaved_group_conversation_memory_stays_session_scoped() {
     let tmp = TempDir::new().unwrap();
     let mem = SqliteMemory::new("test", tmp.path()).unwrap();
-    let group_a_msg = clawcrew_api::channel::ChannelMessage {
+    let group_a_msg = galleon_api::channel::ChannelMessage {
         id: "msg_1".into(),
         sender: "U123".into(),
         reply_target: "group:alpha".into(),
@@ -21833,7 +21833,7 @@ async fn autosaved_group_conversation_memory_stays_session_scoped() {
 
         ..Default::default()
     };
-    let group_b_msg = clawcrew_api::channel::ChannelMessage {
+    let group_b_msg = galleon_api::channel::ChannelMessage {
         id: "msg_2".into(),
         sender: "U123".into(),
         reply_target: "group:beta".into(),
@@ -21905,7 +21905,7 @@ async fn sender_session_ids_match_migrated_matrix_sender_rows() {
     .await
     .unwrap();
 
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "evt_1".into(),
         sender: raw_sender.into(),
         reply_target: "!room:server".into(),
@@ -21956,7 +21956,7 @@ async fn process_channel_message_restores_per_sender_history_on_follow_ups() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -22015,7 +22015,7 @@ async fn process_channel_message_restores_per_sender_history_on_follow_ups() {
 
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-a".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -22036,7 +22036,7 @@ async fn process_channel_message_restores_per_sender_history_on_follow_ups() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-b".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -22133,8 +22133,8 @@ async fn process_channel_message_enriches_current_turn_without_persisting_contex
         },
     );
     let prompt_config = Arc::new(prompt_config);
-    let tools_registry: Arc<clawcrew_api::tool::ScopedToolRegistry> =
-        Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+    let tools_registry: Arc<galleon_api::tool::ScopedToolRegistry> =
+        Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(NamedMockTool("send_message_to_peer"))],
         ));
     let runtime_ctx = peer_prompt_test_context(
@@ -22146,7 +22146,7 @@ async fn process_channel_message_enriches_current_turn_without_persisting_contex
 
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-ctx-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-ctx".to_string(),
@@ -22263,7 +22263,7 @@ fn cache_stability_test_context(
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             Vec::new(),
         )),
         observer: Arc::new(NoopObserver),
@@ -22331,7 +22331,7 @@ async fn drive_one_message(
 ) {
     process_channel_message(
         ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: message_id.to_string(),
             sender: sender.to_string(),
             reply_target: reply_target.to_string(),
@@ -22514,10 +22514,10 @@ async fn process_channel_message_memory_recall_difference_keeps_system_byte_iden
             self.recall(query, 5, None, None, None).await
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for QueryAwareMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for QueryAwareMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
         fn alias(&self) -> &str {
@@ -22680,14 +22680,14 @@ async fn process_channel_message_omits_peer_map_when_send_peer_tool_unavailable(
         channels_by_name,
         provider_impl.clone(),
         Arc::new(prompt_config),
-        Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
     );
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-ctx-no-tool".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-ctx".to_string(),
@@ -22739,7 +22739,7 @@ async fn process_channel_message_persists_image_payload_verbatim() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -22801,7 +22801,7 @@ async fn process_channel_message_persists_image_payload_verbatim() {
 
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-image-1".to_string(),
             sender: "alice".to_string(),
             platform_sender_id: None,
@@ -22812,10 +22812,10 @@ async fn process_channel_message_persists_image_payload_verbatim() {
             timestamp: 1,
             passive_context: false,
             explicitly_addressed: false,
-            conversation_scope: clawcrew_api::channel::ChannelConversationScope::Sender,
+            conversation_scope: galleon_api::channel::ChannelConversationScope::Sender,
             thread_ts: None,
             interruption_scope_id: None,
-            attachments: vec![clawcrew_api::media::MediaAttachment {
+            attachments: vec![galleon_api::media::MediaAttachment {
                 file_name: "sticker.png".to_string(),
                 data: vec![1, 2, 3, 4],
                 mime_type: Some("image/png".to_string()),
@@ -22891,7 +22891,7 @@ async fn process_channel_message_telegram_keeps_system_instruction_at_top_only()
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -22948,7 +22948,7 @@ async fn process_channel_message_telegram_keeps_system_instruction_at_top_only()
 
     process_channel_message(
         runtime_ctx.clone(),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "tg-msg-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-telegram".to_string(),
@@ -24635,10 +24635,10 @@ impl ObservedChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for ObservedChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for ObservedChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -24658,7 +24658,7 @@ impl Channel for ObservedChannel {
 
     async fn listen(
         &self,
-        tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         self.calls.fetch_add(1, Ordering::SeqCst);
         tx.closed().await;
@@ -24676,10 +24676,10 @@ impl Channel for ObservedChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for AlwaysFailChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for AlwaysFailChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -24699,17 +24699,17 @@ impl Channel for AlwaysFailChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         self.calls.fetch_add(1, Ordering::SeqCst);
         anyhow::bail!("listen boom")
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for BlockUntilClosedChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for BlockUntilClosedChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -24717,10 +24717,10 @@ impl ::clawcrew_api::attribution::Attributable for BlockUntilClosedChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for FailOnceChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Discord,
+impl ::galleon_api::attribution::Attributable for FailOnceChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Discord,
         )
     }
 
@@ -24741,7 +24741,7 @@ impl Channel for BlockUntilClosedChannel {
 
     async fn listen(
         &self,
-        tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         self.calls.fetch_add(1, Ordering::SeqCst);
         tx.closed().await;
@@ -24761,7 +24761,7 @@ impl Channel for FailOnceChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         self.calls.fetch_add(1, Ordering::SeqCst);
         if let Some(err) = self.err.lock().unwrap_or_else(|e| e.into_inner()).take() {
@@ -24775,9 +24775,9 @@ struct PluginLifecycleChannel {
     calls: Arc<AtomicUsize>,
 }
 
-impl ::clawcrew_api::attribution::Attributable for PluginLifecycleChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Plugin)
+impl ::galleon_api::attribution::Attributable for PluginLifecycleChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Plugin)
     }
 
     fn alias(&self) -> &str {
@@ -24797,7 +24797,7 @@ impl Channel for PluginLifecycleChannel {
 
     async fn listen(
         &self,
-        tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         self.calls.fetch_add(1, Ordering::SeqCst);
         tx.closed().await;
@@ -24857,10 +24857,10 @@ async fn plugin_only_channel_enters_the_shared_listener_lifecycle_with_exact_ali
 async fn two_plugin_aliases_keep_distinct_composite_registry_keys() {
     struct Aliased(&'static str);
 
-    impl ::clawcrew_api::attribution::Attributable for Aliased {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Plugin,
+    impl ::galleon_api::attribution::Attributable for Aliased {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Plugin,
             )
         }
 
@@ -24881,7 +24881,7 @@ async fn two_plugin_aliases_keep_distinct_composite_registry_keys() {
 
         async fn listen(
             &self,
-            _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+            _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
         ) -> anyhow::Result<()> {
             Ok(())
         }
@@ -24913,7 +24913,7 @@ async fn supervised_listener_marks_error_and_restarts_on_failures() {
         calls: Arc::clone(&calls),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
@@ -24950,7 +24950,7 @@ async fn supervised_listener_does_not_report_ok_for_a_channel_that_never_connect
     let probes = Arc::clone(&inner.probes);
     let channel: Arc<dyn Channel> = inner;
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener_with_health_interval(
         channel,
@@ -25004,7 +25004,7 @@ async fn supervised_listener_health_observation_never_probes_the_channel() {
     let observations = Arc::clone(&inner.observations);
     let channel: Arc<dyn Channel> = inner;
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener_with_health_interval(
         channel,
@@ -25056,7 +25056,7 @@ async fn supervised_listener_waits_one_interval_before_its_second_observation() 
     let observations = Arc::clone(&inner.observations);
     let channel: Arc<dyn Channel> = inner;
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener_with_health_interval(
         channel,
@@ -25095,7 +25095,7 @@ async fn supervised_listener_does_not_report_ok_before_the_first_exchange() {
     ));
     let channel: Arc<dyn Channel> = inner;
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener_with_health_interval(
         channel,
@@ -25153,7 +25153,7 @@ async fn a_replacement_listener_does_not_inherit_the_previous_ok_on_the_same_ali
         Some(ListenerHealth::Healthy),
     ));
     let first: Arc<dyn Channel> = healthy;
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let first_cancel = tokio_util::sync::CancellationToken::new();
     let first_handle = spawn_supervised_listener_with_health_interval(
         first,
@@ -25190,7 +25190,7 @@ async fn a_replacement_listener_does_not_inherit_the_previous_ok_on_the_same_ali
         Some(ListenerHealth::Pending),
     ));
     let second: Arc<dyn Channel> = pending;
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let second_cancel = tokio_util::sync::CancellationToken::new();
     let second_handle = spawn_supervised_listener_with_health_interval(
         second,
@@ -25256,7 +25256,7 @@ async fn paced_wrapper_preserves_listener_health_through_to_the_registry() {
         "non-zero pacing must actually produce the wrapper"
     );
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener_with_health_interval(
         paced,
@@ -25312,7 +25312,7 @@ async fn supervised_listener_stops_refreshing_ok_once_a_success_goes_stale() {
     let reporter = Arc::clone(&inner);
     let channel: Arc<dyn Channel> = inner;
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener_with_health_interval(
         channel,
@@ -25365,7 +25365,7 @@ async fn supervised_listener_refreshes_health_while_running() {
         calls: Arc::clone(&calls),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener_with_health_interval(
         channel,
@@ -25415,7 +25415,7 @@ async fn supervised_listener_does_not_restart_on_non_retryable_discord_http_erro
     });
 
     let component_name = format!("channel:{}", channel.name());
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
@@ -25453,7 +25453,7 @@ async fn supervised_listener_enters_retry_path_on_discord_gateway_rate_limit() {
     });
 
     let component_name = format!("channel:{}", channel.name());
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
@@ -25496,7 +25496,7 @@ async fn supervised_listener_does_not_restart_on_fatal_discord_gateway_close_cod
     });
 
     let component_name = format!("channel:{}", channel.name());
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
@@ -25540,9 +25540,9 @@ async fn non_retryable_listener_error_does_not_stop_other_listener_health() {
     });
 
     let (failing_tx, failing_rx) =
-        tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+        tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let (healthy_tx, healthy_rx) =
-        tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(1);
+        tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(1);
     let cancel = tokio_util::sync::CancellationToken::new();
     let failing_handle =
         spawn_supervised_listener(failing_channel, None, failing_tx, 1, 1, cancel.clone());
@@ -25792,7 +25792,7 @@ async fn media_pipeline_preserves_image_bytes_when_vision_route_configured() {
         channels_by_name,
         provider_impl.clone(),
         Arc::new(galleon_config::schema::Config::default()),
-        Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
     );
@@ -25812,7 +25812,7 @@ async fn media_pipeline_preserves_image_bytes_when_vision_route_configured() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-image-route".to_string(),
             sender: "alice".to_string(),
             platform_sender_id: None,
@@ -25823,10 +25823,10 @@ async fn media_pipeline_preserves_image_bytes_when_vision_route_configured() {
             timestamp: 1,
             passive_context: false,
             explicitly_addressed: false,
-            conversation_scope: clawcrew_api::channel::ChannelConversationScope::Sender,
+            conversation_scope: galleon_api::channel::ChannelConversationScope::Sender,
             thread_ts: None,
             interruption_scope_id: None,
-            attachments: vec![clawcrew_api::media::MediaAttachment {
+            attachments: vec![galleon_api::media::MediaAttachment {
                 file_name: "route.png".to_string(),
                 data: vec![1, 2, 3, 4],
                 mime_type: Some("image/png".to_string()),
@@ -25959,7 +25959,7 @@ async fn telegram_image_document_with_enabled_pipeline_never_inlines_base64() {
         channels_by_name,
         provider_impl.clone(),
         Arc::new(galleon_config::schema::Config::default()),
-        Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
     );
@@ -26124,7 +26124,7 @@ async fn telegram_unsupported_image_document_stays_a_document_end_to_end() {
             channels_by_name,
             provider_impl.clone(),
             Arc::new(galleon_config::schema::Config::default()),
-            Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+            Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
                 vec![],
             )),
         );
@@ -26240,7 +26240,7 @@ async fn e2e_photo_attachment_rejected_by_non_vision_provider() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -26300,7 +26300,7 @@ async fn e2e_photo_attachment_rejected_by_non_vision_provider() {
     // Simulate a photo attachment message with [IMAGE:] marker.
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-photo-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "chat-photo".to_string(),
@@ -26348,7 +26348,7 @@ async fn e2e_failed_vision_turn_does_not_poison_follow_up_text_turn() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -26407,7 +26407,7 @@ async fn e2e_failed_vision_turn_does_not_poison_follow_up_text_turn() {
 
     process_channel_message(
         Arc::clone(&runtime_ctx),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-photo-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "chat-photo".to_string(),
@@ -26428,7 +26428,7 @@ async fn e2e_failed_vision_turn_does_not_poison_follow_up_text_turn() {
 
     process_channel_message(
         Arc::clone(&runtime_ctx),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-text-2".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "chat-photo".to_string(),
@@ -26503,7 +26503,7 @@ async fn e2e_failed_non_retryable_turn_does_not_poison_follow_up_text_turn() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -26562,7 +26562,7 @@ async fn e2e_failed_non_retryable_turn_does_not_poison_follow_up_text_turn() {
 
     process_channel_message(
         Arc::clone(&runtime_ctx),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-bad-1".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "chat-format".to_string(),
@@ -26583,7 +26583,7 @@ async fn e2e_failed_non_retryable_turn_does_not_poison_follow_up_text_turn() {
 
     process_channel_message(
         Arc::clone(&runtime_ctx),
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-text-2".to_string(),
             sender: "clawcrew_user".to_string(),
             reply_target: "chat-format".to_string(),
@@ -26800,7 +26800,7 @@ async fn process_channel_message_applies_query_classification_route() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -26859,7 +26859,7 @@ async fn process_channel_message_applies_query_classification_route() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-qc-1".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -26946,7 +26946,7 @@ async fn process_channel_message_classification_disabled_uses_default_route() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -27005,7 +27005,7 @@ async fn process_channel_message_classification_disabled_uses_default_route() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-qc-disabled".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -27084,7 +27084,7 @@ async fn process_channel_message_classification_no_match_uses_default_route() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -27143,7 +27143,7 @@ async fn process_channel_message_classification_no_match_uses_default_route() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-qc-nomatch".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -27242,7 +27242,7 @@ async fn process_channel_message_classification_priority_selects_highest() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -27301,7 +27301,7 @@ async fn process_channel_message_classification_priority_selects_highest() {
 
     process_channel_message(
         runtime_ctx,
-        clawcrew_api::channel::ChannelMessage {
+        galleon_api::channel::ChannelMessage {
             id: "msg-qc-prio".to_string(),
             sender: "alice".to_string(),
             reply_target: "chat-1".to_string(),
@@ -27993,7 +27993,7 @@ fn interrupt_on_new_message_disabled_for_discord_by_default() {
 
 #[test]
 fn interruption_scope_key_without_scope_id_is_three_component() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "1".into(),
         sender: "alice".into(),
         reply_target: "room".into(),
@@ -28010,7 +28010,7 @@ fn interruption_scope_key_without_scope_id_is_three_component() {
     };
     assert_eq!(interruption_scope_key(&msg), "matrix_room_alice");
 
-    let empty_alias_msg = clawcrew_api::channel::ChannelMessage {
+    let empty_alias_msg = galleon_api::channel::ChannelMessage {
         channel_alias: Some(String::new()),
         ..msg
     };
@@ -28022,7 +28022,7 @@ fn interruption_scope_key_without_scope_id_is_three_component() {
 
 #[test]
 fn interruption_scope_key_with_scope_id_is_four_component() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "1".into(),
         sender: "alice".into(),
         reply_target: "room".into(),
@@ -28045,7 +28045,7 @@ fn interruption_scope_key_keeps_listeners_apart_when_underscores_collide() {
     // Without escaping, `slack.work` + `room_x` and `slack.work_room` + `x`
     // both render as `slack.work_room_x_alice`, which would let one
     // listener's `/stop` cancel the other listener's turn.
-    let scoped = |alias: &str, reply_target: &str| clawcrew_api::channel::ChannelMessage {
+    let scoped = |alias: &str, reply_target: &str| galleon_api::channel::ChannelMessage {
         id: "1".into(),
         sender: "alice".into(),
         reply_target: reply_target.into(),
@@ -28072,7 +28072,7 @@ fn interruption_scope_key_keeps_listeners_apart_when_underscores_collide() {
 #[test]
 fn interruption_scope_key_thread_ts_alone_does_not_affect_key() {
     // thread_ts used for reply anchoring should not bleed into scope key
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "1".into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -28095,7 +28095,7 @@ fn interruption_scope_key_thread_ts_alone_does_not_affect_key() {
 /// listener would cancel the other listener's in-flight turn.
 #[test]
 fn interruption_scope_key_sender_scope_is_alias_aware() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "1".into(),
         sender: "alice".into(),
         reply_target: "room".into(),
@@ -28105,7 +28105,7 @@ fn interruption_scope_key_sender_scope_is_alias_aware() {
         timestamp: 0,
         thread_ts: None,
         interruption_scope_id: None,
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::Sender,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::Sender,
         attachments: vec![],
         subject: None,
 
@@ -28128,7 +28128,7 @@ fn interruption_scope_key_sender_scope_is_alias_aware() {
 
 #[test]
 fn interruption_scope_key_sender_scope_with_scope_id_is_alias_aware() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         id: "1".into(),
         sender: "alice".into(),
         reply_target: "C123".into(),
@@ -28138,7 +28138,7 @@ fn interruption_scope_key_sender_scope_with_scope_id_is_alias_aware() {
         timestamp: 0,
         thread_ts: Some("$thread1".into()),
         interruption_scope_id: Some("$thread1".into()),
-        conversation_scope: clawcrew_api::channel::ChannelConversationScope::Sender,
+        conversation_scope: galleon_api::channel::ChannelConversationScope::Sender,
         attachments: vec![],
         subject: None,
 
@@ -28173,7 +28173,7 @@ async fn message_dispatch_different_threads_do_not_cancel_each_other() {
             galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
-        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+        tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![],
         )),
         observer: Arc::new(NoopObserver),
@@ -28230,11 +28230,11 @@ async fn message_dispatch_different_threads_do_not_cancel_each_other() {
         turn_runner: Arc::new(StandardChannelTurnRunner),
     });
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::ChannelMessage>(8);
     let send_task = galleon_spawn::spawn!(async move {
         // Two messages from same sender but in different Slack threads —
         // they must NOT cancel each other.
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "1741234567.100001".to_string(),
             sender: "alice".to_string(),
             reply_target: "C123".to_string(),
@@ -28252,7 +28252,7 @@ async fn message_dispatch_different_threads_do_not_cancel_each_other() {
         .await
         .unwrap();
         tokio::time::sleep(Duration::from_millis(30)).await;
-        tx.send(clawcrew_api::channel::ChannelMessage {
+        tx.send(galleon_api::channel::ChannelMessage {
             id: "1741234567.200002".to_string(),
             sender: "alice".to_string(),
             reply_target: "C123".to_string(),
@@ -29208,9 +29208,9 @@ async fn draft_updater_never_hands_scratchpad_to_the_transport() {
     // The capacity exceeds the number of deltas, so nothing blocks and the
     // updater needs no concurrent task: it returns once the channel is
     // closed and empty.
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::DraftEvent>(32);
 
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::channel::StreamDelta;
     for delta in [
         "Looking that up",
         " now.\n<tool_res",
@@ -29265,7 +29265,7 @@ async fn draft_updater_never_hands_scratchpad_to_the_transport() {
 
 #[tokio::test]
 async fn draft_updater_uses_legacy_tool_status_and_ignores_reasoning() {
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::channel::StreamDelta;
 
     let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
     let channel: Arc<dyn Channel> = channel_impl.clone();
@@ -29350,8 +29350,8 @@ async fn draft_updater_holds_back_split_alternate_protocol_prefixes() {
     ] {
         let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
-        use clawcrew_api::channel::StreamDelta;
+        let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::DraftEvent>(32);
+        use galleon_api::channel::StreamDelta;
         for delta in deltas {
             tx.send(StreamDelta::Text(delta.to_string())).await.unwrap();
         }
@@ -29418,8 +29418,8 @@ async fn draft_updater_suppresses_strict_mode_protocol_json() {
     ] {
         let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
-        use clawcrew_api::channel::StreamDelta;
+        let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::DraftEvent>(32);
+        use galleon_api::channel::StreamDelta;
         for delta in &deltas {
             tx.send(StreamDelta::Text((*delta).to_string()))
                 .await
@@ -29457,7 +29457,7 @@ async fn draft_updater_suppresses_strict_mode_protocol_json() {
 /// published to the channel via `flush_draft_turn`.
 #[tokio::test]
 async fn multi_message_narration_flush_suppresses_registered_tool_protocol() {
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::channel::StreamDelta;
     let known: HashSet<String> = ["mock_price".to_string()].into_iter().collect();
 
     for (label, payload) in [
@@ -29472,7 +29472,7 @@ async fn multi_message_narration_flush_suppresses_registered_tool_protocol() {
     ] {
         let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
+        let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::DraftEvent>(32);
 
         // The protocol JSON is a completed narration turn; the following
         // `Status` event is what drives the permanent turn flush.
@@ -29513,7 +29513,7 @@ async fn multi_message_narration_flush_suppresses_registered_tool_protocol() {
 
 #[tokio::test]
 async fn multi_message_narration_is_committed_as_text_independent_of_the_final_route() {
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::channel::StreamDelta;
 
     // Contract (multi_message): narration streamed during a turn is published
     // as separate, permanent text messages. `run_draft_updater` has no
@@ -29527,7 +29527,7 @@ async fn multi_message_narration_is_committed_as_text_independent_of_the_final_r
     let known: HashSet<String> = HashSet::new();
     let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
     let channel: Arc<dyn Channel> = channel_impl.clone();
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::DraftEvent>(32);
 
     // A completed narration turn (plain prose, not a tool protocol) followed
     // by the `Status` event that drives the permanent flush.
@@ -29570,9 +29570,9 @@ async fn draft_updater_still_streams_examples_and_ordinary_code_fences() {
     let known: HashSet<String> = ["shell".to_string()].into_iter().collect();
     let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
     let channel: Arc<dyn Channel> = channel_impl.clone();
-    let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
+    let (tx, rx) = tokio::sync::mpsc::channel::<galleon_api::channel::DraftEvent>(32);
 
-    use clawcrew_api::channel::StreamDelta;
+    use galleon_api::channel::StreamDelta;
     for delta in [
         "Here is how a config looks:\n```json\n",
         "{\"retries\": 3,\n",
@@ -29700,8 +29700,8 @@ fn build_channel_system_prompt_excludes_volatile_fields() {
 
 // --- Surface 1(a) regression tests ---
 
-fn build_msg_for_signal_test() -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn build_msg_for_signal_test() -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         channel: "mattermost".to_string(),
         reply_target: "ch:thread".to_string(),
         sender: "user_test".to_string(),
@@ -29716,7 +29716,7 @@ fn channel_prompt_reflects_per_turn_signal_false_uses_no_tools_framing() {
     let base_prompt_with_native = format!(
         "{}\n{}",
         "Some base agent prompt.",
-        clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING,
+        galleon_api::agent::NATIVE_TOOLS_TASK_FRAMING,
     );
     let msg = build_msg_for_signal_test();
     let prompt = build_channel_system_prompt_for_message_with_signal(
@@ -29726,11 +29726,11 @@ fn channel_prompt_reflects_per_turn_signal_false_uses_no_tools_framing() {
         false, // per-turn: no effective native specs
     );
     assert!(
-        prompt.contains(clawcrew_api::agent::NO_TOOLS_TASK_FRAMING),
+        prompt.contains(galleon_api::agent::NO_TOOLS_TASK_FRAMING),
         "per-turn signal=false must inject NO_TOOLS_TASK_FRAMING; got: {prompt}"
     );
     assert!(
-        !prompt.contains(clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING),
+        !prompt.contains(galleon_api::agent::NATIVE_TOOLS_TASK_FRAMING),
         "per-turn signal=false must remove NATIVE_TOOLS_TASK_FRAMING; got: {prompt}"
     );
 }
@@ -29740,7 +29740,7 @@ fn channel_prompt_keeps_startup_signal_when_per_turn_agrees() {
     let base_prompt_with_no_tools = format!(
         "{}\n{}",
         "Some base agent prompt.",
-        clawcrew_api::agent::NO_TOOLS_TASK_FRAMING,
+        galleon_api::agent::NO_TOOLS_TASK_FRAMING,
     );
     let msg = build_msg_for_signal_test();
     let prompt_with_helper = build_channel_system_prompt_for_message_with_signal(
@@ -29762,7 +29762,7 @@ fn channel_prompt_rewrites_no_tools_to_native_when_per_turn_differs() {
     let base_prompt_with_no_tools = format!(
         "{}\n{}",
         "Some base agent prompt.",
-        clawcrew_api::agent::NO_TOOLS_TASK_FRAMING,
+        galleon_api::agent::NO_TOOLS_TASK_FRAMING,
     );
     let msg = build_msg_for_signal_test();
     let prompt = build_channel_system_prompt_for_message_with_signal(
@@ -29772,11 +29772,11 @@ fn channel_prompt_rewrites_no_tools_to_native_when_per_turn_differs() {
         true, // per-turn: native specs now present
     );
     assert!(
-        prompt.contains(clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING),
+        prompt.contains(galleon_api::agent::NATIVE_TOOLS_TASK_FRAMING),
         "per-turn signal=true must inject NATIVE_TOOLS_TASK_FRAMING; got: {prompt}"
     );
     assert!(
-        !prompt.contains(clawcrew_api::agent::NO_TOOLS_TASK_FRAMING),
+        !prompt.contains(galleon_api::agent::NO_TOOLS_TASK_FRAMING),
         "per-turn signal=true must remove NO_TOOLS_TASK_FRAMING; got: {prompt}"
     );
 }
@@ -29869,7 +29869,7 @@ fn build_channel_turn_context_preamble_empty_when_reply_target_empty() {
     // CLI-style path: when there is no channel recipient, no preamble
     // is needed. Mirrors CLI behaviour where no per-turn context block
     // is added.
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         channel: "telegram".into(),
         reply_target: String::new(),
         sender: "alice".into(),
@@ -29888,7 +29888,7 @@ fn build_channel_turn_context_preamble_carries_volatile_fields() {
     // Every per-turn field the system prompt used to carry lives in the
     // preamble now. Pin the comma-separated tuple so a refactor that
     // splits or rewords it fails loudly.
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         channel: "telegram".into(),
         reply_target: "chat:42".into(),
         sender: "alice".into(),
@@ -29976,7 +29976,7 @@ fn build_channel_system_prompt_for_message_omits_volatile_fields() {
 
 #[test]
 fn build_channel_turn_context_preamble_webhook_cron_hint_carries_thread_id() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         channel: "webhook".into(),
         reply_target: "agent-chat:agent-1:thread-7".into(),
         sender: "user:abc".into(),
@@ -30000,7 +30000,7 @@ fn build_channel_turn_context_preamble_webhook_cron_hint_carries_thread_id() {
 
 #[test]
 fn build_channel_turn_context_preamble_non_webhook_cron_hint_keeps_to_as_reply_target() {
-    let msg = clawcrew_api::channel::ChannelMessage {
+    let msg = galleon_api::channel::ChannelMessage {
         channel: "slack".into(),
         reply_target: "C12345".into(),
         sender: "U67890".into(),
@@ -30172,7 +30172,7 @@ fn compiled_channel_guards_reject_new_support_with_stale_unsupported_disposition
 fn compiled_channel_announcement_guard_requires_positive_delivery_in_combined_arms() {
     let dispatch = r#"
         "supported" | "supported-alias" => {
-            clawcrew_api::channel::Channel::send(&ch, &message).await?;
+            galleon_api::channel::Channel::send(&ch, &message).await?;
         }
         "rejected" | "rejected-alias" => {
             anyhow::bail!("not connected");
@@ -30440,7 +30440,7 @@ fn parked_channel_gate_router_with_routes(
         request_route: Mutex::new(request_route.map(str::to_string)),
         escalation_route: Mutex::new(escalation_route.map(str::to_string)),
         run_status: Arc::new(Mutex::new(Some(
-            clawcrew_api::sop::SopRunStatus::WaitingApproval,
+            galleon_api::sop::SopRunStatus::WaitingApproval,
         ))),
         ..Default::default()
     });
@@ -30456,7 +30456,7 @@ fn parked_channel_gate_router_with_routes(
 fn active_run_status(
     engine: &Arc<MockSopDispatcher>,
     _run_id: &str,
-) -> Option<clawcrew_api::sop::SopRunStatus> {
+) -> Option<galleon_api::sop::SopRunStatus> {
     *engine.run_status.lock().unwrap_or_else(|e| e.into_inner())
 }
 
@@ -30631,7 +30631,7 @@ async fn sop_gate_text_reply_does_not_clear_unpoliced_parked_run() {
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
+        Some(galleon_api::sop::SopRunStatus::WaitingApproval)
     );
 }
 
@@ -30655,7 +30655,7 @@ async fn sop_gate_text_reply_requires_matching_request_route() {
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
+        Some(galleon_api::sop::SopRunStatus::WaitingApproval)
     );
 }
 
@@ -30679,7 +30679,7 @@ async fn sop_gate_text_reply_rejects_request_route_that_delivery_would_not_targe
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
+        Some(galleon_api::sop::SopRunStatus::WaitingApproval)
     );
 }
 
@@ -30707,7 +30707,7 @@ async fn sop_gate_text_reply_rejects_short_suffix_reference() {
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
+        Some(galleon_api::sop::SopRunStatus::WaitingApproval)
     );
 }
 
@@ -30735,7 +30735,7 @@ async fn sop_gate_marker_rejects_short_suffix_reference() {
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
+        Some(galleon_api::sop::SopRunStatus::WaitingApproval)
     );
 }
 
@@ -30759,7 +30759,7 @@ async fn sop_gate_text_reply_resolves_bare_singleton_request_route() {
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::Running)
+        Some(galleon_api::sop::SopRunStatus::Running)
     );
 }
 
@@ -30783,7 +30783,7 @@ async fn sop_gate_text_reply_resolves_matching_request_route() {
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::Running)
+        Some(galleon_api::sop::SopRunStatus::Running)
     );
 }
 
@@ -30809,7 +30809,7 @@ async fn channel_gate_approval_drives_resumed_execute_step() {
 
     tokio::time::timeout(Duration::from_secs(1), async {
         loop {
-            if active_run_status(&engine, &run_id) == Some(clawcrew_api::sop::SopRunStatus::Failed)
+            if active_run_status(&engine, &run_id) == Some(galleon_api::sop::SopRunStatus::Failed)
             {
                 break;
             }
@@ -30855,7 +30855,7 @@ async fn approval_only_channel_gate_reply_bypasses_agent_ownership() {
 
     tokio::time::timeout(Duration::from_secs(1), async {
         loop {
-            if active_run_status(&engine, &run_id) == Some(clawcrew_api::sop::SopRunStatus::Failed)
+            if active_run_status(&engine, &run_id) == Some(galleon_api::sop::SopRunStatus::Failed)
             {
                 break;
             }
@@ -30900,7 +30900,7 @@ async fn sop_gate_resolution_finalizes_request_and_escalation_channels() {
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::Running)
+        Some(galleon_api::sop::SopRunStatus::Running)
     );
     for finalized in [
         request_channel.finalized_gate_prompts.lock().await,
@@ -30935,7 +30935,7 @@ async fn sop_gate_text_reply_resolves_matching_escalation_route() {
     );
     assert_eq!(
         active_run_status(&engine, &run_id),
-        Some(clawcrew_api::sop::SopRunStatus::Running)
+        Some(galleon_api::sop::SopRunStatus::Running)
     );
 }
 

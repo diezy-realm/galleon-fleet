@@ -18,7 +18,7 @@ depends_on: Sprint 0 §C (BL-14 harus merge dulu — file overlap orchestrator/m
 **Koreksi baris (verifikasi 2026-10-06):** Titik overwrite `turn.turn.msg.content = combined` ada di `crates/galleon-channels/src/orchestrator/mod.rs:1662` (bergeser dari `1370-1372` di dokumen lama — kode telah berubah sejak dicatat), di dalam fungsi `route_inbound_slot`. Verifikasi akar masalah LENGKAP (bukan hanya titik overwrite, tapi seluruh jalur):
 
 1. `crates/galleon-infra/src/debounce.rs` — `MessageDebouncer::debounce_with_window(sender_key: &str, message: &str, window: Duration)` HANYA menerima `message: &str` (teks polos). `DebouncerEntry.messages: Vec<String>` menyimpan teks saja. `fire_debounced()` menggabung via `entry.messages.join("\n")` — SATU `String`, tidak ada tempat untuk attachment sama sekali di level debouncer ini.
-2. `crates/galleon-channels/src/orchestrator/mod.rs` sekitar baris 11316 (fungsi pemanggil, nama fungsi tempatnya belum dikonfirmasi persis — baca ~11250-11320 untuk nama fungsi pembungkus): panggilan `ctx.debouncer.debounce_with_window(&debounce_key, &msg.content, debounce_window)` hanya mengirim `&msg.content` (String) — **`msg.attachments` (field `Vec<MediaAttachment>` di `clawcrew-api/src/channel.rs:423`) TIDAK PERNAH disertakan dalam pemanggilan ini**. Attachment pesan ke-2/3/dst genuinely tidak pernah disalurkan ke mana pun, bukan "ditimpa" — ini presisi penting untuk desain fix.
+2. `crates/galleon-channels/src/orchestrator/mod.rs` sekitar baris 11316 (fungsi pemanggil, nama fungsi tempatnya belum dikonfirmasi persis — baca ~11250-11320 untuk nama fungsi pembungkus): panggilan `ctx.debouncer.debounce_with_window(&debounce_key, &msg.content, debounce_window)` hanya mengirim `&msg.content` (String) — **`msg.attachments` (field `Vec<MediaAttachment>` di `galleon-api/src/channel.rs:423`) TIDAK PERNAH disertakan dalam pemanggilan ini**. Attachment pesan ke-2/3/dst genuinely tidak pernah disalurkan ke mana pun, bukan "ditimpa" — ini presisi penting untuk desain fix.
 3. `InboundTurn { turn: Box<PendingTurn> }` dibuat SEKALI saat bucket debounce PERTAMA kali dibuka (`msg` lengkap dengan attachment pesan pertama tersimpan di `PendingTurn.msg`). Pesan susulan dalam window yang sama HANYA memperbarui bucket teks di debouncer (langkah 1), tidak pernah menyentuh `PendingTurn` yang sudah dibuat.
 4. Di `route_inbound_slot` (baris 1662), saat window selesai: `turn.turn.msg.content = combined` — mengganti teks `PendingTurn` pertama dengan gabungan teks SEMUA pesan, TAPI `turn.turn.msg.attachments` tetap attachment pesan PERTAMA saja (field ini tidak pernah disentuh ulang).
 
@@ -92,14 +92,14 @@ Plus test regresi: pesan TANPA attachment yang didebounce tetap bekerja seperti 
 
 ## B. Perluasan Skema & Layer Validasi (paralel dengan A setelah A mulai, TIDAK sebelum)
 
-- [x] **BL-53 (LOW-MEDIUM, paralel dengan A)** Perluas `MediaKind` dengan `Document`/`Archive`/`Link` (saat ini hanya `Audio|Image|Video|Unknown`). File: `clawcrew-api/src/media.rs`. Referensi skema: Claude `source.type: base64|url|file` (seragam, lebih bersih ditiru) vs Gemini union-field-per-jenis. Status: COMPLETED (273/273 tests pass).
+- [x] **BL-53 (LOW-MEDIUM, paralel dengan A)** Perluas `MediaKind` dengan `Document`/`Archive`/`Link` (saat ini hanya `Audio|Image|Video|Unknown`). File: `galleon-api/src/media.rs`. Referensi skema: Claude `source.type: base64|url|file` (seragam, lebih bersih ditiru) vs Gemini union-field-per-jenis. Status: COMPLETED (273/273 tests pass).
 
 #### Detail Eksekusi — BL-53
 
-**Verifikasi:** `crates/clawcrew-api/src/media.rs:27` — `pub enum MediaKind { Audio, Image, Video, Unknown }`, dengan `#[derive(Debug, Clone, Copy, PartialEq, Eq)]` — PENTING: enum ini `Copy`, jadi penambahan variant TIDAK memerlukan perubahan derive, tapi SEMUA `match` exhaustive terhadap `MediaKind` di seluruh codebase akan gagal compile sampai ditambah arm baru (ini FITUR bukan bug — compiler akan menunjukkan tepat semua titik yang perlu diupdate).
+**Verifikasi:** `crates/galleon-api/src/media.rs:27` — `pub enum MediaKind { Audio, Image, Video, Unknown }`, dengan `#[derive(Debug, Clone, Copy, PartialEq, Eq)]` — PENTING: enum ini `Copy`, jadi penambahan variant TIDAK memerlukan perubahan derive, tapi SEMUA `match` exhaustive terhadap `MediaKind` di seluruh codebase akan gagal compile sampai ditambah arm baru (ini FITUR bukan bug — compiler akan menunjukkan tepat semua titik yang perlu diupdate).
 
 **File & simbol spesifik:**
-- Ubah: `crates/clawcrew-api/src/media.rs:27` — tambah variant `Document`, `Archive`, `Link`.
+- Ubah: `crates/galleon-api/src/media.rs:27` — tambah variant `Document`, `Archive`, `Link`.
 - WAJIB cari semua consumer: jalankan `code` tool `find_references` pada `MediaKind` SEBELUM menambah variant, untuk inventarisasi semua `match` yang akan pecah — JANGAN tambah variant lalu "fix compile error satu-satu tanpa rencana", baca dulu SEMUA titik match untuk desain respons yang konsisten (misal: apakah `Document`/`Archive` punya perlakuan sama dengan `Unknown` di beberapa titik, atau genuinely baru).
 
 **Spesifikasi API:**
@@ -169,7 +169,7 @@ fn enforce_attachment_limits(msg: &mut ChannelMessage) -> Result<(), AttachmentL
 
 **Langkah pengerjaan:**
 1. **Tunggu BL-52 selesai dan merge** (hard dependency — tidak bisa mulai lebih awal, enforcement butuh attachment yang sudah lengkap).
-2. Cek apakah `MediaAttachment` (`clawcrew-api/src/media.rs` atau `channel.rs`) sudah punya method untuk ukuran byte (`byte_size()`/`len()`/sejenis) — kalau belum, tambahkan sebagai bagian tiket ini.
+2. Cek apakah `MediaAttachment` (`galleon-api/src/media.rs` atau `channel.rs`) sudah punya method untuk ukuran byte (`byte_size()`/`len()`/sejenis) — kalau belum, tambahkan sebagai bagian tiket ini.
 3. Tentukan titik pemanggilan `enforce_attachment_limits` — SETELAH `route_inbound_slot` mengisi attachment lengkap, SEBELUM turn diteruskan ke lane admission (`turn.registration`/`enqueue` yang sudah ada).
 4. Response ke user saat limit terlampaui: pesan error yang jelas (bukan silent drop) — konsisten pola `send_notice_with_timeout`/busy notice yang sudah ada di file ini untuk notifikasi best-effort.
 
@@ -320,7 +320,7 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 | Area | File | Penulis | Catatan serialisasi |
 |---|---|---|---|
 | A (BL-52) | `galleon-infra/src/debounce.rs`, `galleon-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
-| B (BL-53/54/55) | `clawcrew-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
+| B (BL-53/54/55) | `galleon-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
 | C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `galleon-config/src/schema.rs`, `galleon-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
 
 ## Keluaran Sprint

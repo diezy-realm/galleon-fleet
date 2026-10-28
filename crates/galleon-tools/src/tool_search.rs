@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 
 use crate::mcp_deferred::{ActivatedToolSet, DeferredMcpToolSet};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Default maximum number of search results.
 const DEFAULT_MAX_RESULTS: usize = 5;

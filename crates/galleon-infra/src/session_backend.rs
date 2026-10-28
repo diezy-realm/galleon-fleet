@@ -1,7 +1,7 @@
 //! Trait abstraction for session persistence backends.
 
 use chrono::{DateTime, Utc};
-use clawcrew_api::model_provider::ChatMessage;
+use galleon_api::model_provider::ChatMessage;
 
 /// Metadata about a persisted session.
 #[derive(Debug, Clone)]

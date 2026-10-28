@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::fmt::Write;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 
 const MAX_IMAGE_BYTES: u64 = 20 * 1024 * 1024;

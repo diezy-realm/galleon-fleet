@@ -7,4 +7,4 @@ license.workspace = true
 publish = false
 
 [dependencies]
-clawcrew-api.workspace = true
+galleon-api.workspace = true

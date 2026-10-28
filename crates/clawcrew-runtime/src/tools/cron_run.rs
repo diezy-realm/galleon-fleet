@@ -3,8 +3,8 @@ use crate::security::SecurityPolicy;
 use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
-use clawcrew_api::runtime_traits::RuntimeAdapter;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::runtime_traits::RuntimeAdapter;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::Config;
 
 pub struct CronRunTool {
@@ -263,7 +263,7 @@ mod tests {
     use crate::security::AutonomyLevel;
     use std::time::Duration;
     use tempfile::TempDir;
-    use clawcrew_api::runtime_traits::{RuntimeAdapter, ShellDialect};
+    use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect};
     use galleon_config::schema::Config;
 
     const TEST_AGENT: &str = "test-agent";

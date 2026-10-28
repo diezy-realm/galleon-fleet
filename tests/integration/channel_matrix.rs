@@ -99,10 +99,10 @@ impl MatrixTestChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MatrixTestChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for MatrixTestChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -1349,10 +1349,10 @@ async fn capability_matrix_spec() {
 /// Minimal channel with ONLY required methods — validates all defaults work.
 struct MinimalChannel;
 
-impl ::clawcrew_api::attribution::Attributable for MinimalChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for MinimalChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {

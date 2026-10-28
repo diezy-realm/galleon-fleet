@@ -2,11 +2,11 @@ use anyhow::Context;
 use async_trait::async_trait;
 use base64::Engine as _;
 use chrono::Utc;
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, ProgressEvent,
     SendMessage,
 };
-use clawcrew_api::media::MediaAttachment;
+use galleon_api::media::MediaAttachment;
 use futures_util::{SinkExt, StreamExt};
 use galleon_i18n as i18n;
 use reqwest::header::HeaderMap;
@@ -5221,9 +5221,9 @@ fn split_text_into_chunks(text: &str, max_chars: usize, max_chunks: usize) -> Ve
     chunks
 }
 
-impl ::clawcrew_api::attribution::Attributable for SlackChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Slack)
+impl ::galleon_api::attribution::Attributable for SlackChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Slack)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -5251,7 +5251,7 @@ impl Channel for SlackChannel {
         self.self_handle().map(|id| format!("<@{id}>"))
     }
 
-    fn is_direct_message(&self, msg: &clawcrew_api::channel::ChannelMessage) -> bool {
+    fn is_direct_message(&self, msg: &galleon_api::channel::ChannelMessage) -> bool {
         !Self::is_group_channel_id(&msg.reply_target)
     }
 
@@ -6169,7 +6169,7 @@ impl Channel for SlackChannel {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let token = new_approval_token();
 
         let (tx, rx) = oneshot::channel();
@@ -6222,19 +6222,19 @@ impl Channel for SlackChannel {
         // dropped-sender and timeout arms are the runtime denying on its own.
         let attributed =
             match tokio::time::timeout(Duration::from_secs(self.approval_timeout_secs), rx).await {
-                Ok(Ok(resp)) => clawcrew_api::channel::AttributedApprovalResponse::operator(resp),
+                Ok(Ok(resp)) => galleon_api::channel::AttributedApprovalResponse::operator(resp),
                 Ok(Err(_)) => {
                     self.pending_approvals.lock().await.remove(&token);
-                    clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                    galleon_api::channel::AttributedApprovalResponse::from_runtime(
                         ChannelApprovalResponse::Deny,
-                        clawcrew_api::channel::ApprovalSource::Unreachable,
+                        galleon_api::channel::ApprovalSource::Unreachable,
                     )
                 }
                 Err(_) => {
                     self.pending_approvals.lock().await.remove(&token);
-                    clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                    galleon_api::channel::AttributedApprovalResponse::from_runtime(
                         ChannelApprovalResponse::Deny,
-                        clawcrew_api::channel::ApprovalSource::TimedOut,
+                        galleon_api::channel::ApprovalSource::TimedOut,
                     )
                 }
             };
@@ -6577,12 +6577,12 @@ mod tests {
             "slack_test_alias",
             Arc::new(Vec::new),
         );
-        let dm = clawcrew_api::channel::ChannelMessage {
+        let dm = galleon_api::channel::ChannelMessage {
             reply_target: "D0B189MTELX".into(),
             channel: "slack".into(),
             ..Default::default()
         };
-        let group = clawcrew_api::channel::ChannelMessage {
+        let group = galleon_api::channel::ChannelMessage {
             reply_target: "C12345".into(),
             ..dm.clone()
         };
@@ -7759,7 +7759,7 @@ mod tests {
     fn session_key_stable_without_thread_replies() {
         // When thread_replies=false, top-level messages from the same user should
         // produce the same conversation_history_key (thread_ts=None).
-        use clawcrew_api::channel::ChannelMessage;
+        use galleon_api::channel::ChannelMessage;
 
         let make_msg = |ts: &str| ChannelMessage {
             id: format!("slack_C123_{ts}"),
@@ -7789,7 +7789,7 @@ mod tests {
     fn session_key_varies_with_thread_replies() {
         // When thread_replies=true, top-level messages get thread_ts=Some(ts),
         // giving each its own session key (thread isolation).
-        use clawcrew_api::channel::ChannelMessage;
+        use galleon_api::channel::ChannelMessage;
 
         let make_msg = |ts: &str| ChannelMessage {
             id: format!("slack_C123_{ts}"),
@@ -9168,7 +9168,7 @@ mod tests {
 
     #[tokio::test]
     async fn socket_mode_interactive_ingress_suppresses_rejected_approval_replies() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let channel = SlackChannel::new(
             "xoxb-token".into(),

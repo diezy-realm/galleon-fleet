@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::time::Duration;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 const WTTR_BASE_URL: &str = "https://wttr.in";
 const WTTR_TIMEOUT_SECS: u64 = 15;

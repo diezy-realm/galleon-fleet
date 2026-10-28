@@ -223,7 +223,7 @@ impl Observer for LogObserver {
                 ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": model_provider, "model": model, "duration_ms": ms, "success": success, "error": error_message, "input_tokens": input_tokens, "output_tokens": output_tokens})), "llm.response");
             }
             // `ObserverEvent` is `#[non_exhaustive]` — silently ignore any
-            // future variant added by upstream `clawcrew-api`.
+            // future variant added by upstream `galleon-api`.
             _ => {}
         }
     }

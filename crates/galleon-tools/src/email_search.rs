@@ -4,13 +4,13 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use futures_util::TryStreamExt;
 use mail_parser::MessageParser;
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
 use galleon_config::scattered_types::EmailConfig;
 
 use crate::email_imap::imap_connect;
 
-clawcrew_api::tool_attribution!(EmailSearchTool, ToolKind::Plugin);
+galleon_api::tool_attribution!(EmailSearchTool, ToolKind::Plugin);
 
 /// Search an IMAP mailbox without touching the \Seen flag on any message.
 pub struct EmailSearchTool {

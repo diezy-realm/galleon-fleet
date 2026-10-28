@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use serde_json::json;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 const MAX_ROUND_DECIMALS: i64 = 15;
 

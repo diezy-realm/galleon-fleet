@@ -287,7 +287,7 @@ fn empty_cfg() -> galleon_config::schema::Config {
 }
 
 fn section_test_state(config: galleon_config::schema::Config) -> AppState {
-    let memory: std::sync::Arc<dyn clawcrew_api::memory_traits::Memory> =
+    let memory: std::sync::Arc<dyn galleon_api::memory_traits::Memory> =
         std::sync::Arc::new(galleon_memory::NoneMemory::new("none"));
     AppState {
         config: std::sync::Arc::new(parking_lot::RwLock::new(config)),
@@ -330,7 +330,7 @@ fn section_test_state(config: galleon_config::schema::Config) -> AppState {
         nextcloud_talk_webhook_secret: std::collections::HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: std::sync::Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: std::sync::Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: std::sync::Arc::new(Vec::new()),
         tools_registry_by_agent: std::sync::Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,

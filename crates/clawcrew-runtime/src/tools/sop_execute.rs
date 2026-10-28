@@ -5,7 +5,7 @@ use serde_json::json;
 
 use crate::sop::types::{SopEvent, SopRunAction, SopTriggerSource};
 use crate::sop::{SopAuditLogger, SopEngine};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Manually trigger an SOP by name. Returns the run ID and first step instruction.
 pub struct SopExecuteTool {

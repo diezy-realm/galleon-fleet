@@ -183,10 +183,10 @@ impl CapturingChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for CapturingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for CapturingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {

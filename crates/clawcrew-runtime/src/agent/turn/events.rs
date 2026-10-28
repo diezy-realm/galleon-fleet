@@ -7,9 +7,9 @@ use crate::agent::tool_execution::ToolExecutionOutcome;
 use anyhow::Result;
 use tokio::sync::mpsc::Sender;
 use tokio_util::sync::CancellationToken;
-use clawcrew_api::agent::ToolArtifact;
-pub use clawcrew_api::agent::TurnEvent;
-pub use clawcrew_api::channel::ProgressEvent;
+use galleon_api::agent::ToolArtifact;
+pub use galleon_api::agent::TurnEvent;
+pub use galleon_api::channel::ProgressEvent;
 use galleon_tool_call_parser::ParsedToolCall;
 
 /// Minimum characters per chunk when relaying live model text to draft surfaces.
@@ -22,7 +22,7 @@ pub const PROGRESS_MIN_INTERVAL_MS: u64 = 500;
 /// Wrapped in `Arc<Mutex<Option<..>>>` so the enum stays `Clone`; dropping
 /// every clone of the event releases the ack, so a consumer that ignores the
 /// variant can never deadlock the sender.
-pub use clawcrew_api::channel::{
+pub use galleon_api::channel::{
     DRAFT_PLACEHOLDER, DraftEvent, REASONING_FULL_PREFIX, StreamDelta,
     THINKING_STATUS_PREFIX, is_thinking_status_text, thinking_status_label_round,
     thinking_status_round, thinking_status_text,

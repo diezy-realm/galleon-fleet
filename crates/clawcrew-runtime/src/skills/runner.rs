@@ -1,10 +1,10 @@
-//! Implementation of `clawcrew_api::skill::SkillsRunner` for the gateway decoupling.
+//! Implementation of `galleon_api::skill::SkillsRunner` for the gateway decoupling.
 
 use std::path::PathBuf;
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-use clawcrew_api::skill::{
+use galleon_api::skill::{
     AgentSkillEntry, AgentSkillsResult, DroppedSkillEntry, RemoveMode, ScaffoldOptions,
     ServiceError, ShadowedSkillEntry, SkillBundleEntry, SkillDocument, SkillFrontmatter,
     SkillListEntry, SkillsReadResult, SkillsRunner,

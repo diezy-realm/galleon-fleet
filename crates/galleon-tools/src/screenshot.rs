@@ -4,7 +4,7 @@ use std::fmt::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 
 /// Maximum time to wait for a screenshot command to complete.

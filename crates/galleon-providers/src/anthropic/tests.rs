@@ -988,7 +988,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         let provider = AnthropicModelProvider::builder("test")
             .credential(Some("test-key"))
             .build();
-        let params = clawcrew_api::model_provider::NativeThinkingParams {
+        let params = galleon_api::model_provider::NativeThinkingParams {
             budget_tokens: 10_000,
             display: None,
         };
@@ -1007,7 +1007,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         let provider = AnthropicModelProvider::builder("test")
             .credential(Some("test-key"))
             .build();
-        let params = clawcrew_api::model_provider::NativeThinkingParams {
+        let params = galleon_api::model_provider::NativeThinkingParams {
             budget_tokens: 10_000,
             display: Some(ThinkingDisplay::Updates),
         };
@@ -1026,7 +1026,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         let provider = AnthropicModelProvider::builder("test")
             .credential(Some("test-key"))
             .build();
-        let params = clawcrew_api::model_provider::NativeThinkingParams {
+        let params = galleon_api::model_provider::NativeThinkingParams {
             budget_tokens: 10_000,
             display: None,
         };
@@ -2021,7 +2021,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         .expect_err("thinking alone is not a string-only final answer");
 
         assert!(error.chain().any(|cause| {
-            cause.is::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>()
+            cause.is::<galleon_api::model_provider::SemanticEmptyTerminalCompletion>()
         }));
     }
 
@@ -5295,7 +5295,7 @@ data: {\"type\":\"message_stop\"}\n\n";
             let request = ProviderChatRequest {
                 messages: messages.as_slice(),
                 tools: None,
-                thinking: Some(clawcrew_api::model_provider::NativeThinkingParams {
+                thinking: Some(galleon_api::model_provider::NativeThinkingParams {
                     budget_tokens: 1024,
                     display: None,
                 }),
@@ -5338,7 +5338,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         let request = ProviderChatRequest {
             messages: messages.as_slice(),
             tools: None,
-            thinking: Some(clawcrew_api::model_provider::NativeThinkingParams {
+            thinking: Some(galleon_api::model_provider::NativeThinkingParams {
                 budget_tokens: 1024,
                 display: None,
             }),
@@ -5635,7 +5635,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         let request = ProviderChatRequest {
             messages: messages.as_slice(),
             tools: None,
-            thinking: Some(clawcrew_api::model_provider::NativeThinkingParams {
+            thinking: Some(galleon_api::model_provider::NativeThinkingParams {
                 budget_tokens: 10_000,
                 display: None,
             }),
@@ -6089,7 +6089,7 @@ data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"refusal\"},\"usag
     fn resolve_thinking_propagates_display() {
         let model_provider = AnthropicModelProvider::builder("test").build();
 
-        let params = clawcrew_api::model_provider::NativeThinkingParams {
+        let params = galleon_api::model_provider::NativeThinkingParams {
             budget_tokens: 10_000,
             display: Some(ThinkingDisplay::Updates),
         };
@@ -6098,7 +6098,7 @@ data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"refusal\"},\"usag
         let config = config.expect("thinking config for supported model");
         assert_eq!(config.display, Some(ThinkingDisplay::Updates));
 
-        let params = clawcrew_api::model_provider::NativeThinkingParams {
+        let params = galleon_api::model_provider::NativeThinkingParams {
             budget_tokens: 10_000,
             display: None,
         };
@@ -6342,7 +6342,7 @@ data: {\"type\":\"message_stop\"}\n\n";
     async fn display_enabled_thinking_uses_streaming_production_path() {
         use axum::{Router, response::IntoResponse, routing::post};
         use futures_util::StreamExt as _;
-        use clawcrew_api::model_provider::NativeThinkingParams;
+        use galleon_api::model_provider::NativeThinkingParams;
 
         // The reviewer's core blocker: `display = "updates"` must construct a
         // real streaming request, not detour through the non-streaming

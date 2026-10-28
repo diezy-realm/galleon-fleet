@@ -108,8 +108,8 @@ pub struct RetrievalPipeline {
     generation: AtomicU64,
 }
 
-impl ::clawcrew_api::attribution::Attributable for RetrievalPipeline {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
+impl ::galleon_api::attribution::Attributable for RetrievalPipeline {
+    fn role(&self) -> ::galleon_api::attribution::Role {
         self.memory.role()
     }
 
@@ -627,10 +627,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for StatefulMemory {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Memory(
-                ::clawcrew_api::attribution::MemoryKind::InMemory,
+    impl ::galleon_api::attribution::Attributable for StatefulMemory {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Memory(
+                ::galleon_api::attribution::MemoryKind::InMemory,
             )
         }
 

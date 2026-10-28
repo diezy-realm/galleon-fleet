@@ -4,7 +4,7 @@ use parking_lot::Mutex;
 use serde::Deserialize;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Reddit channel — polls for mentions, DMs, and comment replies via Reddit OAuth2 API.
 pub struct RedditChannel {
@@ -296,9 +296,9 @@ impl RedditChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for RedditChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Reddit)
+impl ::galleon_api::attribution::Attributable for RedditChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Reddit)
     }
     fn alias(&self) -> &str {
         &self.alias

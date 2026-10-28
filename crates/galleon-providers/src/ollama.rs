@@ -497,7 +497,7 @@ impl OllamaModelProvider {
     fn with_prompt_guided_tool_instructions(
         &self,
         messages: &[ChatMessage],
-        tools: Option<&[clawcrew_api::tool::ToolSpec]>,
+        tools: Option<&[galleon_api::tool::ToolSpec]>,
     ) -> anyhow::Result<Vec<ChatMessage>> {
         let Some(tools) = tools.filter(|items| !items.is_empty()) else {
             return Ok(messages.to_vec());
@@ -947,7 +947,7 @@ impl ModelProvider for OllamaModelProvider {
 
     async fn chat(
         &self,
-        request: clawcrew_api::model_provider::ChatRequest<'_>,
+        request: galleon_api::model_provider::ChatRequest<'_>,
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<ChatResponse> {
@@ -997,11 +997,11 @@ impl ModelProvider for OllamaModelProvider {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-impl ::clawcrew_api::attribution::Attributable for OllamaModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Ollama,
+impl ::galleon_api::attribution::Attributable for OllamaModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Ollama,
             ),
         )
     }
@@ -1174,8 +1174,8 @@ mod tests {
     async fn chat_with_tool_specs_omits_native_tools_payload() {
         use axum::{Json, Router, extract::State, routing::post};
         use tokio::net::TcpListener;
-        use clawcrew_api::model_provider::ChatRequest;
-        use clawcrew_api::tool::ToolSpec;
+        use galleon_api::model_provider::ChatRequest;
+        use galleon_api::tool::ToolSpec;
 
         type CapturedBody = Arc<Mutex<Option<serde_json::Value>>>;
 

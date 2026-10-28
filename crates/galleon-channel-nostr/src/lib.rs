@@ -5,7 +5,7 @@ use nostr_sdk::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Protocol used by a sender, tracked so replies use the same protocol.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -98,9 +98,9 @@ impl NostrChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for NostrChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Nostr)
+impl ::galleon_api::attribution::Attributable for NostrChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Nostr)
     }
     fn alias(&self) -> &str {
         &self.alias

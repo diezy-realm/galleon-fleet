@@ -7,8 +7,8 @@
 //! which the multimodal provider path resolves into image content at
 //! request time (`galleon_providers::multimodal`).
 //!
-//! Acceptance is decided by [`clawcrew_api::media::image_mime_from_magic`]
-//! filtered through [`clawcrew_api::media::is_provider_image_mime`] — the same
+//! Acceptance is decided by [`galleon_api::media::image_mime_from_magic`]
+//! filtered through [`galleon_api::media::is_provider_image_mime`] — the same
 //! canonical contract channels consult — so this endpoint can never save an
 //! image the provider loader would then drop. The saved filename's extension
 //! is derived from the sniffed MIME, so name and payload agree by
@@ -21,7 +21,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
 };
 use serde::{Deserialize, Serialize};
-use clawcrew_api::media::{
+use galleon_api::media::{
     PROVIDER_IMAGE_MIME_TYPES, image_mime_from_magic, is_provider_image_mime,
 };
 

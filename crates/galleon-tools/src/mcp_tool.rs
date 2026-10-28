@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use crate::embedded_resource::format_mcp_tool_result_for_model;
 use crate::mcp_client::McpRegistry;
 use crate::mcp_protocol::McpToolDef;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, ToolSpec};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult, ToolSpec};
 use galleon_config::policy::SecurityPolicy;
 
 /// A clawcrew [`Tool`] backed by an MCP server tool.

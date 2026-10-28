@@ -8,7 +8,7 @@ use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, mpsc};
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 pub use galleon_config::scattered_types::{VoiceCallConfig, VoiceProvider};
 
@@ -392,10 +392,10 @@ impl VoiceCallChannel {
 
 // ── Channel trait implementation ─────────────────────────────────
 
-impl ::clawcrew_api::attribution::Attributable for VoiceCallChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::VoiceCall,
+impl ::galleon_api::attribution::Attributable for VoiceCallChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::VoiceCall,
         )
     }
     fn alias(&self) -> &str {

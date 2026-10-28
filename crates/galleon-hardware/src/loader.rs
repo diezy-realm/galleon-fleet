@@ -5,7 +5,7 @@ use super::subprocess::SubprocessTool;
 use anyhow::Result;
 use std::fs;
 use std::path::{Path, PathBuf};
-use clawcrew_api::tool::Tool;
+use galleon_api::tool::Tool;
 
 /// A successfully loaded plugin, ready for registration.
 pub struct LoadedPlugin {

@@ -42,11 +42,11 @@ impl ModelProvider for MockModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for MockModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -105,7 +105,7 @@ pub(crate) fn test_state(config: galleon_config::schema::Config) -> AppState {
         nextcloud_talk_webhook_secret: std::collections::HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,

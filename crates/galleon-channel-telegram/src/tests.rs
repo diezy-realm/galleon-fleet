@@ -9,8 +9,8 @@ use galleon_channel_core::model_picker_delivery;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-pub fn channel_ingress_context(msg: &ChannelMessage) -> clawcrew_api::ingress::IngressContext {
-    use clawcrew_api::ingress::{IngressContext, SourceClass, Transport, TrustClass};
+pub fn channel_ingress_context(msg: &ChannelMessage) -> galleon_api::ingress::IngressContext {
+    use galleon_api::ingress::{IngressContext, SourceClass, Transport, TrustClass};
 
     let mut ingress = IngressContext::channel();
     ingress.message_id = (!msg.id.is_empty()).then(|| msg.id.clone());
@@ -113,7 +113,7 @@ fn should_record_passive_group_context_matches_predicate() {
 
 #[test]
 fn passive_group_context_shares_group_history_whatever_per_user_session_says() {
-    use clawcrew_api::channel::ChannelConversationScope;
+    use galleon_api::channel::ChannelConversationScope;
 
     let mention_only = true;
     let group_msg = || {
@@ -1612,7 +1612,7 @@ async fn send_text_chunks_resumes_from_first_unsent_chunk_after_partial_failure(
 
 /// Regression: when finalization chunks a long final answer and a later
 /// chunk fails after an earlier one was accepted, `finalize_draft` must
-/// surface [`clawcrew_api::channel::FinalizePartialDelivery`] rather than a
+/// surface [`galleon_api::channel::FinalizePartialDelivery`] rather than a
 /// plain error. A plain error makes the orchestrator fall back to
 /// `channel.send(full_answer)`, which restarts at chunk zero and re-posts the
 /// chunk Telegram already accepted. Proving the accepted chunk is sent
@@ -1679,7 +1679,7 @@ async fn finalize_draft_partial_chunk_failure_signals_partial_delivery_not_a_res
         .await
         .expect_err("a partial chunk failure must not report success");
     assert!(
-        err.downcast_ref::<clawcrew_api::channel::FinalizePartialDelivery>()
+        err.downcast_ref::<galleon_api::channel::FinalizePartialDelivery>()
             .is_some(),
         "partial chunk failure must surface as FinalizePartialDelivery so the \
              orchestrator does not resend the whole answer; got: {err:#}"
@@ -1762,7 +1762,7 @@ async fn finalize_multi_message_partial_chunk_failure_signals_partial_delivery_n
         .await
         .expect_err("a partial chunk failure must not report success");
     assert!(
-        err.downcast_ref::<clawcrew_api::channel::FinalizePartialDelivery>()
+        err.downcast_ref::<galleon_api::channel::FinalizePartialDelivery>()
             .is_some(),
         "the multi-message finalizer must surface FinalizePartialDelivery so the \
              orchestrator does not resend the whole answer from chunk zero; got: {err:#}"
@@ -2085,7 +2085,7 @@ async fn flush_draft_turn_strips_orphan_redacted_thinking_close_tag() {
 /// prompt (and no longer re-flushes anything).
 #[tokio::test]
 async fn narration_precedes_approval_prompt_via_barrier_flush() {
-    use clawcrew_api::channel::ChannelApprovalRequest;
+    use galleon_api::channel::ChannelApprovalRequest;
     use wiremock::matchers::{body_string_contains, method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -2148,7 +2148,7 @@ async fn narration_precedes_approval_prompt_via_barrier_flush() {
     let result = ch.request_approval("123", &request).await.unwrap();
     assert_eq!(
         result,
-        Some(clawcrew_api::channel::ChannelApprovalResponse::Deny)
+        Some(galleon_api::channel::ChannelApprovalResponse::Deny)
     );
 }
 
@@ -2168,7 +2168,7 @@ async fn narration_precedes_approval_prompt_via_barrier_flush() {
 /// `latest_multi_message_send_at`).
 #[tokio::test]
 async fn request_approval_paces_prompt_after_narration() {
-    use clawcrew_api::channel::ChannelApprovalRequest;
+    use galleon_api::channel::ChannelApprovalRequest;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -3824,11 +3824,11 @@ fn model_picker_runtime_routes(config: &Config) -> Arc<Vec<ModelPickerOption>> {
 
 fn model_picker_request_routes(
     config: &Config,
-) -> Vec<clawcrew_api::channel::ChannelModelPickerRoute> {
+) -> Vec<galleon_api::channel::ChannelModelPickerRoute> {
     config
         .model_routes
         .iter()
-        .map(|route| clawcrew_api::channel::ChannelModelPickerRoute {
+        .map(|route| galleon_api::channel::ChannelModelPickerRoute {
             hint: route.hint.clone(),
             model_provider: route.model_provider.clone(),
             model: route.model.clone(),
@@ -6383,8 +6383,8 @@ fn wildcard_does_not_admit_a_sender_with_no_usable_identity() {
 
 #[test]
 fn channel_ingress_context_preserves_telegram_metadata_not_content_claims() {
-    use clawcrew_api::ingress::{IngressDecision, SourceClass, Transport, TrustClass, TurnOrigin};
-    use clawcrew_api::ingress::{IngressPolicy, ingress_policy};
+    use galleon_api::ingress::{IngressDecision, SourceClass, Transport, TrustClass, TurnOrigin};
+    use galleon_api::ingress::{IngressPolicy, ingress_policy};
 
     let channel = TelegramChannel::new(
         "token".into(),
@@ -6646,7 +6646,7 @@ async fn attachment_parser_applies_the_topic_thread_gate() {
 
 #[tokio::test]
 async fn opted_in_group_media_shares_the_text_conversation_scope() {
-    use clawcrew_api::channel::ChannelConversationScope;
+    use galleon_api::channel::ChannelConversationScope;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7950,7 +7950,7 @@ fn telegram_with_per_user_session_propagates_value() {
 
 #[test]
 fn telegram_conversation_scope_respects_per_user_session_flag() {
-    use clawcrew_api::channel::ChannelConversationScope;
+    use galleon_api::channel::ChannelConversationScope;
     let group_msg = serde_json::json!({ "chat": { "type": "supergroup" } });
     let private_msg = serde_json::json!({ "chat": { "type": "private" } });
 
@@ -12279,7 +12279,7 @@ async fn media_group_materializes_once_in_message_order_with_shared_context() {
         attachment
             .marker
             .as_ref()
-            .is_some_and(|marker| marker.kind == clawcrew_api::media::MarkerKind::Image)
+            .is_some_and(|marker| marker.kind == galleon_api::media::MarkerKind::Image)
             && !attachment.data.is_empty()
     }));
     let first_pos = msg.content.find("photo_-100_10.jpg").unwrap();
@@ -12510,8 +12510,8 @@ fn envelope(
     file_name: &str,
     mime_type: Option<&str>,
     data: &[u8],
-) -> clawcrew_api::media::MediaAttachment {
-    clawcrew_api::media::MediaAttachment {
+) -> galleon_api::media::MediaAttachment {
+    galleon_api::media::MediaAttachment {
         file_name: file_name.to_string(),
         data: data.to_vec(),
         mime_type: mime_type.map(str::to_string),
@@ -13563,7 +13563,7 @@ fn truncate_telegram_command_description_multibyte_within_char_limit() {
 
 #[tokio::test]
 async fn inbound_photo_populates_typed_image_attachment_envelope() {
-    use clawcrew_api::media::MediaKind;
+    use galleon_api::media::MediaKind;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -13629,7 +13629,7 @@ async fn inbound_photo_populates_typed_image_attachment_envelope() {
 
 #[tokio::test]
 async fn inbound_image_document_populates_image_kind_envelope() {
-    use clawcrew_api::media::MediaKind;
+    use galleon_api::media::MediaKind;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -13812,7 +13812,7 @@ async fn register_bot_commands_includes_skills() {
     )
     .with_mock_api_base(mock_server.uri())
     .with_workspace_dir(workspace.path().to_path_buf())
-    .with_skills(vec![clawcrew_api::skill::Skill {
+    .with_skills(vec![galleon_api::skill::Skill {
         name: "weather".to_string(),
         description: "Check the weather forecast".to_string(),
         ..Default::default()
@@ -14167,7 +14167,7 @@ fn approval_timeout_defaults_to_120_and_is_overridable() {
 
 #[tokio::test]
 async fn pending_approval_requires_allowed_user_and_origin_chat() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     let mention_only = false;
     let ch = TelegramChannel::new(
@@ -14424,7 +14424,7 @@ async fn listener_rejects_known_approval_callbacks_from_wrong_user_or_chat() {
 
 #[tokio::test]
 async fn approval_callback_edits_message_with_outcome_and_drops_keyboard() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -14688,7 +14688,7 @@ async fn edit_envelope_malformed_body_is_classified_failed() {
 
 #[tokio::test]
 async fn process_update_routes_callback_to_single_edit_and_returns_advanced() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -14882,7 +14882,7 @@ async fn timeout_wins_claim_and_late_callback_is_a_stale_no_edit() {
     .with_mock_api_base(mock_server.uri())
     .with_approval_timeout_secs(1);
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
@@ -14895,7 +14895,7 @@ async fn timeout_wins_claim_and_late_callback_is_a_stale_no_edit() {
         .unwrap();
     assert_eq!(
         attributed.response,
-        clawcrew_api::channel::ChannelApprovalResponse::Deny
+        galleon_api::channel::ChannelApprovalResponse::Deny
     );
 
     // the operator's tap arrives after the runtime already denied: the
@@ -14975,7 +14975,7 @@ async fn callback_wins_claim_and_runtime_honors_operator_response() {
         .with_approval_timeout_secs(120),
     );
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
@@ -15010,7 +15010,7 @@ async fn callback_wins_claim_and_runtime_honors_operator_response() {
     let attributed = waiter.await.unwrap().unwrap().unwrap();
     assert_eq!(
         attributed.response,
-        clawcrew_api::channel::ChannelApprovalResponse::Approve
+        galleon_api::channel::ChannelApprovalResponse::Approve
     );
 
     let requests = mock_server.received_requests().await.unwrap();
@@ -15031,7 +15031,7 @@ async fn callback_wins_claim_and_runtime_honors_operator_response() {
 
 #[tokio::test]
 async fn deadline_resolver_loses_claim_and_consumes_callback_response() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     let mention_only = false;
     let ch = TelegramChannel::new(
@@ -15062,7 +15062,7 @@ async fn deadline_resolver_loses_claim_and_consumes_callback_response() {
 
 #[tokio::test]
 async fn deadline_resolver_wins_claim_and_denies() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     let mention_only = false;
     let ch = TelegramChannel::new(
@@ -15116,7 +15116,7 @@ async fn request_approval_localizes_heading_and_keeps_callback_data_exact() {
     .with_mock_api_base(mock_server.uri())
     .with_approval_timeout_secs(1);
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
@@ -15203,11 +15203,11 @@ async fn approval_card_shows_the_batch_position_in_html_and_in_the_plain_fallbac
     .with_mock_api_base(mock_server.uri())
     .with_approval_timeout_secs(1);
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
-        position: Some(clawcrew_api::channel::ApprovalPosition { index: 2, total: 3 }),
+        position: Some(galleon_api::channel::ApprovalPosition { index: 2, total: 3 }),
     };
 
     // Nothing resolves the pending oneshot; the short timeout returns a
@@ -15288,11 +15288,11 @@ async fn approval_card_omits_the_position_for_a_single_call() {
     .with_mock_api_base(mock_server.uri())
     .with_approval_timeout_secs(1);
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
-        position: Some(clawcrew_api::channel::ApprovalPosition { index: 1, total: 1 }),
+        position: Some(galleon_api::channel::ApprovalPosition { index: 1, total: 1 }),
     };
 
     let _ = ch.request_approval("12345", &request).await;

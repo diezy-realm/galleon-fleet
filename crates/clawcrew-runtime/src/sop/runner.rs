@@ -1,10 +1,10 @@
-//! Implementation of `clawcrew_api::sop::SopRunner` for gateway decoupling.
+//! Implementation of `galleon_api::sop::SopRunner` for gateway decoupling.
 
 use parking_lot::RwLock;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use clawcrew_api::sop::{
+use galleon_api::sop::{
     ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome, Sop, SopRunSummary,
     SopRunner,
 };
@@ -692,7 +692,7 @@ impl SopRunner for RuntimeSopRunner {
         &self,
         path: &str,
         payload: Option<&str>,
-    ) -> anyhow::Result<Option<clawcrew_api::sop::WebhookDispatchResult>> {
+    ) -> anyhow::Result<Option<galleon_api::sop::WebhookDispatchResult>> {
         let (Some(engine), Some(audit)) = (&self.engine, &self.audit) else {
             return Err(anyhow::anyhow!("sop_dispatch_unavailable"));
         };
@@ -763,7 +763,7 @@ impl SopRunner for RuntimeSopRunner {
                 super::dispatch::DispatchResult::NoMatch => None,
             })
             .collect::<Vec<_>>();
-        Ok(Some(clawcrew_api::sop::WebhookDispatchResult {
+        Ok(Some(galleon_api::sop::WebhookDispatchResult {
             blocked_only,
             results: mapped,
         }))

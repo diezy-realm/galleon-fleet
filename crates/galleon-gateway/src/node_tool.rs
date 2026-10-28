@@ -8,9 +8,9 @@ use async_trait::async_trait;
 use tokio::time::Duration;
 
 use crate::nodes::{NodeInvocation, NodeRegistry};
-use clawcrew_api::attribution::{ToolKind, ToolProvenance};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::{ToolKind, ToolProvenance};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool_attribution;
 use galleon_tools::node_capabilities::requires_approval;
 
 tool_attribution!(NodeTool, ToolKind::Plugin, ToolProvenance::Extension);
@@ -169,7 +169,7 @@ impl Tool for NodeTool {
 mod tests {
     use super::*;
     use crate::nodes::{NodeCapability, NodeInfo, NodeRegistry};
-    use clawcrew_api::attribution::Attributable;
+    use galleon_api::attribution::Attributable;
 
     #[test]
     fn node_tool_name_format() {

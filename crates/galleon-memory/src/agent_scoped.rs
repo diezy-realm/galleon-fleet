@@ -621,10 +621,10 @@ impl Memory for AgentScopedMemory {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for AgentScopedMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(
-            ::clawcrew_api::attribution::MemoryKind::AgentScoped,
+impl ::galleon_api::attribution::Attributable for AgentScopedMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(
+            ::galleon_api::attribution::MemoryKind::AgentScoped,
         )
     }
     fn alias(&self) -> &str {

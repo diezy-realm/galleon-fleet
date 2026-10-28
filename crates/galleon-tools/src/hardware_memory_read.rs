@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use serde_json::json;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// RAM base for Nucleo-F401RE (STM32F401)
 const NUCLEO_RAM_BASE: u64 = 0x2000_0000;

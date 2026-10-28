@@ -4,8 +4,8 @@ use super::serial::SerialTransport;
 use async_trait::async_trait;
 use serde_json::{Value, json};
 use std::sync::Arc;
-use clawcrew_api::attribution::{Attributable, Role};
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::attribution::{Attributable, Role};
+use galleon_api::tool::{Tool, ToolResult};
 
 fn output_pin(device: &str) -> Option<u8> {
     match device {
@@ -143,7 +143,7 @@ impl Tool for ReadDeviceTool {
 
 impl Attributable for SetDeviceTool {
     fn role(&self) -> Role {
-        Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+        Role::Tool(galleon_api::attribution::ToolKind::Plugin)
     }
     fn alias(&self) -> &str {
         "set_device"
@@ -152,7 +152,7 @@ impl Attributable for SetDeviceTool {
 
 impl Attributable for ReadDeviceTool {
     fn role(&self) -> Role {
-        Role::Tool(clawcrew_api::attribution::ToolKind::Plugin)
+        Role::Tool(galleon_api::attribution::ToolKind::Plugin)
     }
     fn alias(&self) -> &str {
         "read_device"

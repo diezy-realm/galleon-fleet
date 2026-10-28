@@ -5,9 +5,9 @@
 use crate::peripherals::Peripheral;
 use async_trait::async_trait;
 use serde_json::{Value, json};
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
+use galleon_api::tool_attribution;
 use galleon_config::schema::PeripheralBoardConfig;
 
 tool_attribution!(RpiGpioReadTool, ToolKind::Plugin);

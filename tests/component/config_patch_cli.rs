@@ -9,7 +9,7 @@ use axum::{Router, routing::patch};
 #[cfg(feature = "gateway")]
 use clawcrew::gateway::{self, AppState};
 #[cfg(feature = "gateway")]
-use clawcrew_api::attribution::Attributable;
+use galleon_api::attribution::Attributable;
 use galleon_config::schema::Config;
 #[cfg(feature = "gateway")]
 use galleon_memory::NoneMemory;
@@ -49,9 +49,9 @@ impl ModelProvider for MockModelProvider {
 
 #[cfg(feature = "gateway")]
 impl Attributable for MockModelProvider {
-    fn role(&self) -> clawcrew_api::attribution::Role {
-        clawcrew_api::attribution::Role::Provider(clawcrew_api::attribution::ProviderKind::Model(
-            clawcrew_api::attribution::ModelProviderKind::Custom,
+    fn role(&self) -> galleon_api::attribution::Role {
+        galleon_api::attribution::Role::Provider(galleon_api::attribution::ProviderKind::Model(
+            galleon_api::attribution::ModelProviderKind::Custom,
         ))
     }
 

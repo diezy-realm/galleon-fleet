@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
-use clawcrew_api::tool::ToolSpec;
+use galleon_api::tool::ToolSpec;
 
 /// GitHub OAuth client ID for Copilot (VS Code extension).
 const GITHUB_CLIENT_ID: &str = "Iv1.b507a08c87ecfe98";
@@ -970,11 +970,11 @@ impl ModelProvider for CopilotModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for CopilotModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Copilot,
+impl ::galleon_api::attribution::Attributable for CopilotModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Copilot,
             ),
         )
     }
@@ -1107,7 +1107,7 @@ mod tests {
         // Pins that the copilot `convert_messages` call site of
         // `sanitize_tool_arguments` is wired in. The helper contract itself is
         // covered in `compatible::tests::sanitize_tool_arguments_*`.
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         let messages = vec![ChatMessage {
             role: "assistant".into(),
@@ -1127,7 +1127,7 @@ mod tests {
     #[test]
     fn convert_messages_passes_through_valid_tool_arguments() {
         // Companion regression: valid JSON must round-trip byte-for-byte.
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         let messages = vec![ChatMessage {
             role: "assistant".into(),

@@ -212,7 +212,7 @@ impl LucidMemory {
 
             let rank = entries.len();
             entries.push(MemoryEntry {
-                scope: clawcrew_api::memory_traits::MemoryScope::Workspace,
+                scope: galleon_api::memory_traits::MemoryScope::Workspace,
                 id: format!("lucid:{rank}"),
                 key: format!("lucid_{rank}"),
                 content: content.to_string(),
@@ -619,9 +619,9 @@ impl Memory for LucidMemory {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for LucidMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::Lucid)
+impl ::galleon_api::attribution::Attributable for LucidMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::Lucid)
     }
     fn alias(&self) -> &str {
         &self.alias

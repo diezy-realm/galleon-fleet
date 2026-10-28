@@ -9,7 +9,7 @@ use crate::cron::scheduler::deliver_announcement;
 use crate::peers::resolve_peer_set;
 use anyhow::Result;
 use async_trait::async_trait;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::Config;
 use parking_lot::Mutex;
 use serde_json::json;
@@ -67,8 +67,8 @@ impl Tool for SendMessageToPeerTool {
         })
     }
 
-    fn param_domains(&self) -> Vec<(&'static str, clawcrew_api::tool::OptionDomain)> {
-        use clawcrew_api::tool::OptionDomain;
+    fn param_domains(&self) -> Vec<(&'static str, galleon_api::tool::OptionDomain)> {
+        use galleon_api::tool::OptionDomain;
         vec![
             ("channel", OptionDomain::ChannelRefs),
             ("target", OptionDomain::PeerTargets),
@@ -207,7 +207,7 @@ impl Tool for SendMessageToPeerTool {
                     &recipient_alias,
                     &body,
                     None,
-                    clawcrew_api::ingress::TurnOrigin::AgentDirect,
+                    galleon_api::ingress::TurnOrigin::AgentDirect,
                 ));
                 if let Err(e) = deliver_peer_turn_with_cost_scope(cost_ctx, turn_usage, turn).await
                 {

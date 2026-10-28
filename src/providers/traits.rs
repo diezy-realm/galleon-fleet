@@ -1,4 +1,4 @@
-pub use clawcrew_api::model_provider::*;
+pub use galleon_api::model_provider::*;
 
 #[cfg(test)]
 mod tests {
@@ -6,7 +6,7 @@ mod tests {
     use async_trait::async_trait;
     use futures_util::StreamExt;
     use futures_util::stream::{self, BoxStream};
-    use clawcrew_api::tool::ToolSpec;
+    use galleon_api::tool::ToolSpec;
 
     /// Representative non-zero temperature for default-path chat tests;
     /// mocks ignore it, so any plausible in-range value is fine — this
@@ -40,11 +40,11 @@ mod tests {
             Ok("ok".into())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for CapabilityMockModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for CapabilityMockModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -279,11 +279,11 @@ mod tests {
             Ok("response".to_string())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MockModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -377,11 +377,11 @@ mod tests {
             Ok(system.unwrap_or_default().to_string())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for EchoSystemModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for EchoSystemModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -414,11 +414,11 @@ mod tests {
             Ok(system.unwrap_or_default().to_string())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for CustomConvertModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for CustomConvertModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -451,11 +451,11 @@ mod tests {
             Ok("should_not_reach".to_string())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for InvalidConvertModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for InvalidConvertModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -578,11 +578,11 @@ mod tests {
             .boxed()
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for StreamingChunkOnlyModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamingChunkOnlyModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }

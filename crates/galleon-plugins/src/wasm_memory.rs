@@ -1,4 +1,4 @@
-//! Memory adapter: `WasmMemory` implements `clawcrew_api::memory_traits::Memory`
+//! Memory adapter: `WasmMemory` implements `galleon_api::memory_traits::Memory`
 //! backed by the `memory-plugin` component world. Warm store, called at high
 //! frequency, so the store and bindings live for the adapter's lifetime.
 
@@ -22,8 +22,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use wasmtime::Store;
 use wasmtime::component::Linker;
-use clawcrew_api::attribution::{Attributable, MemoryKind, Role};
-use clawcrew_api::memory_traits::{
+use galleon_api::attribution::{Attributable, MemoryKind, Role};
+use galleon_api::memory_traits::{
     ExportFilter, Memory, MemoryCategory, MemoryEntry, ProceduralMessage,
 };
 

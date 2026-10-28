@@ -10,9 +10,9 @@ use std::process::{Output, Stdio};
 use std::time::Duration;
 use tokio::process::Command;
 use tokio::time::timeout;
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
+use galleon_api::tool_attribution;
 
 tool_attribution!(ArduinoUploadTool, ToolKind::Plugin);
 

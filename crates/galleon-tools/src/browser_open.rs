@@ -2,7 +2,7 @@ use crate::helpers::domain_guard;
 use async_trait::async_trait;
 use serde_json::json;
 use std::{process::Stdio, sync::Arc, time::Duration};
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 
 const BROWSER_OPEN_LAUNCH_TIMEOUT: Duration = Duration::from_secs(10);

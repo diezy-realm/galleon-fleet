@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::tool::{Tool, ToolResult};
 
 // ── ToolError ─────────────────────────────────────────────────────────────────
 

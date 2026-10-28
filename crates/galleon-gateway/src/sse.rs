@@ -186,8 +186,8 @@ impl BroadcastObserver {
     }
 }
 
-impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
-    fn record_event(&self, event: &clawcrew_api::observability_traits::ObserverEvent) {
+impl galleon_api::observability_traits::Observer for BroadcastObserver {
+    fn record_event(&self, event: &galleon_api::observability_traits::ObserverEvent) {
         // Helper for optional string fields
         fn add_optional_string(json: &mut serde_json::Value, key: &str, value: &Option<String>) {
             if let Some(value) = value {
@@ -200,7 +200,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
         // takes care of that fan-out. Here we only translate to JSON and
         // ship to SSE subscribers.
         let json = match event {
-            clawcrew_api::observability_traits::ObserverEvent::LlmRequest {
+            galleon_api::observability_traits::ObserverEvent::LlmRequest {
                 model_provider,
                 model,
                 messages_count,
@@ -223,7 +223,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_api::observability_traits::ObserverEvent::ToolCall {
+            galleon_api::observability_traits::ObserverEvent::ToolCall {
                 tool,
                 duration,
                 success,
@@ -247,7 +247,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
+            galleon_api::observability_traits::ObserverEvent::ToolCallStart {
                 tool,
                 channel,
                 agent_alias,
@@ -267,7 +267,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_api::observability_traits::ObserverEvent::Error { component, message } => {
+            galleon_api::observability_traits::ObserverEvent::Error { component, message } => {
                 serde_json::json!({
                     "type": "error",
                     "source": "observability",
@@ -276,7 +276,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
                     "timestamp": chrono::Utc::now().to_rfc3339(),
                 })
             }
-            clawcrew_api::observability_traits::ObserverEvent::AgentStart {
+            galleon_api::observability_traits::ObserverEvent::AgentStart {
                 model_provider,
                 model,
                 channel,
@@ -295,7 +295,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_api::observability_traits::ObserverEvent::AgentEnd {
+            galleon_api::observability_traits::ObserverEvent::AgentEnd {
                 model_provider,
                 model,
                 duration,
@@ -332,7 +332,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_api::observability_traits::ObserverEvent::HistoryTrimmed {
+            galleon_api::observability_traits::ObserverEvent::HistoryTrimmed {
                 dropped_messages,
                 kept_turns,
                 reason,
@@ -384,7 +384,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
         let _ = self.tx.send(json);
     }
 
-    fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {
+    fn record_metric(&self, _metric: &galleon_api::observability_traits::ObserverMetric) {
         // Metrics are not broadcast over SSE; the primary observer records them.
     }
 
@@ -400,7 +400,7 @@ impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::observability_traits::{Observer, ObserverEvent};
+    use galleon_api::observability_traits::{Observer, ObserverEvent};
 
     // The broadcast hook is process-wide; serialize hook-touching tests
     // within this test binary so they don't observe each other's state.
@@ -496,8 +496,8 @@ mod tests {
             token_budget: Some(500_000),
             tokens_before: Some(612_000),
             tokens_after: Some(117_000),
-            tokens_before_source: Some(clawcrew_api::agent::TokenCountSource::Provider),
-            tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
+            tokens_before_source: Some(galleon_api::agent::TokenCountSource::Provider),
+            tokens_after_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
             unsatisfiable_floor: None,
         });
 
@@ -683,7 +683,7 @@ mod tests {
             model_provider: "anthropic".into(),
             model: "claude-sonnet-4-6".into(),
             duration: std::time::Duration::from_millis(42),
-            tokens_used: Some(clawcrew_api::observability_traits::TurnTokenUsage {
+            tokens_used: Some(galleon_api::observability_traits::TurnTokenUsage {
                 input_tokens: 12,
                 output_tokens: 34,
             }),
@@ -778,16 +778,16 @@ mod tests {
     fn factory_observer_events_reach_broadcast_hook() {
         let _guard = HOOK_TEST_LOCK.lock();
 
-        clawcrew_api::observability_traits::clear_broadcast_hook();
+        galleon_api::observability_traits::clear_broadcast_hook();
 
         let (tx, mut rx) = tokio::sync::broadcast::channel(16);
         let buffer = Arc::new(EventBuffer::new(16));
         let bo: Arc<dyn Observer> = Arc::new(BroadcastObserver::new(tx, buffer.clone()));
-        clawcrew_api::observability_traits::set_broadcast_hook(bo);
+        galleon_api::observability_traits::set_broadcast_hook(bo);
 
         // Same factory call site as `process_message` in the agent loop: TeeObserver with NoopObserver primary.
-        let observer = clawcrew_api::observability_traits::TeeObserver::new(Box::new(
-            clawcrew_api::observability_traits::NoopObserver,
+        let observer = galleon_api::observability_traits::TeeObserver::new(Box::new(
+            galleon_api::observability_traits::NoopObserver,
         ));
 
         observer.record_event(&ObserverEvent::ToolCall {
@@ -817,7 +817,7 @@ mod tests {
             "broadcast events must also land in the buffer"
         );
 
-        clawcrew_api::observability_traits::clear_broadcast_hook();
+        galleon_api::observability_traits::clear_broadcast_hook();
     }
 
     /// Pins the `/api/events/history` surface for the turn-lifecycle
@@ -830,16 +830,16 @@ mod tests {
     fn agent_lifecycle_events_reach_history_payload_via_broadcast_hook() {
         let _guard = HOOK_TEST_LOCK.lock();
 
-        clawcrew_api::observability_traits::clear_broadcast_hook();
+        galleon_api::observability_traits::clear_broadcast_hook();
 
         let (tx, _rx) = tokio::sync::broadcast::channel(16);
         let buffer = Arc::new(EventBuffer::new(16));
         let bo: Arc<dyn Observer> = Arc::new(BroadcastObserver::new(tx, buffer.clone()));
-        clawcrew_api::observability_traits::set_broadcast_hook(bo);
+        galleon_api::observability_traits::set_broadcast_hook(bo);
 
         // Same factory call site as the channel orchestrator and agent loop: TeeObserver with NoopObserver primary.
-        let observer = clawcrew_api::observability_traits::TeeObserver::new(Box::new(
-            clawcrew_api::observability_traits::NoopObserver,
+        let observer = galleon_api::observability_traits::TeeObserver::new(Box::new(
+            galleon_api::observability_traits::NoopObserver,
         ));
 
         observer.record_event(&ObserverEvent::AgentStart {
@@ -879,7 +879,7 @@ mod tests {
             assert_eq!(event["channel"], "telegram");
         }
 
-        clawcrew_api::observability_traits::clear_broadcast_hook();
+        galleon_api::observability_traits::clear_broadcast_hook();
     }
 
     /// Warning follow-up (non-persistent boundary): even if a credential-marked

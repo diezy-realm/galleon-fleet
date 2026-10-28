@@ -388,7 +388,7 @@ impl Observer for PrometheusObserver {
                 self.errors.with_label_values(&[component]).inc();
             }
             // `ObserverEvent` is `#[non_exhaustive]` — silently ignore any
-            // future variant added by upstream `clawcrew-api`.
+            // future variant added by upstream `galleon-api`.
             _ => {}
         }
     }
@@ -447,7 +447,7 @@ mod tests {
             model_provider: "openrouter".into(),
             model: "claude-sonnet".into(),
             duration: Duration::from_millis(500),
-            tokens_used: Some(clawcrew_api::observability_traits::TurnTokenUsage {
+            tokens_used: Some(galleon_api::observability_traits::TurnTokenUsage {
                 input_tokens: 100,
                 output_tokens: 0,
             }),

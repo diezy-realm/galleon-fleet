@@ -757,7 +757,7 @@ pub struct SopEvent {
 // ── Run state ────────────────────────────────────────────────────
 
 /// Status of an SOP execution run.
-pub use clawcrew_api::sop::SopRunStatus;
+pub use galleon_api::sop::SopRunStatus;
 
 /// Result status of a single step execution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -866,9 +866,9 @@ pub struct SopRun {
     pub revision_base: u32,
 }
 
-impl ::clawcrew_api::attribution::Attributable for SopRun {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Sop
+impl ::galleon_api::attribution::Attributable for SopRun {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Sop
     }
     fn alias(&self) -> &str {
         &self.sop_name

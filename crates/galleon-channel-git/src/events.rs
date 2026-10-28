@@ -2,7 +2,7 @@
 //! `ChannelMessage`s.
 
 use chrono::{DateTime, Utc};
-use clawcrew_api::channel::{CHANNEL_SOP_SUBJECT_PREFIX, ChannelMessage};
+use galleon_api::channel::{CHANNEL_SOP_SUBJECT_PREFIX, ChannelMessage};
 use serde_json::json;
 
 use super::types::{
@@ -400,7 +400,7 @@ pub fn event_to_sop_message(
 }
 
 fn sop_topic(channel_key: &str, alias: &str, event_type: &str) -> String {
-    clawcrew_api::channel::ChannelSopTopic::build(channel_key, alias, event_type)
+    galleon_api::channel::ChannelSopTopic::build(channel_key, alias, event_type)
 }
 
 fn event_target(event: &GitEvent) -> String {

@@ -3,7 +3,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use clawcrew_api::model_provider::ModelProvider;
+use galleon_api::model_provider::ModelProvider;
 use galleon_config::schema::MemoryConfig;
 use galleon_memory::{Memory, create_memory};
 use clawcrew_runtime::agent::agent::Agent;

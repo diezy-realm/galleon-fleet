@@ -1,5 +1,5 @@
 #[cfg(any(feature = "channel-slack", test))]
-use clawcrew_api::channel::ProgressEvent;
+use galleon_api::channel::ProgressEvent;
 
 #[cfg(any(feature = "channel-slack", test))]
 pub(crate) fn lifecycle_progress_fluent_key(event: ProgressEvent) -> &'static str {
@@ -23,7 +23,7 @@ pub use galleon_channel_core::truncate_with_ellipsis;
 
 /// Checks if a text matches the canonical breadcrumb or the localized breadcrumb.
 pub fn is_history_trim_breadcrumb_text(text: &str) -> bool {
-    if text == clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL {
+    if text == galleon_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL {
         return true;
     }
     text == galleon_i18n::get_required_cli_string("history-trim-breadcrumb")
@@ -502,8 +502,8 @@ pub(crate) const APPROVAL_REPLY_ALWAYS: &str = "always";
 
 pub fn parse_approval_reply(
     text: &str,
-) -> Option<(String, clawcrew_api::channel::ChannelApprovalResponse)> {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+) -> Option<(String, galleon_api::channel::ChannelApprovalResponse)> {
+    use galleon_api::channel::ChannelApprovalResponse;
     let lower = text.trim().to_lowercase();
     let mut parts = lower.splitn(2, ' ');
     let token = parts.next()?.to_string();
@@ -625,7 +625,7 @@ pub(crate) use galleon_channel_core::approval::{
 };
 
 /// Generate a conversation history key from a channel message.
-pub fn conversation_history_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
+pub fn conversation_history_key(msg: &galleon_api::channel::ChannelMessage) -> String {
     match &msg.thread_ts {
         Some(tid) => format!(
             "{}_{}_{}_{}",
@@ -1156,7 +1156,7 @@ mod tests {
 
     #[test]
     fn parse_approval_reply_accepts_canonical_forms() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
         let cases = [
             ("abc123 yes", ChannelApprovalResponse::Approve),
             ("abc123 y", ChannelApprovalResponse::Approve),
@@ -1204,7 +1204,7 @@ mod tests {
 
     #[test]
     fn yesno_approval_prompt_keywords_still_parse_via_parse_approval_reply() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         // Localization must not desync the prompt text from
         // `parse_approval_reply`: whatever locale is active, the reply
@@ -1276,7 +1276,7 @@ mod tests {
 
     #[test]
     fn position_counter_reports_raw_batch_position_not_approval_count() {
-        use clawcrew_api::channel::{ApprovalPosition, ChannelApprovalRequest};
+        use galleon_api::channel::{ApprovalPosition, ChannelApprovalRequest};
 
         // The batch is three calls and only the second needs approval. The
         // card must read "2 of 3" — the model-issued position — rather than
@@ -1294,7 +1294,7 @@ mod tests {
 
     #[test]
     fn position_counter_is_absent_without_a_position() {
-        use clawcrew_api::channel::ChannelApprovalRequest;
+        use galleon_api::channel::ChannelApprovalRequest;
 
         let request = ChannelApprovalRequest {
             tool_name: "shell".to_string(),
@@ -1392,7 +1392,7 @@ mod tests {
 
     #[tokio::test]
     async fn approval_resolution_requires_authorized_responder_and_destination() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let pending = tokio::sync::Mutex::new(std::collections::HashMap::new());
         let (tx, rx) = tokio::sync::oneshot::channel();
@@ -1465,7 +1465,7 @@ mod tests {
 
     #[tokio::test]
     async fn approval_resolution_reports_closed_receiver_as_failure() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let pending = tokio::sync::Mutex::new(std::collections::HashMap::new());
         let (tx, rx) = tokio::sync::oneshot::channel();

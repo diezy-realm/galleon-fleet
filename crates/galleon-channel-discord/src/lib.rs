@@ -1,9 +1,9 @@
 use async_trait::async_trait;
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelGatePrompt, ChannelMessage,
     GateChoiceEmphasis, SendMessage,
 };
-use clawcrew_api::media::{
+use galleon_api::media::{
     MarkerKind, MediaAttachment, RenderedMarker, provider_loadable_image_mime_for,
 };
 use futures_util::{SinkExt, StreamExt};
@@ -1901,10 +1901,10 @@ fn requires_new_session_close_code(code: u16) -> bool {
     matches!(code, 4007 | 4009)
 }
 
-impl ::clawcrew_api::attribution::Attributable for DiscordChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Discord,
+impl ::galleon_api::attribution::Attributable for DiscordChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Discord,
         )
     }
     fn alias(&self) -> &str {
@@ -2965,9 +2965,9 @@ impl Channel for DiscordChannel {
                                                 Some(i) => (i.label, i.prefill),
                                                 None => ("Text".to_string(), None),
                                             };
-                                            let title = match clawcrew_api::channel::GateChoiceKind::from_id(choice) {
-                                                Some(clawcrew_api::channel::GateChoiceKind::Edit) => "Edit the draft",
-                                                Some(clawcrew_api::channel::GateChoiceKind::Revise) => "Ask for a re-draft",
+                                            let title = match galleon_api::channel::GateChoiceKind::from_id(choice) {
+                                                Some(galleon_api::channel::GateChoiceKind::Edit) => "Edit the draft",
+                                                Some(galleon_api::channel::GateChoiceKind::Revise) => "Ask for a re-draft",
                                                 _ => "Provide text",
                                             };
                                             let modal = components::DiscordModal {
@@ -4092,7 +4092,7 @@ impl Channel for DiscordChannel {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         // Approval prompts can't be delivered over a deferred interaction
         // reply (the sentinel is not a channel and the single @original
         // edit is reserved for the answer). Fail fast so the agent loop's
@@ -4129,20 +4129,20 @@ impl Channel for DiscordChannel {
         // report it to the model as an operator's refusal.
         let attributed =
             match tokio::time::timeout(Duration::from_secs(self.approval_timeout_secs), rx).await {
-                Ok(Ok(resp)) => clawcrew_api::channel::AttributedApprovalResponse::operator(resp),
+                Ok(Ok(resp)) => galleon_api::channel::AttributedApprovalResponse::operator(resp),
                 Ok(Err(_)) => {
                     // Sender dropped: the gateway task went away without a click.
                     self.pending_approvals.lock().await.remove(&token);
-                    clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                    galleon_api::channel::AttributedApprovalResponse::from_runtime(
                         ChannelApprovalResponse::Deny,
-                        clawcrew_api::channel::ApprovalSource::Unreachable,
+                        galleon_api::channel::ApprovalSource::Unreachable,
                     )
                 }
                 Err(_) => {
                     self.pending_approvals.lock().await.remove(&token);
-                    clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                    galleon_api::channel::AttributedApprovalResponse::from_runtime(
                         ChannelApprovalResponse::Deny,
-                        clawcrew_api::channel::ApprovalSource::TimedOut,
+                        galleon_api::channel::ApprovalSource::TimedOut,
                     )
                 }
             };
@@ -4865,8 +4865,8 @@ mod tests {
         assert!(err.to_string().contains("unknown or expired"));
     }
 
-    fn skill(name: &str, description: &str, tags: &[&str]) -> clawcrew_api::skill::Skill {
-        clawcrew_api::skill::Skill {
+    fn skill(name: &str, description: &str, tags: &[&str]) -> galleon_api::skill::Skill {
+        galleon_api::skill::Skill {
             name: name.to_string(),
             description: description.to_string(),
             description_localizations: Default::default(),
@@ -7635,7 +7635,7 @@ mod tests {
 
     #[tokio::test]
     async fn send_draft_returns_none_when_not_partial() {
-        use clawcrew_api::channel::SendMessage;
+        use galleon_api::channel::SendMessage;
         use galleon_config::schema::StreamMode;
 
         let listen_to_bots = false;

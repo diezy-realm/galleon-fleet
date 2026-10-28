@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use clawcrew_api::app_manifest::AppManifest;
+use galleon_api::app_manifest::AppManifest;
 
 /// Version of the persisted registry payload. A higher on-disk version is
 /// refused rather than partially read (downgrade is unsafe).
@@ -332,7 +332,7 @@ fn validate_runtime_version(minimum: &str, actual: &str) -> Result<(), anyhow::E
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::app_manifest::{AppDependency, AppToolDefinition};
+    use galleon_api::app_manifest::{AppDependency, AppToolDefinition};
 
     fn manifest(id: &str, version: &str) -> AppManifest {
         AppManifest {

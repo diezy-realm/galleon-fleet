@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-api"
+name = "galleon-api"
 rust-version.workspace = true
 version.workspace = true
 edition = "2024"

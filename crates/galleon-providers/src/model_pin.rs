@@ -118,7 +118,7 @@ impl ModelProvider for ModelPinnedProvider {
         self.inner.default_wire_api()
     }
 
-    fn convert_tools(&self, tools: &[clawcrew_api::tool::ToolSpec]) -> super::traits::ToolsPayload {
+    fn convert_tools(&self, tools: &[galleon_api::tool::ToolSpec]) -> super::traits::ToolsPayload {
         self.inner.convert_tools(tools)
     }
 
@@ -248,8 +248,8 @@ impl ModelProvider for ModelPinnedProvider {
     }
 }
 
-impl clawcrew_api::attribution::Attributable for ModelPinnedProvider {
-    fn role(&self) -> clawcrew_api::attribution::Role {
+impl galleon_api::attribution::Attributable for ModelPinnedProvider {
+    fn role(&self) -> galleon_api::attribution::Role {
         self.inner.role()
     }
     fn alias(&self) -> &str {
@@ -264,11 +264,11 @@ mod tests {
 
     struct ModelAwareCapabilityProvider;
 
-    impl clawcrew_api::attribution::Attributable for ModelAwareCapabilityProvider {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Provider(
-                clawcrew_api::attribution::ProviderKind::Model(
-                    clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl galleon_api::attribution::Attributable for ModelAwareCapabilityProvider {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Provider(
+                galleon_api::attribution::ProviderKind::Model(
+                    galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -334,11 +334,11 @@ mod tests {
 
     struct AccountedLeaf;
 
-    impl clawcrew_api::attribution::Attributable for AccountedLeaf {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Provider(
-                clawcrew_api::attribution::ProviderKind::Model(
-                    clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl galleon_api::attribution::Attributable for AccountedLeaf {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Provider(
+                galleon_api::attribution::ProviderKind::Model(
+                    galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }

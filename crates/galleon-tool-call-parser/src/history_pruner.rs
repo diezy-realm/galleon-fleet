@@ -1,6 +1,6 @@
 //! History pruning and orphaned tool message sanitization.
 
-use clawcrew_api::model_provider::ChatMessage;
+use galleon_api::model_provider::ChatMessage;
 
 /// Outcome of a single `remove_orphaned_tool_messages` pass. The caller
 /// is responsible for logging — that's where the agent/channel/session

@@ -1,1 +1,1 @@
-pub use clawcrew_api::schema::*;
+pub use galleon_api::schema::*;

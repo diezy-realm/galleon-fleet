@@ -561,11 +561,11 @@ impl ModelProvider for RouterModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for RouterModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Router,
+impl ::galleon_api::attribution::Attributable for RouterModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Router,
             ),
         )
     }
@@ -580,7 +580,7 @@ mod tests {
     use futures_util::StreamExt;
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use clawcrew_api::tool::ToolSpec;
+    use galleon_api::tool::ToolSpec;
 
     struct MockModelProvider {
         calls: Arc<AtomicUsize>,
@@ -639,11 +639,11 @@ mod tests {
             Some(format!("limiter-for-{model}"))
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for MockModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -793,11 +793,11 @@ mod tests {
             self.stream_response(model)
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for StreamingMockModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for StreamingMockModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -868,11 +868,11 @@ mod tests {
             .boxed()
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for ToolEventStreamingMockModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for ToolEventStreamingMockModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1162,11 +1162,11 @@ mod tests {
             Ok(self.response.to_string())
         }
     }
-    impl ::clawcrew_api::attribution::Attributable for CapableMockModelProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for CapableMockModelProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -1711,11 +1711,11 @@ mod tests {
             mixed_model: &'static str,
         }
 
-        impl ::clawcrew_api::attribution::Attributable for ModelScopedMixedProvider {
-            fn role(&self) -> ::clawcrew_api::attribution::Role {
-                ::clawcrew_api::attribution::Role::Provider(
-                    ::clawcrew_api::attribution::ProviderKind::Model(
-                        ::clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl ::galleon_api::attribution::Attributable for ModelScopedMixedProvider {
+            fn role(&self) -> ::galleon_api::attribution::Role {
+                ::galleon_api::attribution::Role::Provider(
+                    ::galleon_api::attribution::ProviderKind::Model(
+                        ::galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }

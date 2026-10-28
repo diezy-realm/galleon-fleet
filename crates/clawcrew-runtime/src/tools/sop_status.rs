@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use serde_json::json;
 
 use crate::sop::{SopEngine, SopMetricsCollector};
-use clawcrew_api::tool::{Tool, ToolResult};
+use galleon_api::tool::{Tool, ToolResult};
 
 /// Query SOP execution status — active runs, finished runs, or a specific run by ID.
 pub struct SopStatusTool {

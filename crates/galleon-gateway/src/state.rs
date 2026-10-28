@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use clawcrew_api::memory_traits::MemoryStrategy;
+use galleon_api::memory_traits::MemoryStrategy;
 use galleon_config::cost::tracker::CostTracker;
 use galleon_config::pairing::PairingGuard;
 use galleon_config::schema::Config;
@@ -45,9 +45,9 @@ pub struct AppState {
     pub nextcloud_talk_webhook_secret: HashMap<String, Arc<str>>,
     #[cfg(feature = "channel-email")]
     pub gmail_push: Option<Arc<galleon_channels::gmail_push::GmailPushChannel>>,
-    pub observer: Arc<dyn clawcrew_api::observability_traits::Observer>,
-    pub tools_registry: Arc<Vec<clawcrew_api::tool::ToolSpec>>,
-    pub tools_registry_by_agent: Arc<HashMap<String, Arc<Vec<clawcrew_api::tool::ToolSpec>>>>,
+    pub observer: Arc<dyn galleon_api::observability_traits::Observer>,
+    pub tools_registry: Arc<Vec<galleon_api::tool::ToolSpec>>,
+    pub tools_registry_by_agent: Arc<HashMap<String, Arc<Vec<galleon_api::tool::ToolSpec>>>>,
     pub cost_tracker: Option<Arc<CostTracker>>,
     pub event_tx: tokio::sync::broadcast::Sender<serde_json::Value>,
     pub event_buffer: Arc<crate::sse::EventBuffer>,
@@ -70,16 +70,16 @@ pub struct AppState {
         >,
     >,
     pub pending_reload: Arc<std::sync::atomic::AtomicBool>,
-    pub tui_registry: Option<Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
-    pub sop_runner: Option<Arc<dyn clawcrew_api::sop::SopRunner>>,
-    pub diagnostics: Option<Arc<dyn clawcrew_api::doctor::DiagnosticsRunner>>,
+    pub tui_registry: Option<Arc<dyn galleon_api::runtime_traits::TuiConnectionRegistry>>,
+    pub sop_runner: Option<Arc<dyn galleon_api::sop::SopRunner>>,
+    pub diagnostics: Option<Arc<dyn galleon_api::doctor::DiagnosticsRunner>>,
     pub quickstart: Option<Arc<dyn galleon_config::quickstart::QuickstartRunner>>,
     pub integration_catalog:
         Option<Arc<dyn galleon_config::integrations::IntegrationCatalogProvider>>,
-    pub personality_runner: Option<Arc<dyn clawcrew_api::personality::PersonalityRunner>>,
-    pub skills_runner: Option<Arc<dyn clawcrew_api::skill::SkillsRunner>>,
-    pub acp_runner: Option<Arc<dyn clawcrew_api::runtime_traits::AcpSessionRunner>>,
-    pub control_plane: Option<clawcrew_api::control_plane::ControlPlaneHandle>,
+    pub personality_runner: Option<Arc<dyn galleon_api::personality::PersonalityRunner>>,
+    pub skills_runner: Option<Arc<dyn galleon_api::skill::SkillsRunner>>,
+    pub acp_runner: Option<Arc<dyn galleon_api::runtime_traits::AcpSessionRunner>>,
+    pub control_plane: Option<galleon_api::control_plane::ControlPlaneHandle>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -98,10 +98,10 @@ impl ModelProvider for FallbackModelProvider {
     }
 }
 
-impl clawcrew_api::attribution::Attributable for FallbackModelProvider {
-    fn role(&self) -> clawcrew_api::attribution::Role {
-        clawcrew_api::attribution::Role::Provider(clawcrew_api::attribution::ProviderKind::Model(
-            clawcrew_api::attribution::ModelProviderKind::Custom,
+impl galleon_api::attribution::Attributable for FallbackModelProvider {
+    fn role(&self) -> galleon_api::attribution::Role {
+        galleon_api::attribution::Role::Provider(galleon_api::attribution::ProviderKind::Model(
+            galleon_api::attribution::ModelProviderKind::Custom,
         ))
     }
 
@@ -121,9 +121,9 @@ impl AppState {
         config: Config,
         external_event_tx: Option<tokio::sync::broadcast::Sender<serde_json::Value>>,
         reload_controls: Option<galleon_infra::gateway_controls::GatewayReloadControls>,
-        tui_registry: Option<Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
+        tui_registry: Option<Arc<dyn galleon_api::runtime_traits::TuiConnectionRegistry>>,
         canvas_store: Option<CanvasStore>,
-        sop_runner: Option<Arc<dyn clawcrew_api::sop::SopRunner>>,
+        sop_runner: Option<Arc<dyn galleon_api::sop::SopRunner>>,
     ) -> Self {
         let memory: Arc<dyn Memory> = Arc::new(galleon_memory::NoneMemory::new("gateway-runtime"));
         let model_provider: Arc<dyn ModelProvider> =
@@ -178,7 +178,7 @@ impl AppState {
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+            observer: Arc::new(galleon_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(HashMap::new()),
             cost_tracker: None,
@@ -215,14 +215,14 @@ impl AppState {
 /// Daemon-owned services whose lifecycle matches one supervised gateway run.
 pub struct GatewaySupervision {
     pub readiness: Option<galleon_infra::gateway_controls::GatewayReadinessReporter>,
-    pub plugin_webhooks: Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
+    pub plugin_webhooks: Arc<galleon_api::webhook::PluginWebhookRegistry>,
 }
 
 impl GatewaySupervision {
     #[must_use]
     pub fn new(
         readiness: Option<galleon_infra::gateway_controls::GatewayReadinessReporter>,
-        plugin_webhooks: Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
+        plugin_webhooks: Arc<galleon_api::webhook::PluginWebhookRegistry>,
     ) -> Self {
         Self {
             readiness,

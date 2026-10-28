@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use thiserror::Error;
-use clawcrew_api::channel::ChannelMessage;
+use galleon_api::channel::ChannelMessage;
 
 use crate::PluginCapability;
 use crate::endpoint::PluginChannelEndpoint;

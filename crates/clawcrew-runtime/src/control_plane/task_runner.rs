@@ -157,7 +157,7 @@ impl Default for StepStatus {
     }
 }
 
-pub use clawcrew_api::control_plane::{LedgerAction, LedgerEntry};
+pub use galleon_api::control_plane::{LedgerAction, LedgerEntry};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StepExecutionResult {

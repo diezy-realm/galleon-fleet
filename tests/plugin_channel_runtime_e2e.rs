@@ -15,8 +15,8 @@ use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
 use tempfile::TempDir;
-use clawcrew_api::channel::SendMessage;
-use clawcrew_api::webhook::{PluginWebhookRegistry, RawWebhook, WebhookOutcome};
+use galleon_api::channel::SendMessage;
+use galleon_api::webhook::{PluginWebhookRegistry, RawWebhook, WebhookOutcome};
 use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
 use galleon_config::providers::{ChannelRef, ModelProviderRef};
 use galleon_config::schema::{
@@ -212,7 +212,7 @@ async fn configured_channel_reaches_real_guest_and_shared_listener_contract() {
             "channel-secret".to_string(),
         )],
         body: br#"{"id":"runtime-1","sender":"tester","reply_target":"room","content":"from webhook"}"#.to_vec(),
-        cancellation: clawcrew_api::webhook::WebhookCancellation::new(),
+        cancellation: galleon_api::webhook::WebhookCancellation::new(),
         idempotency: None,
         reply,
     })
@@ -236,7 +236,7 @@ async fn configured_channel_reaches_real_guest_and_shared_listener_contract() {
         query: "challenge=runtime-echo".to_string(),
         headers: vec![("x-fixture-secret".to_string(), "channel-secret".to_string())],
         body: Vec::new(),
-        cancellation: clawcrew_api::webhook::WebhookCancellation::new(),
+        cancellation: galleon_api::webhook::WebhookCancellation::new(),
         idempotency: None,
         reply,
     })

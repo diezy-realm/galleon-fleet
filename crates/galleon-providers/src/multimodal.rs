@@ -4,11 +4,11 @@ use sha2::{Digest as _, Sha256};
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
-use clawcrew_api::media::{
+use galleon_api::media::{
     PROVIDER_IMAGE_MIME_TYPES, image_mime_from_extension, image_mime_from_magic,
     is_provider_image_mime,
 };
-use clawcrew_api::model_provider::ChatMessage;
+use galleon_api::model_provider::ChatMessage;
 use galleon_config::schema::{MultimodalConfig, build_runtime_proxy_client_with_timeouts};
 
 pub const IMAGE_MARKER_PREFIX: &str = "[IMAGE:";

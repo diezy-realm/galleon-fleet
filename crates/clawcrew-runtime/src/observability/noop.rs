@@ -1,4 +1,4 @@
-pub use clawcrew_api::observability_traits::NoopObserver;
+pub use galleon_api::observability_traits::NoopObserver;
 
 #[cfg(test)]
 mod tests {

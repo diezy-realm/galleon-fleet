@@ -10,7 +10,7 @@ trap 'rm -rf "$fixture_dir"' EXIT
 
 repo_root="${fixture_dir}/repo"
 mkdir -p "$repo_root/crates/galleon-channels" \
-    "$repo_root/crates/clawcrew-api" \
+    "$repo_root/crates/galleon-api" \
     "$repo_root/crates/galleon-config" \
     "$repo_root/crates/galleon-plugins" \
     "$repo_root/crates/clawcrew-runtime" \
@@ -23,7 +23,7 @@ cat > "$metadata_file" <<EOF
 {
   "packages": [
     {"id": "path+file://${repo_root}#clawcrew 0.8.4", "name": "clawcrew", "manifest_path": "Cargo.toml"},
-    {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "name": "clawcrew-api", "manifest_path": "crates/clawcrew-api/Cargo.toml"},
+    {"id": "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4", "name": "galleon-api", "manifest_path": "crates/galleon-api/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "name": "galleon-channels", "manifest_path": "crates/galleon-channels/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4", "name": "galleon-config", "manifest_path": "crates/galleon-config/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "name": "galleon-plugins", "manifest_path": "crates/galleon-plugins/Cargo.toml"},
@@ -35,7 +35,7 @@ cat > "$metadata_file" <<EOF
   ],
   "workspace_members": [
     "path+file://${repo_root}#clawcrew 0.8.4",
-    "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4",
+    "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4",
     "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4",
     "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4",
@@ -47,11 +47,11 @@ cat > "$metadata_file" <<EOF
   ],
   "resolve": {
     "nodes": [
-      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
-      {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "deps": []},
+      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
+      {"id": "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4", "deps": []},
-      {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}]},
+      {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "deps": []},
@@ -116,8 +116,8 @@ assert_selection "skip" skip '[]' 'No covered Rust compilation or test paths cha
 printf '%s\n' 'crates/galleon-channels/src/lib.rs' > "$paths_file"
 assert_selection "one package and reverse dependent" scoped '["clawcrew","galleon-channels"]' '' "$paths_file"
 
-printf '%s\n' 'crates/clawcrew-api/src/lib.rs' > "$paths_file"
-assert_selection "plugin host from reverse-dependent closure" scoped '["clawcrew","clawcrew-api","galleon-plugins"]' '' "$paths_file" true
+printf '%s\n' 'crates/galleon-api/src/lib.rs' > "$paths_file"
+assert_selection "plugin host from reverse-dependent closure" scoped '["clawcrew","galleon-api","galleon-plugins"]' '' "$paths_file" true
 
 printf '%s\n' 'crates/galleon-providers/src/lib.rs' 'crates/galleon-channels/src/lib.rs' > "$paths_file"
 assert_selection "multiple packages" scoped '["clawcrew","galleon-channels","galleon-gateway","galleon-providers"]' '' "$paths_file" true
@@ -276,7 +276,7 @@ output="$(run_selector pull_request "$paths_file" "$metadata_file")"
 printf '%s\n' "$output" | grep -Fx 'mode=full' >/dev/null
 printf '%s\n' "$output" | grep -Fx 'needs_plugin_host=true' >/dev/null
 
-printf '%s\n' 'crates/clawcrew-api/src/lib.rs' > "$paths_file"
+printf '%s\n' 'crates/galleon-api/src/lib.rs' > "$paths_file"
 output="$(python3 "$selector" --event pull_request --changed-paths-file "$paths_file" --repo-root "$repo_root")"
 printf '%s\n' "$output" | grep -Fx 'mode=full' >/dev/null
 printf '%s\n' "$output" | grep -Fx 'reason=Changed paths or Cargo metadata are unavailable; selecting full is safer.' >/dev/null
@@ -284,7 +284,7 @@ printf '%s\n' "$output" | grep -Fx 'needs_plugin_host=true' >/dev/null
 
 malformed_metadata="$fixture_dir/malformed.json"
 printf '%s\n' '{"packages": []}' > "$malformed_metadata"
-printf '%s\n' 'crates/clawcrew-api/src/lib.rs' > "$paths_file"
+printf '%s\n' 'crates/galleon-api/src/lib.rs' > "$paths_file"
 output="$(run_selector pull_request "$paths_file" "$malformed_metadata")"
 printf '%s\n' "$output" | grep -Fx 'mode=full' >/dev/null
 printf '%s\n' "$output" | grep -F 'reason=Cargo metadata is malformed or unavailable' >/dev/null

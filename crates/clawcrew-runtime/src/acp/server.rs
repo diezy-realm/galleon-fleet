@@ -10,15 +10,15 @@ use std::time::{Duration, Instant};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{Mutex, mpsc};
 use uuid::Uuid;
-use clawcrew_api::agent::ToolArtifact;
-use clawcrew_api::elicitation::ElicitationCapabilities;
-pub use clawcrew_api::jsonrpc::RpcOutbound;
-use clawcrew_api::jsonrpc::error_codes::*;
-use clawcrew_api::jsonrpc::{
+use galleon_api::agent::ToolArtifact;
+use galleon_api::elicitation::ElicitationCapabilities;
+pub use galleon_api::jsonrpc::RpcOutbound;
+use galleon_api::jsonrpc::error_codes::*;
+use galleon_api::jsonrpc::{
     ACP_PROTOCOL_VERSION, JsonRpcError, JsonRpcNotification, JsonRpcRequest, JsonRpcResponse,
 };
-use clawcrew_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
-use clawcrew_api::plan::PlanEntry;
+use galleon_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
+use galleon_api::plan::PlanEntry;
 use galleon_config::schema::Config;
 use galleon_infra::acp_session_store::AcpSessionStore;
 use crate::agent::agent::{Agent, TurnEvent};
@@ -3709,11 +3709,11 @@ mod tests {
         requests: Arc<parking_lot::Mutex<Vec<Vec<ChatMessage>>>>,
     }
 
-    impl clawcrew_api::attribution::Attributable for RecordingNativeProvider {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Provider(
-                clawcrew_api::attribution::ProviderKind::Model(
-                    clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl galleon_api::attribution::Attributable for RecordingNativeProvider {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Provider(
+                galleon_api::attribution::ProviderKind::Model(
+                    galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -3724,9 +3724,9 @@ mod tests {
     }
 
     #[async_trait]
-    impl clawcrew_api::model_provider::ModelProvider for RecordingNativeProvider {
-        fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-            clawcrew_api::model_provider::ProviderCapabilities {
+    impl galleon_api::model_provider::ModelProvider for RecordingNativeProvider {
+        fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+            galleon_api::model_provider::ProviderCapabilities {
                 native_tool_calling: true,
                 ..Default::default()
             }
@@ -3744,12 +3744,12 @@ mod tests {
 
         async fn chat(
             &self,
-            request: clawcrew_api::model_provider::ChatRequest<'_>,
+            request: galleon_api::model_provider::ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+        ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
             self.requests.lock().push(request.messages.to_vec());
-            Ok(clawcrew_api::model_provider::ChatResponse {
+            Ok(galleon_api::model_provider::ChatResponse {
                 text: Some("recovered".to_string()),
                 tool_calls: Vec::new(),
                 usage: None,
@@ -3758,7 +3758,7 @@ mod tests {
         }
     }
 
-    use clawcrew_api::model_provider::ModelProvider;
+    use galleon_api::model_provider::ModelProvider;
 
     /// Like `RecordingNativeProvider` but advertises vision, so historical
     /// image markers are *retained* on the way to the provider instead of
@@ -3771,11 +3771,11 @@ mod tests {
         requests: Arc<parking_lot::Mutex<Vec<Vec<ChatMessage>>>>,
     }
 
-    impl clawcrew_api::attribution::Attributable for RecordingVisionProvider {
-        fn role(&self) -> clawcrew_api::attribution::Role {
-            clawcrew_api::attribution::Role::Provider(
-                clawcrew_api::attribution::ProviderKind::Model(
-                    clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl galleon_api::attribution::Attributable for RecordingVisionProvider {
+        fn role(&self) -> galleon_api::attribution::Role {
+            galleon_api::attribution::Role::Provider(
+                galleon_api::attribution::ProviderKind::Model(
+                    galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -3787,8 +3787,8 @@ mod tests {
 
     #[async_trait]
     impl ModelProvider for RecordingVisionProvider {
-        fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-            clawcrew_api::model_provider::ProviderCapabilities {
+        fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+            galleon_api::model_provider::ProviderCapabilities {
                 native_tool_calling: true,
                 vision: true,
                 ..Default::default()
@@ -3807,12 +3807,12 @@ mod tests {
 
         async fn chat(
             &self,
-            request: clawcrew_api::model_provider::ChatRequest<'_>,
+            request: galleon_api::model_provider::ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+        ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
             self.requests.lock().push(request.messages.to_vec());
-            Ok(clawcrew_api::model_provider::ChatResponse {
+            Ok(galleon_api::model_provider::ChatResponse {
                 text: Some("recovered".to_string()),
                 tool_calls: Vec::new(),
                 usage: None,
@@ -3888,11 +3888,11 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for EmptyTerminalProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
+    impl ::galleon_api::attribution::Attributable for EmptyTerminalProvider {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Provider(
+                ::galleon_api::attribution::ProviderKind::Model(
+                    ::galleon_api::attribution::ModelProviderKind::Custom,
                 ),
             )
         }
@@ -3906,9 +3906,9 @@ mod tests {
         Agent::builder()
             .model_provider(Box::new(EmptyTerminalProvider))
             .tools(
-                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(Vec::new()).into(),
+                galleon_api::tool::ScopedToolRegistry::from_raw_for_test(Vec::new()).into(),
             )
-            .observer(Arc::from(clawcrew_api::observability_traits::NoopObserver))
+            .observer(Arc::from(galleon_api::observability_traits::NoopObserver))
             .tool_dispatcher(Box::new(
                 crate::agent::dispatcher::NativeToolDispatcher,
             ))
@@ -5313,11 +5313,11 @@ mod tests {
             forbidden_blobs: [String; 2],
         }
 
-        impl clawcrew_api::attribution::Attributable for ScriptedDeliverFileProvider {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for ScriptedDeliverFileProvider {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -5329,8 +5329,8 @@ mod tests {
 
         #[async_trait]
         impl ModelProvider for ScriptedDeliverFileProvider {
-            fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-                clawcrew_api::model_provider::ProviderCapabilities {
+            fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+                galleon_api::model_provider::ProviderCapabilities {
                     native_tool_calling: true,
                     ..Default::default()
                 }
@@ -5348,10 +5348,10 @@ mod tests {
 
             async fn chat(
                 &self,
-                request: clawcrew_api::model_provider::ChatRequest<'_>,
+                request: galleon_api::model_provider::ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+            ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
                 self.requests.lock().push(request.messages.to_vec());
                 match self.calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst) {
                     0 => {
@@ -5365,7 +5365,7 @@ mod tests {
                             ),
                             "deliver_file path requirement was not exposed"
                         );
-                        Ok(clawcrew_api::model_provider::ChatResponse {
+                        Ok(galleon_api::model_provider::ChatResponse {
                             text: None,
                             tool_calls: vec![ToolCall {
                                 id: "tc-deliver".to_string(),
@@ -5406,7 +5406,7 @@ mod tests {
                                 .all(|blob| !message.content.contains(blob))),
                             "base64 leaked into the provider-visible tool round"
                         );
-                        Ok(clawcrew_api::model_provider::ChatResponse {
+                        Ok(galleon_api::model_provider::ChatResponse {
                             text: Some("Delivered the requested file.".to_string()),
                             tool_calls: Vec::new(),
                             usage: None,
@@ -5955,8 +5955,8 @@ mod tests {
                 token_budget: Some(500_000),
                 tokens_before: Some(612_000),
                 tokens_after: Some(117_000),
-                tokens_before_source: Some(clawcrew_api::agent::TokenCountSource::Provider),
-                tokens_after_source: Some(clawcrew_api::agent::TokenCountSource::Calibrated),
+                tokens_before_source: Some(galleon_api::agent::TokenCountSource::Provider),
+                tokens_after_source: Some(galleon_api::agent::TokenCountSource::Calibrated),
                 unsatisfiable_floor: None,
             },
         )
@@ -6321,7 +6321,7 @@ mod tests {
 
     #[test]
     fn plan_event_projects_to_acp_plan_update() {
-        use clawcrew_api::plan::{PlanEntry, PlanPriority, PlanStatus};
+        use galleon_api::plan::{PlanEntry, PlanPriority, PlanStatus};
 
         let event = TurnEvent::Plan {
             entries: vec![
@@ -6749,7 +6749,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_load_restores_history_and_streams_notifications() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
         let cwd = tempfile::tempdir().unwrap();
         let store =
             Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
@@ -6817,7 +6817,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_load_replays_only_history_retained_after_restore_trim() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
@@ -6894,7 +6894,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_load_replays_the_retained_turn_when_a_persisted_crumb_leads_the_seed() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         // `dropped_messages` from the crumb-aware restore trim counts only
         // real messages, but the persisted leading breadcrumb is still a row
@@ -6909,7 +6909,7 @@ mod tests {
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
             .unwrap();
         let crumb = ConversationMessage::Chat(ChatMessage::user(
-            clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string(),
+            galleon_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string(),
         ));
         store
             .append_turn(session_id, std::slice::from_ref(&crumb))
@@ -6986,7 +6986,7 @@ mod tests {
 
     #[tokio::test]
     async fn failed_turn_transcript_persists_visible_work_and_reloads() {
-        use clawcrew_api::model_provider::{
+        use galleon_api::model_provider::{
             ChatMessage, ConversationMessage, ToolCall, ToolResultMessage,
         };
 
@@ -7084,7 +7084,7 @@ mod tests {
 
     #[test]
     fn repair_incomplete_tool_calls_strips_unpaired_native_calls_only() {
-        use clawcrew_api::model_provider::{ConversationMessage, ToolCall, ToolResultMessage};
+        use galleon_api::model_provider::{ConversationMessage, ToolCall, ToolResultMessage};
 
         fn call(id: &str) -> ToolCall {
             ToolCall {
@@ -7174,7 +7174,7 @@ mod tests {
 
     #[tokio::test]
     async fn restored_failed_turn_repairs_incomplete_tool_call_before_next_prompt() {
-        use clawcrew_api::model_provider::{ConversationMessage, ToolCall};
+        use galleon_api::model_provider::{ConversationMessage, ToolCall};
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
@@ -7262,7 +7262,7 @@ mod tests {
 
     #[tokio::test]
     async fn prompt_failure_persists_transcript_through_the_handler() {
-        use clawcrew_api::model_provider::ConversationMessage;
+        use galleon_api::model_provider::ConversationMessage;
 
         // Drive a populated, non-retryable provider failure through the real
         // `session/prompt` handler (not the `replace_transcript`/
@@ -7270,11 +7270,11 @@ mod tests {
         // routing and the production replace path are exercised: a regression in
         // the handler match would surface here.
         struct FailingProvider;
-        impl clawcrew_api::attribution::Attributable for FailingProvider {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for FailingProvider {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -7283,7 +7283,7 @@ mod tests {
             }
         }
         #[async_trait::async_trait]
-        impl clawcrew_api::model_provider::ModelProvider for FailingProvider {
+        impl galleon_api::model_provider::ModelProvider for FailingProvider {
             async fn chat_with_system(
                 &self,
                 _system_prompt: Option<&str>,
@@ -7295,10 +7295,10 @@ mod tests {
             }
             async fn chat(
                 &self,
-                _request: clawcrew_api::model_provider::ChatRequest<'_>,
+                _request: galleon_api::model_provider::ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+            ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
                 anyhow::bail!("provider rejected the request")
             }
         }
@@ -7371,7 +7371,7 @@ mod tests {
 
     #[tokio::test]
     async fn replace_transcript_surfaces_persistence_failure() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
@@ -7419,7 +7419,7 @@ mod tests {
             .unwrap();
         let before = vec![
             ConversationMessage::Chat(ChatMessage::user(
-                clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL,
+                galleon_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL,
             )),
             ConversationMessage::Chat(ChatMessage::user("old request")),
             ConversationMessage::Chat(ChatMessage::assistant("old answer")),
@@ -7613,7 +7613,7 @@ mod tests {
 
     #[tokio::test]
     async fn replace_transcript_does_not_resurrect_a_turn_the_agent_already_trimmed() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         // Simulate a prior terminal write that persisted an older turn, then a
         // later terminal write for a turn during which the live agent had
@@ -7693,7 +7693,7 @@ mod tests {
         use std::sync::Arc as StdArc;
 
         use tokio::sync::Notify;
-        use clawcrew_api::model_provider::ChatMessage;
+        use galleon_api::model_provider::ChatMessage;
 
         // A provider that parks inside `chat` so the first turn is in flight and
         // can be cancelled mid-turn.
@@ -7701,11 +7701,11 @@ mod tests {
             entered: StdArc<Notify>,
             release: StdArc<Notify>,
         }
-        impl clawcrew_api::attribution::Attributable for BarrierProvider {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for BarrierProvider {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -7714,7 +7714,7 @@ mod tests {
             }
         }
         #[async_trait]
-        impl clawcrew_api::model_provider::ModelProvider for BarrierProvider {
+        impl galleon_api::model_provider::ModelProvider for BarrierProvider {
             async fn chat_with_system(
                 &self,
                 _system_prompt: Option<&str>,
@@ -7726,13 +7726,13 @@ mod tests {
             }
             async fn chat(
                 &self,
-                _request: clawcrew_api::model_provider::ChatRequest<'_>,
+                _request: galleon_api::model_provider::ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+            ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
                 self.entered.notify_one();
                 self.release.notified().await;
-                Ok(clawcrew_api::model_provider::ChatResponse {
+                Ok(galleon_api::model_provider::ChatResponse {
                     text: Some("done".to_string()),
                     tool_calls: Vec::new(),
                     usage: None,
@@ -7851,7 +7851,7 @@ mod tests {
 
     #[tokio::test]
     async fn resumed_session_sanitizes_incomplete_call_and_cancellation_sentinel() {
-        use clawcrew_api::model_provider::{ConversationMessage, ToolCall};
+        use galleon_api::model_provider::{ConversationMessage, ToolCall};
 
         // `session/resume` seeds provider history without client replay, so it
         // must apply the same typed restore sanitization as `session/load`: an
@@ -7947,7 +7947,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_load_replays_incomplete_call_but_seeds_repaired_history() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
 
         // The two projections are split: the failed turn's visible activity must
         // survive reload for the client, while only provider-facing history
@@ -8038,7 +8038,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_load_replays_rejected_image_but_keeps_it_out_of_the_seed() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         // A turn whose image the provider rejected is now durable. If the seed
         // keeps the marker, a vision-capable provider re-attaches that same
@@ -8131,7 +8131,7 @@ mod tests {
 
     #[tokio::test]
     async fn restored_failed_turn_is_recognized_across_locales() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         // A failed image turn is persisted through the production boundary and
         // reloaded by a process that did not render its marker. Durable
@@ -8270,7 +8270,7 @@ mod tests {
     async fn failed_image_turn_degrades_media_on_the_active_session() {
         use std::sync::Arc as StdArc;
 
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         // The restore path is not the only poisoned path. The failed turn is
         // also the trailing span of the LIVE agent history, and a
@@ -8284,11 +8284,11 @@ mod tests {
             first_call_done: StdArc<std::sync::atomic::AtomicBool>,
         }
 
-        impl clawcrew_api::attribution::Attributable for RejectingVisionProvider {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for RejectingVisionProvider {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -8300,8 +8300,8 @@ mod tests {
 
         #[async_trait]
         impl ModelProvider for RejectingVisionProvider {
-            fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-                clawcrew_api::model_provider::ProviderCapabilities {
+            fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+                galleon_api::model_provider::ProviderCapabilities {
                     native_tool_calling: true,
                     vision: true,
                     ..Default::default()
@@ -8320,10 +8320,10 @@ mod tests {
 
             async fn chat(
                 &self,
-                request: clawcrew_api::model_provider::ChatRequest<'_>,
+                request: galleon_api::model_provider::ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+            ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
                 self.requests.lock().push(request.messages.to_vec());
                 if !self
                     .first_call_done
@@ -8333,7 +8333,7 @@ mod tests {
                     // first prompt fails after exactly one provider request.
                     anyhow::bail!("400 Bad Request: provider rejected the request");
                 }
-                Ok(clawcrew_api::model_provider::ChatResponse {
+                Ok(galleon_api::model_provider::ChatResponse {
                     text: Some("recovered".to_string()),
                     tool_calls: Vec::new(),
                     usage: None,
@@ -8450,7 +8450,7 @@ mod tests {
 
     #[tokio::test]
     async fn failed_image_with_prompt_tool_results_degrades_media_on_both_paths() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         // A prompt-mode tool round appends its results as a user-role
         // `[Tool results]` carrier, and typed replay preserves it as an
@@ -8573,11 +8573,11 @@ mod tests {
             tool_call_response: String,
         }
 
-        impl clawcrew_api::attribution::Attributable for PromptToolVisionProvider {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for PromptToolVisionProvider {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -8589,8 +8589,8 @@ mod tests {
 
         #[async_trait]
         impl ModelProvider for PromptToolVisionProvider {
-            fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
-                clawcrew_api::model_provider::ProviderCapabilities {
+            fn capabilities(&self) -> galleon_api::model_provider::ProviderCapabilities {
+                galleon_api::model_provider::ProviderCapabilities {
                     native_tool_calling: false,
                     vision: true,
                     ..Default::default()
@@ -8609,21 +8609,21 @@ mod tests {
 
             async fn chat(
                 &self,
-                request: clawcrew_api::model_provider::ChatRequest<'_>,
+                request: galleon_api::model_provider::ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+            ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
                 let call = self.calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                 self.requests.lock().push(request.messages.to_vec());
                 match call {
-                    0 => Ok(clawcrew_api::model_provider::ChatResponse {
+                    0 => Ok(galleon_api::model_provider::ChatResponse {
                         text: Some(self.tool_call_response.clone()),
                         tool_calls: Vec::new(),
                         usage: None,
                         reasoning_content: None,
                     }),
                     1 => anyhow::bail!("400 Bad Request: provider rejected the request"),
-                    _ => Ok(clawcrew_api::model_provider::ChatResponse {
+                    _ => Ok(galleon_api::model_provider::ChatResponse {
                         text: Some("recovered".to_string()),
                         tool_calls: Vec::new(),
                         usage: None,
@@ -8753,7 +8753,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_load_aligns_replay_with_repaired_trimmed_seed() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
 
         // The C1 witness, composed: an older failed turn (user prompt,
         // unmatched native call, durable failure sentinel) followed by a newer
@@ -8943,7 +8943,7 @@ mod tests {
 
     #[test]
     fn cancelled_turn_transcript_swaps_generic_marker_for_structured_event() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         let interrupted =
             galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
@@ -8980,7 +8980,7 @@ mod tests {
 
     #[test]
     fn is_cancellation_event_ignores_real_tool_call_sharing_the_sentinel_name() {
-        use clawcrew_api::model_provider::{ConversationMessage, ToolCall};
+        use galleon_api::model_provider::{ConversationMessage, ToolCall};
 
         // The genuine sentinel is still recognised.
         assert!(
@@ -9151,7 +9151,7 @@ mod tests {
 
     #[tokio::test]
     async fn restored_cancelled_turn_replays_client_cancel_and_hides_marker_from_provider() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
 
         let interrupted =
             galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
@@ -9266,11 +9266,11 @@ mod tests {
             release: StdArc<Notify>,
         }
 
-        impl clawcrew_api::attribution::Attributable for BarrierProvider {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for BarrierProvider {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -9280,7 +9280,7 @@ mod tests {
         }
 
         #[async_trait::async_trait]
-        impl clawcrew_api::model_provider::ModelProvider for BarrierProvider {
+        impl galleon_api::model_provider::ModelProvider for BarrierProvider {
             async fn chat_with_system(
                 &self,
                 _system_prompt: Option<&str>,
@@ -9293,13 +9293,13 @@ mod tests {
 
             async fn chat(
                 &self,
-                _request: clawcrew_api::model_provider::ChatRequest<'_>,
+                _request: galleon_api::model_provider::ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+            ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
                 self.entered.notify_one();
                 self.release.notified().await;
-                Ok(clawcrew_api::model_provider::ChatResponse {
+                Ok(galleon_api::model_provider::ChatResponse {
                     text: Some("done".to_string()),
                     tool_calls: Vec::new(),
                     usage: None,
@@ -9406,11 +9406,11 @@ mod tests {
             entered: StdArc<Notify>,
             release: StdArc<Notify>,
         }
-        impl clawcrew_api::attribution::Attributable for BarrierProvider {
-            fn role(&self) -> clawcrew_api::attribution::Role {
-                clawcrew_api::attribution::Role::Provider(
-                    clawcrew_api::attribution::ProviderKind::Model(
-                        clawcrew_api::attribution::ModelProviderKind::Custom,
+        impl galleon_api::attribution::Attributable for BarrierProvider {
+            fn role(&self) -> galleon_api::attribution::Role {
+                galleon_api::attribution::Role::Provider(
+                    galleon_api::attribution::ProviderKind::Model(
+                        galleon_api::attribution::ModelProviderKind::Custom,
                     ),
                 )
             }
@@ -9419,7 +9419,7 @@ mod tests {
             }
         }
         #[async_trait::async_trait]
-        impl clawcrew_api::model_provider::ModelProvider for BarrierProvider {
+        impl galleon_api::model_provider::ModelProvider for BarrierProvider {
             async fn chat_with_system(
                 &self,
                 _system_prompt: Option<&str>,
@@ -9431,13 +9431,13 @@ mod tests {
             }
             async fn chat(
                 &self,
-                _request: clawcrew_api::model_provider::ChatRequest<'_>,
+                _request: galleon_api::model_provider::ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> anyhow::Result<clawcrew_api::model_provider::ChatResponse> {
+            ) -> anyhow::Result<galleon_api::model_provider::ChatResponse> {
                 self.entered.notify_one();
                 self.release.notified().await;
-                Ok(clawcrew_api::model_provider::ChatResponse {
+                Ok(galleon_api::model_provider::ChatResponse {
                     text: Some("done".to_string()),
                     tool_calls: Vec::new(),
                     usage: None,
@@ -10046,7 +10046,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_resume_restores_without_replay() {
-        use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
+        use galleon_api::model_provider::{ChatMessage, ConversationMessage};
         let cwd = tempfile::tempdir().unwrap();
         let store =
             Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
@@ -10094,7 +10094,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_resume_replays_stored_plan() {
-        use clawcrew_api::plan::{PlanEntry, PlanPriority, PlanStatus};
+        use galleon_api::plan::{PlanEntry, PlanPriority, PlanStatus};
         let cwd = tempfile::tempdir().unwrap();
         let store =
             Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());

@@ -15,9 +15,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, OnceLock, RwLock};
 use std::time::Duration;
 
-use clawcrew_api::attribution::Attributable;
-use clawcrew_api::channel::{Channel, SendMessage};
-use clawcrew_api::webhook::{
+use galleon_api::attribution::Attributable;
+use galleon_api::channel::{Channel, SendMessage};
+use galleon_api::webhook::{
     MAX_WEBHOOK_RESPONSE_BODY_BYTES, RawWebhook, WebhookIdempotency, WebhookOutcome, WebhookReject,
 };
 use galleon_plugins::component::{HostInboundMessage, PluginLimits};
@@ -234,7 +234,7 @@ fn outbound(content: &str, recipient: &str) -> SendMessage {
 fn fixture_webhook(
     body: impl Into<Vec<u8>>,
     secret: &str,
-    cancellation: clawcrew_api::webhook::WebhookCancellation,
+    cancellation: galleon_api::webhook::WebhookCancellation,
     idempotency: Option<WebhookIdempotency>,
 ) -> (
     RawWebhook,
@@ -354,7 +354,7 @@ async fn channel_webhook_component_authenticates_parses_and_host_stamps() {
     let (unauthorized, unauthorized_outcome) = fixture_webhook(
         br#"{"id":"bad","sender":"tester","reply_target":"room","content":"ignored"}"#,
         "wrong-token",
-        clawcrew_api::webhook::WebhookCancellation::new(),
+        galleon_api::webhook::WebhookCancellation::new(),
         None,
     );
     sink.send(unauthorized)
@@ -369,7 +369,7 @@ async fn channel_webhook_component_authenticates_parses_and_host_stamps() {
     let (malformed, malformed_outcome) = fixture_webhook(
         b"not-json".to_vec(),
         "token-main",
-        clawcrew_api::webhook::WebhookCancellation::new(),
+        galleon_api::webhook::WebhookCancellation::new(),
         None,
     );
     sink.send(malformed).await.expect("webhook queue is open");
@@ -382,7 +382,7 @@ async fn channel_webhook_component_authenticates_parses_and_host_stamps() {
     let (valid, valid_outcome) = fixture_webhook(
         br#"{"id":"event-1","sender":"tester","reply_target":"room","content":"hello"}"#,
         "token-main",
-        clawcrew_api::webhook::WebhookCancellation::new(),
+        galleon_api::webhook::WebhookCancellation::new(),
         None,
     );
     sink.send(valid).await.expect("webhook queue is open");
@@ -409,7 +409,7 @@ async fn cancelled_webhook_drops_disposable_parser_and_later_request_recovers() 
     let (tx, mut inbound) = tokio::sync::mpsc::channel(2);
     let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
-    let cancellation = clawcrew_api::webhook::WebhookCancellation::new();
+    let cancellation = galleon_api::webhook::WebhookCancellation::new();
     let (spinning, spinning_outcome) =
         fixture_webhook(b"spin".to_vec(), "token-main", cancellation.clone(), None);
     sink.send(spinning).await.expect("webhook queue is open");
@@ -426,7 +426,7 @@ async fn cancelled_webhook_drops_disposable_parser_and_later_request_recovers() 
     let (valid, valid_outcome) = fixture_webhook(
         br#"{"id":"event-2","sender":"tester","reply_target":"room","content":"recovered"}"#,
         "token-main",
-        clawcrew_api::webhook::WebhookCancellation::new(),
+        galleon_api::webhook::WebhookCancellation::new(),
         None,
     );
     sink.send(valid).await.expect("webhook queue is open");
@@ -466,7 +466,7 @@ async fn host_config_failure_is_unavailable_and_a_later_webhook_recovers() {
     let (unavailable, unavailable_outcome) = fixture_webhook(
         br#"{"id":"unavailable-1","sender":"tester","reply_target":"room","content":"ignored"}"#,
         "token-main",
-        clawcrew_api::webhook::WebhookCancellation::new(),
+        galleon_api::webhook::WebhookCancellation::new(),
         None,
     );
     sink.send(unavailable).await.expect("webhook queue is open");
@@ -483,7 +483,7 @@ async fn host_config_failure_is_unavailable_and_a_later_webhook_recovers() {
     let (valid, valid_outcome) = fixture_webhook(
         br#"{"id":"recovered-1","sender":"tester","reply_target":"room","content":"recovered"}"#,
         "token-main",
-        clawcrew_api::webhook::WebhookCancellation::new(),
+        galleon_api::webhook::WebhookCancellation::new(),
         None,
     );
     sink.send(valid).await.expect("webhook queue is open");
@@ -511,7 +511,7 @@ async fn webhook_sender_policy_runs_before_idempotency_reservation() {
     let idempotency = WebhookIdempotency::new(
         move |_| {
             observed_calls.fetch_add(1, Ordering::SeqCst);
-            clawcrew_api::webhook::WebhookReservation::Unavailable
+            galleon_api::webhook::WebhookReservation::Unavailable
         },
         |_| false,
         |_| false,
@@ -519,7 +519,7 @@ async fn webhook_sender_policy_runs_before_idempotency_reservation() {
     let (blocked, outcome) = fixture_webhook(
         br#"{"id":"blocked-1","sender":"blocked","reply_target":"room","content":"ignored"}"#,
         "token-main",
-        clawcrew_api::webhook::WebhookCancellation::new(),
+        galleon_api::webhook::WebhookCancellation::new(),
         Some(idempotency),
     );
     sink.send(blocked).await.expect("webhook queue is open");
@@ -565,7 +565,7 @@ async fn typed_webhook_replies_bypass_message_policy_and_bound_utf8_output() {
         let (mut request, outcome) = fixture_webhook(
             body,
             "token-main",
-            clawcrew_api::webhook::WebhookCancellation::new(),
+            galleon_api::webhook::WebhookCancellation::new(),
             Some(idempotency.clone()),
         );
         request.method = method.to_string();
@@ -588,7 +588,7 @@ async fn typed_webhook_replies_bypass_message_policy_and_bound_utf8_output() {
     let (mut request, outcome) = fixture_webhook(
         b"",
         "wrong-token",
-        clawcrew_api::webhook::WebhookCancellation::new(),
+        galleon_api::webhook::WebhookCancellation::new(),
         Some(idempotency),
     );
     request.method = "GET".to_string();
@@ -602,7 +602,7 @@ async fn typed_webhook_replies_bypass_message_policy_and_bound_utf8_output() {
 
     let (request, outcome) = fixture_webhook(
         br#"{"id":"sentinel-1","sender":"tester","reply_target":"room","content":"ordinary message","channel":"__webhook_reply__"}"#,
-        "token-main", clawcrew_api::webhook::WebhookCancellation::new(), None,
+        "token-main", galleon_api::webhook::WebhookCancellation::new(), None,
     );
     sink.send(request).await.expect("webhook receiver active");
     assert!(matches!(

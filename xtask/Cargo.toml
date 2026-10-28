@@ -36,7 +36,7 @@ cargo_metadata = "0.18"
 schemars = { version = "1.2" }
 tokio = { version = "1.50", default-features = false, features = ["rt-multi-thread", "macros", "net"] }
 tower-http = { version = "0.6", default-features = false, features = ["fs"] }
-clawcrew-api = { workspace = true }
+galleon-api = { workspace = true }
 galleon-config = { workspace = true }
 galleon-hardware = { workspace = true }
 galleon-providers = { workspace = true }

@@ -10,7 +10,7 @@ use rusqlite::{Connection, OpenFlags, OptionalExtension, TransactionBehavior, pa
 use sha2::{Digest, Sha256};
 use std::io::{self, BufRead, Read};
 use std::path::{Path, PathBuf};
-use clawcrew_api::model_provider::ChatMessage;
+use galleon_api::model_provider::ChatMessage;
 
 /// SQLite-backed session store with FTS5 and WAL mode.
 pub struct SqliteSessionBackend {

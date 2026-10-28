@@ -215,14 +215,14 @@ pub struct CronJobPatch {
     pub shell_output_format: Option<CronShellOutputFormat>,
 }
 
-impl ::clawcrew_api::attribution::Attributable for CronJob {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
+impl ::galleon_api::attribution::Attributable for CronJob {
+    fn role(&self) -> ::galleon_api::attribution::Role {
         let kind = match self.schedule {
-            Schedule::Cron { .. } => ::clawcrew_api::attribution::CronKind::Cron,
-            Schedule::At { .. } => ::clawcrew_api::attribution::CronKind::At,
-            Schedule::Every { .. } => ::clawcrew_api::attribution::CronKind::Interval,
+            Schedule::Cron { .. } => ::galleon_api::attribution::CronKind::Cron,
+            Schedule::At { .. } => ::galleon_api::attribution::CronKind::At,
+            Schedule::Every { .. } => ::galleon_api::attribution::CronKind::Interval,
         };
-        ::clawcrew_api::attribution::Role::Cron(kind)
+        ::galleon_api::attribution::Role::Cron(kind)
     }
     fn alias(&self) -> &str {
         &self.id

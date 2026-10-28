@@ -16,7 +16,7 @@
 
 // Import Discord types from the actual module
 // Note: adjust path if tests are run from a different location
-use clawcrew_api::channel::ChannelMessage;
+use galleon_api::channel::ChannelMessage;
 
 /// Mock Discord Gateway message (MESSAGE_CREATE event, DM)
 fn mock_discord_dm_event(user_id: &str, username: &str, content: &str) -> serde_json::Value {

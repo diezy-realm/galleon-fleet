@@ -140,7 +140,7 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     use {
         crate::security::SecurityPolicy, crate::security::traits::Sandbox, serde_json::json,
-        std::sync::Mutex, clawcrew_api::runtime_traits::RuntimeAdapter, clawcrew_api::tool::Tool,
+        std::sync::Mutex, galleon_api::runtime_traits::RuntimeAdapter, galleon_api::tool::Tool,
         galleon_config::autonomy::AutonomyLevel, galleon_config::schema::CodexCliConfig,
         galleon_tools::codex_cli::CodexCliTool,
     };
@@ -177,8 +177,8 @@ mod tests {
             true
         }
 
-        fn shell_dialect(&self) -> clawcrew_api::runtime_traits::ShellDialect {
-            clawcrew_api::runtime_traits::ShellDialect::Posix
+        fn shell_dialect(&self) -> galleon_api::runtime_traits::ShellDialect {
+            galleon_api::runtime_traits::ShellDialect::Posix
         }
 
         fn build_shell_command(
@@ -318,8 +318,8 @@ mod tests {
             true
         }
 
-        fn shell_dialect(&self) -> clawcrew_api::runtime_traits::ShellDialect {
-            clawcrew_api::runtime_traits::ShellDialect::Posix
+        fn shell_dialect(&self) -> galleon_api::runtime_traits::ShellDialect {
+            galleon_api::runtime_traits::ShellDialect::Posix
         }
 
         fn build_shell_command(

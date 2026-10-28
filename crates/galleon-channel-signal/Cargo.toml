@@ -18,7 +18,7 @@ publish = true
 # The remaining ceiling is approval-prompt i18n (needs the runtime Fluent
 # catalogue) and structured logging/env-proxy — documented in lib.rs.
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 anyhow = "1.0"
 async-trait = "0.1"
 futures-util = { version = "0.3", default-features = false }

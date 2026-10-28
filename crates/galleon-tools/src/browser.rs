@@ -11,7 +11,7 @@ use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::process::Command;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 
 /// Computer-use sidecar settings.

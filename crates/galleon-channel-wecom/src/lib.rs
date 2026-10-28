@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use async_trait::async_trait;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 async fn ensure_success(
     resp: reqwest::Response,
@@ -74,9 +74,9 @@ impl WeComChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for WeComChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::WeCom)
+impl ::galleon_api::attribution::Attributable for WeComChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::WeCom)
     }
     fn alias(&self) -> &str {
         &self.alias

@@ -4,7 +4,7 @@ use axum::body::Body;
 use axum::http::{HeaderValue, Request, Uri};
 use axum::response::IntoResponse;
 #[cfg(feature = "channel-whatsapp-cloud")]
-use clawcrew_api::channel::ChannelMessage;
+use galleon_api::channel::ChannelMessage;
 use galleon_memory::{Memory, MemoryCategory, MemoryEntry};
 use galleon_providers::ModelProvider;
 use galleon_tools::tool_search::{mcp_tool_access_policy, register_eager_mcp_tool_if_allowed};
@@ -63,7 +63,7 @@ fn generate_test_secret() -> String {
 }
 
 struct NamedMcpMockTool(&'static str);
-clawcrew_api::mock_tool_attribution!(NamedMcpMockTool);
+galleon_api::mock_tool_attribution!(NamedMcpMockTool);
 #[async_trait]
 impl tools::Tool for NamedMcpMockTool {
     fn name(&self) -> &str {
@@ -426,7 +426,7 @@ pub(super) fn admin_paircode_state(
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -1415,7 +1415,7 @@ async fn metrics_endpoint_returns_hint_when_prometheus_is_disabled() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -1461,13 +1461,13 @@ async fn metrics_endpoint_returns_hint_when_prometheus_is_disabled() {
 #[tokio::test]
 async fn metrics_endpoint_renders_prometheus_output() {
     let event_tx = tokio::sync::broadcast::channel(16).0;
-    let prom = clawcrew_api::observability_traits::NoopObserver;
-    clawcrew_api::observability_traits::Observer::record_event(
+    let prom = galleon_api::observability_traits::NoopObserver;
+    galleon_api::observability_traits::Observer::record_event(
         &prom,
-        &clawcrew_api::observability_traits::ObserverEvent::HeartbeatTick,
+        &galleon_api::observability_traits::ObserverEvent::HeartbeatTick,
     );
 
-    let observer: Arc<dyn clawcrew_api::observability_traits::Observer> = Arc::new(prom);
+    let observer: Arc<dyn galleon_api::observability_traits::Observer> = Arc::new(prom);
     let state = AppState {
         config: Arc::new(RwLock::new(Config::default())),
         config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
@@ -1968,9 +1968,9 @@ impl Memory for MockMemory {
         Ok(Vec::new())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for MockMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::InMemory)
+impl ::galleon_api::attribution::Attributable for MockMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::InMemory)
     }
     fn alias(&self) -> &str {
         "MockMemory"
@@ -1995,11 +1995,11 @@ impl ModelProvider for MockModelProvider {
         Ok("ok".into())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for MockModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -2010,15 +2010,15 @@ impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
 
 #[derive(Default)]
 struct CapturingObserver {
-    events: Mutex<Vec<clawcrew_api::observability_traits::ObserverEvent>>,
+    events: Mutex<Vec<galleon_api::observability_traits::ObserverEvent>>,
 }
 
-impl clawcrew_api::observability_traits::Observer for CapturingObserver {
-    fn record_event(&self, event: &clawcrew_api::observability_traits::ObserverEvent) {
+impl galleon_api::observability_traits::Observer for CapturingObserver {
+    fn record_event(&self, event: &galleon_api::observability_traits::ObserverEvent) {
         self.events.lock().push(event.clone());
     }
 
-    fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {}
+    fn record_metric(&self, _metric: &galleon_api::observability_traits::ObserverMetric) {}
 
     fn name(&self) -> &str {
         "capturing"
@@ -2116,9 +2116,9 @@ impl Memory for TrackingMemory {
         Ok(Vec::new())
     }
 }
-impl ::clawcrew_api::attribution::Attributable for TrackingMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::InMemory)
+impl ::galleon_api::attribution::Attributable for TrackingMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::InMemory)
     }
     fn alias(&self) -> &str {
         "TrackingMemory"
@@ -2164,7 +2164,7 @@ fn sse_test_state(model_provider: Arc<dyn ModelProvider>) -> AppState {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -2730,11 +2730,11 @@ impl ModelProvider for HangingProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for HangingProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for HangingProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -3744,7 +3744,7 @@ async fn webhook_idempotency_skips_duplicate_provider_calls() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -4656,7 +4656,7 @@ async fn webhook_unknown_agent_rejected_before_dispatch() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -4721,7 +4721,7 @@ async fn webhook_explicit_agent_reports_model_without_owning_lifecycle() {
     let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
     let memory: Arc<dyn Memory> = Arc::new(MockMemory);
     let observer_impl = Arc::new(CapturingObserver::default());
-    let observer: Arc<dyn clawcrew_api::observability_traits::Observer> = observer_impl.clone();
+    let observer: Arc<dyn galleon_api::observability_traits::Observer> = observer_impl.clone();
 
     let mut config = Config::default();
     config.providers.models.anthropic.insert(
@@ -4826,10 +4826,10 @@ async fn webhook_explicit_agent_reports_model_without_owning_lifecycle() {
     assert!(
         !events.iter().any(|event| matches!(
             event,
-            clawcrew_api::observability_traits::ObserverEvent::AgentStart { .. }
-                | clawcrew_api::observability_traits::ObserverEvent::AgentEnd { .. }
-                | clawcrew_api::observability_traits::ObserverEvent::LlmRequest { .. }
-                | clawcrew_api::observability_traits::ObserverEvent::LlmResponse { .. }
+            galleon_api::observability_traits::ObserverEvent::AgentStart { .. }
+                | galleon_api::observability_traits::ObserverEvent::AgentEnd { .. }
+                | galleon_api::observability_traits::ObserverEvent::LlmRequest { .. }
+                | galleon_api::observability_traits::ObserverEvent::LlmResponse { .. }
         )),
         "the HTTP handler must not create a second agent lifecycle; events were: {events:?}"
     );
@@ -4875,7 +4875,7 @@ async fn webhook_autosave_stores_distinct_keys_per_request() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -5081,7 +5081,7 @@ async fn webhook_secret_hash_rejects_missing_header() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -5167,7 +5167,7 @@ async fn webhook_secret_hash_rejects_invalid_header() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -5258,7 +5258,7 @@ async fn webhook_secret_hash_accepts_valid_header() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -5354,7 +5354,7 @@ async fn nextcloud_talk_webhook_returns_not_found_when_not_configured() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -5445,7 +5445,7 @@ async fn nextcloud_talk_webhook_rejects_invalid_signature() {
         nextcloud_talk_webhook_secret: HashMap::from([(alias.to_string(), Arc::from(secret))]),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -5544,7 +5544,7 @@ async fn nextcloud_talk_webhook_rejects_when_no_secret_is_configured() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -5611,11 +5611,11 @@ impl ModelProvider for SlowProvider {
     }
 }
 #[cfg(feature = "channel-nextcloud")]
-impl ::clawcrew_api::attribution::Attributable for SlowProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
+impl ::galleon_api::attribution::Attributable for SlowProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(
+            ::galleon_api::attribution::ProviderKind::Model(
+                ::galleon_api::attribution::ModelProviderKind::Custom,
             ),
         )
     }
@@ -5694,7 +5694,7 @@ async fn nextcloud_talk_webhook_returns_before_llm_call_completes() {
         tui_registry: None,
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -6572,7 +6572,7 @@ fn linq_test_state_with_config(
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -6656,7 +6656,7 @@ async fn linq_webhook_returns_not_found_when_no_channels_configured() {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,
@@ -6909,9 +6909,9 @@ impl Memory for CapturingMemory {
 }
 
 #[cfg(feature = "channel-linq")]
-impl ::clawcrew_api::attribution::Attributable for CapturingMemory {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Memory(::clawcrew_api::attribution::MemoryKind::InMemory)
+impl ::galleon_api::attribution::Attributable for CapturingMemory {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Memory(::galleon_api::attribution::MemoryKind::InMemory)
     }
     fn alias(&self) -> &str {
         "CapturingMemory"
@@ -6933,7 +6933,7 @@ impl Channel for CapturingChannel {
         "capturing"
     }
 
-    async fn send(&self, message: &clawcrew_api::channel::SendMessage) -> anyhow::Result<()> {
+    async fn send(&self, message: &galleon_api::channel::SendMessage) -> anyhow::Result<()> {
         self.sends
             .lock()
             .push((message.content.clone(), message.recipient.clone()));
@@ -6942,17 +6942,17 @@ impl Channel for CapturingChannel {
 
     async fn listen(
         &self,
-        _tx: tokio::sync::mpsc::Sender<clawcrew_api::channel::ChannelMessage>,
+        _tx: tokio::sync::mpsc::Sender<galleon_api::channel::ChannelMessage>,
     ) -> anyhow::Result<()> {
         Ok(())
     }
 }
 
 #[cfg(feature = "channel-linq")]
-impl ::clawcrew_api::attribution::Attributable for CapturingChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
+impl ::galleon_api::attribution::Attributable for CapturingChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Webhook,
         )
     }
     fn alias(&self) -> &str {
@@ -6961,8 +6961,8 @@ impl ::clawcrew_api::attribution::Attributable for CapturingChannel {
 }
 
 #[cfg(feature = "channel-linq")]
-fn test_channel_message(sender: &str, content: &str) -> clawcrew_api::channel::ChannelMessage {
-    clawcrew_api::channel::ChannelMessage {
+fn test_channel_message(sender: &str, content: &str) -> galleon_api::channel::ChannelMessage {
+    galleon_api::channel::ChannelMessage {
         id: "msg-1".into(),
         sender: sender.into(),
         platform_sender_id: None,
@@ -7265,7 +7265,7 @@ fn webhook_baseline_state() -> AppState {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
+        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
         cost_tracker: None,

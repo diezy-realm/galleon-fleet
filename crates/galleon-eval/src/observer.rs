@@ -1,7 +1,7 @@
 //! An [`Observer`] that records tool-call outcomes and token usage from a run.
 
 use std::sync::{Mutex, MutexGuard};
-use clawcrew_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
+use galleon_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
 
 /// One dispatched tool call as observed at the dispatch boundary.
 ///
@@ -118,7 +118,7 @@ impl Observer for RecordingObserver {
 mod tests {
     use super::*;
     use std::time::Duration;
-    use clawcrew_api::observability_traits::{Observer, ObserverEvent};
+    use galleon_api::observability_traits::{Observer, ObserverEvent};
 
     fn tool_call_event(tool: &str, success: bool) -> ObserverEvent {
         tool_call_event_with(tool, success, None, None)

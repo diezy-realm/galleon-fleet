@@ -408,7 +408,7 @@ fn fail(err: anyhow::Error, raw_response: impl Into<String>) -> BatchFailure {
 /// builds no HTTP. One request per source string keeps the per-entry mapping
 /// unambiguous (the .po model is one msgid -> one msgstr).
 async fn translate_batch(
-    provider: &dyn clawcrew_api::model_provider::ModelProvider,
+    provider: &dyn galleon_api::model_provider::ModelProvider,
     model: &str,
     locale: &str,
     batch: &[&str],

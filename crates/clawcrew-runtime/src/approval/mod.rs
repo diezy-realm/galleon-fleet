@@ -1065,7 +1065,7 @@ mod tests {
 
     #[test]
     fn channel_approve_maps_to_yes() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
         let mapped = match ChannelApprovalResponse::Approve {
             ChannelApprovalResponse::Approve => ApprovalResponse::Yes,
             ChannelApprovalResponse::AlwaysApprove => ApprovalResponse::Always,
@@ -1079,7 +1079,7 @@ mod tests {
 
     #[test]
     fn channel_always_approve_maps_to_always() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
         let mapped = match ChannelApprovalResponse::AlwaysApprove {
             ChannelApprovalResponse::Approve => ApprovalResponse::Yes,
             ChannelApprovalResponse::AlwaysApprove => ApprovalResponse::Always,
@@ -1093,7 +1093,7 @@ mod tests {
 
     #[test]
     fn channel_deny_maps_to_no() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
         let mapped = match ChannelApprovalResponse::Deny {
             ChannelApprovalResponse::Approve => ApprovalResponse::Yes,
             ChannelApprovalResponse::AlwaysApprove => ApprovalResponse::Always,
@@ -1107,7 +1107,7 @@ mod tests {
 
     #[test]
     fn channel_deny_with_edit_maps_to_replace_with() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
         let mapped = match (ChannelApprovalResponse::DenyWithEdit {
             replacement: "x".to_string(),
         }) {
@@ -1130,7 +1130,7 @@ mod tests {
 
     #[test]
     fn channel_approval_request_serde_roundtrip() {
-        use clawcrew_api::channel::ChannelApprovalRequest;
+        use galleon_api::channel::ChannelApprovalRequest;
         let req = ChannelApprovalRequest {
             tool_name: "shell".into(),
             arguments_summary: "command: ls -la".into(),
@@ -1145,7 +1145,7 @@ mod tests {
 
     #[test]
     fn channel_approval_response_serde_roundtrip() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
         // AlwaysApprove serializes to "always" to match the CLI-side
         // ApprovalResponse::Always and keep audit logs consistent.
         let json = serde_json::to_string(&ChannelApprovalResponse::AlwaysApprove).unwrap();

@@ -60,7 +60,7 @@ impl ThinkingLevel {
     }
 }
 
-pub use clawcrew_api::model_provider::{
+pub use galleon_api::model_provider::{
     MAX_BUDGET_TOKENS, MIN_BUDGET_TOKENS, NativeThinkingParams,
 };
 
@@ -86,12 +86,12 @@ impl HasPropKind for ThinkingDisplayMode {
 impl ThinkingDisplayMode {
     /// Map to the wire-level `ThinkingDisplay`. `Off` maps to `None` so
     /// requests with the default setting carry no `display` key at all.
-    pub fn to_display(self) -> Option<clawcrew_api::model_provider::ThinkingDisplay> {
+    pub fn to_display(self) -> Option<galleon_api::model_provider::ThinkingDisplay> {
         match self {
             Self::Off => None,
-            Self::Omitted => Some(clawcrew_api::model_provider::ThinkingDisplay::Omitted),
-            Self::Updates => Some(clawcrew_api::model_provider::ThinkingDisplay::Updates),
-            Self::Summarized => Some(clawcrew_api::model_provider::ThinkingDisplay::Summarized),
+            Self::Omitted => Some(galleon_api::model_provider::ThinkingDisplay::Omitted),
+            Self::Updates => Some(galleon_api::model_provider::ThinkingDisplay::Updates),
+            Self::Summarized => Some(galleon_api::model_provider::ThinkingDisplay::Summarized),
         }
     }
 }

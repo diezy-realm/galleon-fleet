@@ -59,9 +59,9 @@ pub(crate) fn set_runtime_approved_arg(
 /// `attribution_span!` carrying the agent's role + alias.
 pub struct AgentAttribution<'a>(pub &'a str);
 
-impl ::clawcrew_api::attribution::Attributable for AgentAttribution<'_> {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Agent
+impl ::galleon_api::attribution::Attributable for AgentAttribution<'_> {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Agent
     }
     fn alias(&self) -> &str {
         self.0

@@ -9,7 +9,7 @@ use axum::{
         sse::{Event, KeepAlive, Sse},
     },
 };
-use clawcrew_api::control_plane::{ControlPlaneHandle, TaskRecord, TaskStatus};
+use galleon_api::control_plane::{ControlPlaneHandle, TaskRecord, TaskStatus};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -19,7 +19,7 @@ fn resolve_control_plane(state: &AppState) -> Option<ControlPlaneHandle> {
     state
         .control_plane
         .clone()
-        .or_else(|| clawcrew_api::control_plane::control_plane().cloned())
+        .or_else(|| galleon_api::control_plane::control_plane().cloned())
 }
 
 const MAX_PAGE_SIZE: u32 = 100;
@@ -499,8 +499,8 @@ fn redact_value(value: Value) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::control_plane::task_registry::CancellationState;
-    use clawcrew_api::control_plane::{TaskKind, TaskRecord, TaskStatus};
+    use galleon_api::control_plane::task_registry::CancellationState;
+    use galleon_api::control_plane::{TaskKind, TaskRecord, TaskStatus};
 
     fn rec(id: &str, agent: &str, status: TaskStatus, finished: Option<&str>) -> TaskRecord {
         TaskRecord {

@@ -5,8 +5,8 @@ use parking_lot::RwLock;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use clawcrew_api::channel::Channel;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::channel::Channel;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::policy::ToolOperation;
 
@@ -206,7 +206,7 @@ impl Tool for ReactionTool {
 mod tests {
     use super::*;
     use std::sync::atomic::{AtomicBool, Ordering};
-    use clawcrew_api::channel::{ChannelMessage, SendMessage};
+    use galleon_api::channel::{ChannelMessage, SendMessage};
 
     struct MockChannel {
         reaction_added: AtomicBool,
@@ -235,10 +235,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for MockChannel {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Webhook,
+    impl ::galleon_api::attribution::Attributable for MockChannel {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Webhook,
             )
         }
         fn alias(&self) -> &str {

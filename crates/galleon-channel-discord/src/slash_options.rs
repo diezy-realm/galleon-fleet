@@ -21,8 +21,8 @@ impl OptKind {
     /// The Discord wire projection of a canonical [`SlashOptionKind`]. Exhaustive
     /// so a new canonical variant forces a wire mapping here rather than silently
     /// dropping.
-    pub fn from_kind(kind: clawcrew_api::skill::SlashOptionKind) -> Self {
-        use clawcrew_api::skill::SlashOptionKind as K;
+    pub fn from_kind(kind: galleon_api::skill::SlashOptionKind) -> Self {
+        use galleon_api::skill::SlashOptionKind as K;
         match kind {
             K::String => Self::String,
             K::Integer => Self::Integer,
@@ -490,7 +490,7 @@ mod tests {
 
     #[test]
     fn from_kind_projects_every_canonical_variant_to_matching_wire_type() {
-        use clawcrew_api::skill::SlashOptionKind as K;
+        use galleon_api::skill::SlashOptionKind as K;
         for kind in K::ALL {
             let projected = OptKind::from_kind(kind);
             assert_eq!(

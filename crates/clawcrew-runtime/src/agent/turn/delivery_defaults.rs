@@ -366,7 +366,7 @@ mod tests {
             vec![],
             std::sync::Arc::new(parking_lot::RwLock::new(std::collections::HashMap::new())),
         );
-        let schema = clawcrew_api::tool::Tool::parameters_schema(&tool);
+        let schema = galleon_api::tool::Tool::parameters_schema(&tool);
         assert!(
             schema["properties"]["channel"].is_object(),
             "escalate_to_human must declare the injected `channel` parameter; schema: {schema}"

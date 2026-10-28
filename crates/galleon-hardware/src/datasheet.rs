@@ -7,9 +7,9 @@ use cap_std::fs::{Dir, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
-use clawcrew_api::attribution::ToolKind;
-use clawcrew_api::tool::{Tool, ToolResult};
-use clawcrew_api::tool_attribution;
+use galleon_api::attribution::ToolKind;
+use galleon_api::tool::{Tool, ToolResult};
+use galleon_api::tool_attribution;
 
 tool_attribution!(DatasheetTool, ToolKind::Plugin);
 

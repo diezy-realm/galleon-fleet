@@ -4,16 +4,16 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
-use clawcrew_api::elicitation::{
+use galleon_api::elicitation::{
     ElicitationCapabilities, ElicitationMode, ElicitationRequest, ElicitationResponse,
     multi_select_schema, single_select_schema,
 };
 use galleon_i18n as i18n;
 
-use clawcrew_api::jsonrpc::RpcOutbound;
+use galleon_api::jsonrpc::RpcOutbound;
 
 /// Per-session ACP back-channel. One instance is registered into each tool's
 /// channel map at session/new time and torn down on session/stop.
@@ -157,7 +157,7 @@ impl AcpChannel {
         match parsed {
             ElicitationResponse::Accept { content } => {
                 let text =
-                    clawcrew_api::elicitation::decode_single_select_accept(&content, choices)?;
+                    galleon_api::elicitation::decode_single_select_accept(&content, choices)?;
                 Ok(Some(text))
             }
             ElicitationResponse::Decline | ElicitationResponse::Cancel => Ok(None),
@@ -165,10 +165,10 @@ impl AcpChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for AcpChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::AcpChannel,
+impl ::galleon_api::attribution::Attributable for AcpChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::AcpChannel,
         )
     }
     fn alias(&self) -> &str {
@@ -400,7 +400,7 @@ impl Channel for AcpChannel {
         match parsed {
             ElicitationResponse::Accept { content } => {
                 let texts =
-                    clawcrew_api::elicitation::decode_multi_select_accept(&content, choices)?;
+                    galleon_api::elicitation::decode_multi_select_accept(&content, choices)?;
                 Ok(Some(texts))
             }
             ElicitationResponse::Decline | ElicitationResponse::Cancel => Ok(None),
@@ -424,7 +424,7 @@ impl Channel for AcpChannel {
         &self,
         _recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let is_edit_tool = matches!(request.tool_name.as_str(), "file_edit" | "file_write");
         let mut options = vec![
             json!({
@@ -528,15 +528,15 @@ impl Channel for AcpChannel {
                     other => anyhow::bail!("ACP returned unknown permission optionId: {other}"),
                 };
                 Ok(Some(
-                    clawcrew_api::channel::AttributedApprovalResponse::operator(response),
+                    galleon_api::channel::AttributedApprovalResponse::operator(response),
                 ))
             }
             // The client withdrew the prompt; nobody chose anything. Still a
             // deny, but the runtime's, not the operator's.
             "cancelled" => Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::Unreachable,
+                    galleon_api::channel::ApprovalSource::Unreachable,
                 ),
             )),
             other => anyhow::bail!("ACP returned unexpected permission outcome: {other}"),
@@ -548,8 +548,8 @@ impl Channel for AcpChannel {
 mod tests {
     use super::*;
     use tokio::sync::mpsc;
-    use clawcrew_api::elicitation::single_select_schema_with_property_name;
-    use clawcrew_api::jsonrpc::JSONRPC_VERSION;
+    use galleon_api::elicitation::single_select_schema_with_property_name;
+    use galleon_api::jsonrpc::JSONRPC_VERSION;
 
     fn make_rpc() -> (Arc<RpcOutbound>, mpsc::Receiver<String>) {
         let (tx, rx) = mpsc::channel::<String>(16);

@@ -1,6 +1,6 @@
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
-use clawcrew_api::channel::{Channel, ChannelApprovalResponse, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelApprovalResponse, ChannelMessage, SendMessage};
 pub use galleon_config::schema::MattermostListenMode;
 use futures_util::{SinkExt, StreamExt, stream::SplitSink, stream::SplitStream};
 use parking_lot::Mutex;
@@ -1187,10 +1187,10 @@ impl MattermostChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MattermostChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Mattermost,
+impl ::galleon_api::attribution::Attributable for MattermostChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Mattermost,
         )
     }
     fn alias(&self) -> &str {
@@ -1302,7 +1302,7 @@ impl Channel for MattermostChannel {
         Ok(())
     }
 
-    fn room_context(&self, room_id: &str) -> Option<clawcrew_api::channel::ChannelRoomContext> {
+    fn room_context(&self, room_id: &str) -> Option<galleon_api::channel::ChannelRoomContext> {
         if !self.purpose_as_instructions {
             return None;
         }
@@ -1311,7 +1311,7 @@ impl Channel for MattermostChannel {
         // per thread, so strip the thread half before looking one up.
         let room_id = recipient_channel_id(room_id);
         let purpose = self.room_purposes.lock().get(room_id).cloned()?;
-        let context = clawcrew_api::channel::ChannelRoomContext {
+        let context = galleon_api::channel::ChannelRoomContext {
             purpose: Some(purpose),
         };
         (!context.is_empty()).then_some(context)
@@ -1320,7 +1320,7 @@ impl Channel for MattermostChannel {
     async fn request_approval(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
+        request: &galleon_api::channel::ChannelApprovalRequest,
     ) -> Result<Option<ChannelApprovalResponse>> {
         Ok(self
             .request_approval_attributed(recipient, request)
@@ -1343,8 +1343,8 @@ impl Channel for MattermostChannel {
     async fn request_approval_attributed(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let (tx, rx) = tokio::sync::oneshot::channel();
         // Allocation and registration are one critical section, and the token is
         // drawn so it collides with neither a live prompt nor one still inside
@@ -1415,15 +1415,15 @@ impl Channel for MattermostChannel {
         let attributed =
             match tokio::time::timeout(Duration::from_secs(self.approval_timeout_secs), rx).await {
                 Ok(Ok(response)) => {
-                    clawcrew_api::channel::AttributedApprovalResponse::operator(response)
+                    galleon_api::channel::AttributedApprovalResponse::operator(response)
                 }
-                Ok(Err(_)) => clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                Ok(Err(_)) => galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::Unreachable,
+                    galleon_api::channel::ApprovalSource::Unreachable,
                 ),
-                Err(_) => clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                Err(_) => galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::TimedOut,
+                    galleon_api::channel::ApprovalSource::TimedOut,
                 ),
             };
         // One retirement for every outcome. The resolving path already removed

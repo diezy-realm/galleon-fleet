@@ -30,8 +30,8 @@ use matrix_sdk::{
     },
 };
 
-use clawcrew_api::channel::DRAFT_PLACEHOLDER;
-use clawcrew_api::channel::{
+use galleon_api::channel::DRAFT_PLACEHOLDER;
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, DraftProgress,
     DraftProgressKind, RoomCreationOptions, RoomVisibility, SendMessage,
 };
@@ -333,7 +333,7 @@ mod allowlist {
 
 // ─── approval ──────────────────────────────────────────────────────────────
 mod approval {
-    use clawcrew_api::channel::{ChannelApprovalResponse, SendMessage};
+    use galleon_api::channel::{ChannelApprovalResponse, SendMessage};
     use rand::{Rng, RngExt};
 
     pub(super) const TOKEN_LEN: usize = 8;
@@ -509,7 +509,7 @@ mod streaming {
     };
 
     use anyhow::{Result, bail};
-    use clawcrew_api::channel::{
+    use galleon_api::channel::{
         DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, is_thinking_status_text, thinking_status_round,
     };
     use matrix_sdk::ruma::{OwnedEventId, OwnedRoomId};
@@ -2204,7 +2204,7 @@ mod inbound {
     use tokio::sync::{Mutex as TokioMutex, RwLock as TokioRwLock, mpsc};
 
     use super::{allowlist, approval, context as ctx_mod, mention};
-    use clawcrew_api::{channel::ChannelMessage, media::MediaAttachment};
+    use galleon_api::{channel::ChannelMessage, media::MediaAttachment};
     use galleon_config::schema::MatrixConfig;
 
     pub(super) const SYNC_LONGPOLL_TIMEOUT: Duration = Duration::from_secs(30);
@@ -3159,7 +3159,7 @@ mod outbound {
     use tokio::sync::{Mutex as TokioMutex, RwLock as TokioRwLock};
 
     use super::{client, context as ctx_mod, markers};
-    use clawcrew_api::{channel::SendMessage, media::MediaAttachment};
+    use galleon_api::{channel::SendMessage, media::MediaAttachment};
 
     pub(super) type ReactionKey = (OwnedRoomId, OwnedEventId, String);
 
@@ -4893,9 +4893,9 @@ impl MatrixChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MatrixChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Matrix)
+impl ::galleon_api::attribution::Attributable for MatrixChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Matrix)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -5533,7 +5533,7 @@ impl Channel for MatrixChannel {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let client = self.ensure_client().await?;
         let destination = client::resolve_room(client, &self.alias_cache, recipient)
             .await?
@@ -5571,18 +5571,18 @@ impl Channel for MatrixChannel {
         // runtime denying because nobody replied, and must say so.
         match result {
             Ok(Ok(resp)) => Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::operator(resp),
+                galleon_api::channel::AttributedApprovalResponse::operator(resp),
             )),
             Ok(Err(_)) => Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::Unreachable,
+                    galleon_api::channel::ApprovalSource::Unreachable,
                 ),
             )),
             Err(_) => Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::TimedOut,
+                    galleon_api::channel::ApprovalSource::TimedOut,
                 ),
             )),
         }

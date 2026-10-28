@@ -14,8 +14,8 @@
 use async_trait::async_trait;
 use serde_json::{Value, json};
 use std::sync::Arc;
-use clawcrew_api::channel::ForgeApiRequest;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::channel::ForgeApiRequest;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::policy::{SecurityPolicy, ToolOperation};
 
 use crate::reaction::ChannelMapHandle;
@@ -639,7 +639,7 @@ impl GitForgeTool {
     fn resolve_channel(
         &self,
         name: &str,
-    ) -> Result<Arc<dyn clawcrew_api::channel::Channel>, String> {
+    ) -> Result<Arc<dyn galleon_api::channel::Channel>, String> {
         let map = self.channels.read();
         if map.is_empty() {
             return Err(ferr("tool-git-forge-error-no-channels"));
@@ -1031,7 +1031,7 @@ mod tests {
     use super::*;
     use parking_lot::{Mutex, RwLock};
     use std::collections::HashMap;
-    use clawcrew_api::channel::{
+    use galleon_api::channel::{
         Channel, ChannelMessage, ForgeApiRequest, ForgeApiResponse, SendMessage,
     };
 
@@ -1051,10 +1051,10 @@ mod tests {
         }
     }
 
-    impl ::clawcrew_api::attribution::Attributable for ForgeMock {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Channel(
-                ::clawcrew_api::attribution::ChannelKind::Git,
+    impl ::galleon_api::attribution::Attributable for ForgeMock {
+        fn role(&self) -> ::galleon_api::attribution::Role {
+            ::galleon_api::attribution::Role::Channel(
+                ::galleon_api::attribution::ChannelKind::Git,
             )
         }
         fn alias(&self) -> &str {

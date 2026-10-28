@@ -399,7 +399,7 @@ pub enum ElicitationShape {
 impl ElicitationShape {
     /// Best-effort decoder. The daemon always emits the
     /// `single_select_schema` / `multi_select_schema` shape from
-    /// `clawcrew-api`, so a return of `None` means a future schema
+    /// `galleon-api`, so a return of `None` means a future schema
     /// shape we don't yet render — the TUI auto-cancels in that case.
     pub fn from_schema(schema: &Value) -> Option<Self> {
         let properties = schema.get("properties")?.as_object()?;

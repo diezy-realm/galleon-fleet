@@ -11,7 +11,7 @@ publish = true
 
 [dependencies]
 galleon-log.workspace = true
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 galleon-config.workspace = true
 galleon-spawn.workspace = true
 galleon-tools.workspace = true

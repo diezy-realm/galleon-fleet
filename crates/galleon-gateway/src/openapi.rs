@@ -101,12 +101,12 @@ pub fn build_spec() -> serde_json::Value {
             "UpgradeAcceptedResponse": schema_value::<UpgradeAcceptedResponse>(),
             "UpgradeStatusResponse":  schema_value::<UpgradeStatusResponse>(),
             "VersionError":           schema_value::<VersionErrorResponse>(),
-            "Sop":              schema_value::<clawcrew_api::sop::Sop>(),
+            "Sop":              schema_value::<galleon_api::sop::Sop>(),
             "SopGraph":         schema_value::<galleon_sop_graph::SopGraph>(),
             "GraphLegend":      schema_value::<galleon_sop_graph::GraphLegend>(),
             "RunOverlay":       schema_value::<galleon_sop_graph::RunOverlay>(),
-            "ApprovalDecision": schema_value::<clawcrew_api::sop::ApprovalDecision>(),
-            "TriggerSourceRegistry": schema_value::<clawcrew_api::sop::TriggerSourceRegistry>(),
+            "ApprovalDecision": schema_value::<galleon_api::sop::ApprovalDecision>(),
+            "TriggerSourceRegistry": schema_value::<galleon_api::sop::TriggerSourceRegistry>(),
             "SlashOptionKindsResult": schema_value::<crate::api_skills::SlashOptionKindsResult>(),
             "StatusResponse": response_schema_value::<StatusResponse>(),
         },
@@ -437,9 +437,9 @@ pub fn build_spec() -> serde_json::Value {
     #[cfg(feature = "a2a")]
     augment_spec_with_a2a(
         &mut spec,
-        schema_value::<clawcrew_api::a2a_wire::JsonRpcRequest>(),
-        schema_value::<clawcrew_api::a2a_wire::Task>(),
-        schema_value::<clawcrew_api::a2a_wire::Message>(),
+        schema_value::<galleon_api::a2a_wire::JsonRpcRequest>(),
+        schema_value::<galleon_api::a2a_wire::Task>(),
+        schema_value::<galleon_api::a2a_wire::Message>(),
     );
     flatten_defs_into_components(&mut spec);
     spec

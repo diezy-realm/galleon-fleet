@@ -309,7 +309,7 @@ pub fn ftl_files_in(locale_dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
 pub fn build_model_provider(
     provider_name: &str,
     config_dir: Option<&str>,
-) -> anyhow::Result<(Box<dyn clawcrew_api::model_provider::ModelProvider>, String)> {
+) -> anyhow::Result<(Box<dyn galleon_api::model_provider::ModelProvider>, String)> {
     let home =
         std::env::var("HOME").unwrap_or_else(|_| std::env::var("USERPROFILE").unwrap_or_default());
     let dir_candidates: Vec<std::path::PathBuf> = match config_dir {

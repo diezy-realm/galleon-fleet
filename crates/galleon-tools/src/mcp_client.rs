@@ -2288,7 +2288,7 @@ mod tests {
     async fn mcp_tool_wrapper_execute_materializes_blob_and_preserves_full_result() {
         use crate::mcp_tool::McpToolWrapper;
         use base64::Engine as _;
-        use clawcrew_api::tool::Tool as _;
+        use galleon_api::tool::Tool as _;
 
         let dir = tempfile::tempdir().unwrap();
         let pdf_b64 = base64::engine::general_purpose::STANDARD.encode(b"%PDF-1.4 hello world");
