@@ -9,7 +9,7 @@ services:
       - "127.0.0.1:8080:8080"
     environment:
       CLAWCREW_providers__models__openrouter__agent_demo__api_key: "${OPENROUTER_API_KEY:-}"
-      RUST_LOG: "${RUST_LOG:-clawcrew=info,clawcrew_hardware=info,esp32_sim=info}"
+      RUST_LOG: "${RUST_LOG:-clawcrew=info,galleon_hardware=info,esp32_sim=info}"
     volumes:
       # Mount the demo config (constrained hardware-only surface).
       - ./clawcrew.toml.example:/app/data/config/config.toml:ro

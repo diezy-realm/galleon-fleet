@@ -37,7 +37,7 @@
 | `scripts` | 60 | 671 | `rename` / `delete` |
 | `standard-docs` | 72 | 660 | `rename` / `delete` |
 | `tests` | 64 | 657 | `rename` / `delete` |
-| `crates/clawcrew-hardware` | 33 | 547 | `rename` / `delete` |
+| `crates/galleon-hardware` | 33 | 547 | `rename` / `delete` |
 
 ---
 

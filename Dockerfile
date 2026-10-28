@@ -128,8 +128,8 @@ RUN mkdir -p src src/bin benches apps/galleoncode/src apps/galleonrelay/src tool
     && echo "fn main() {}" > xtask/src/bin/mdbook.rs \
     && echo "fn main() {}" > xtask/src/bin/fluent.rs \
     && echo "fn main() {}" > xtask/src/bin/web.rs \
-    && mkdir -p crates/clawcrew-hardware/examples \
-    && echo "fn main() {}" > crates/clawcrew-hardware/examples/esp32_sim.rs \
+    && mkdir -p crates/galleon-hardware/examples \
+    && echo "fn main() {}" > crates/galleon-hardware/examples/esp32_sim.rs \
     && for d in crates/*/; do [ "$d" = "crates/clawcrew-macros/" ] && continue; mkdir -p "${d}src" && printf '' > "${d}src/lib.rs"; done \
     && for d in crates/*/tests/fixtures/*/; do [ -f "${d}Cargo.toml" ] || continue; mkdir -p "${d}src" && printf '' > "${d}src/lib.rs"; done \
     && printf 'fn main() {}' > crates/clawcrew-log/tests/fixtures/attribution-macro-consumer/src/main.rs

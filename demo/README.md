@@ -152,7 +152,7 @@ demo/
 ```
 
 The simulator binary and visualizer live in:
-`crates/clawcrew-hardware/examples/esp32_sim.{rs,html}`
+`crates/galleon-hardware/examples/esp32_sim.{rs,html}`
 
 This demo harness depends on three focused changes extracted from the original
 large contribution:

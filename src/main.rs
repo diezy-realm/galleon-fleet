@@ -4800,7 +4800,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             #[cfg(feature = "hardware")]
             clawcrew_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
                 Box::pin(async move {
-                    clawcrew_hardware::peripherals::create_peripheral_tools(&config).await
+                    galleon_hardware::peripherals::create_peripheral_tools(&config).await
                 })
             }));
 
@@ -5172,11 +5172,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 Box::new(clawcrew_channels::cli::CliChannel::new("cli"))
             }));
 
-            // Wire peripheral tools from clawcrew-hardware
+            // Wire peripheral tools from galleon-hardware
             #[cfg(feature = "hardware")]
             clawcrew_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
                 Box::pin(async move {
-                    clawcrew_hardware::peripherals::create_peripheral_tools(&config).await
+                    galleon_hardware::peripherals::create_peripheral_tools(&config).await
                 })
             }));
 
@@ -6485,7 +6485,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                 #[cfg(feature = "hardware")]
                 clawcrew_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
                     Box::pin(async move {
-                        clawcrew_hardware::peripherals::create_peripheral_tools(&config).await
+                        galleon_hardware::peripherals::create_peripheral_tools(&config).await
                     })
                 }));
 

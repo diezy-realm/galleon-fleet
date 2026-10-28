@@ -362,7 +362,7 @@ pub async fn handle_hardware_reload(
     let tool_count = state.tools_registry.len();
 
     // Reload hardware context from disk (same function used by the agent loop)
-    let context = clawcrew_hardware::load_hardware_context_prompt(&[]);
+    let context = galleon_hardware::load_hardware_context_prompt(&[]);
     let context_length = context.len();
 
     ::clawcrew_log::record!(

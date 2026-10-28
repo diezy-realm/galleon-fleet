@@ -73,8 +73,8 @@ RUN mkdir -p src src/bin benches apps/tauri/src apps/galleoncode/src apps/galleo
     && echo "fn main() {}" > xtask/src/bin/mdbook.rs \
     && echo "fn main() {}" > xtask/src/bin/fluent.rs \
     && echo "fn main() {}" > xtask/src/bin/web.rs \
-    && mkdir -p crates/clawcrew-hardware/examples \
-    && echo "fn main() {}" > crates/clawcrew-hardware/examples/esp32_sim.rs \
+    && mkdir -p crates/galleon-hardware/examples \
+    && echo "fn main() {}" > crates/galleon-hardware/examples/esp32_sim.rs \
     && for d in crates/*/tests/fixtures/*/; do \
         [ -f "${d}Cargo.toml" ] || continue; \
         mkdir -p "${d}src"; \

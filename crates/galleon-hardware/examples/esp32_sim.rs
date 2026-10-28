@@ -20,9 +20,9 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{RwLock, broadcast};
-use clawcrew_hardware::util::serial_open_baud;
+use galleon_hardware::util::serial_open_baud;
 #[cfg(unix)]
-use clawcrew_hardware::util::should_open_serial_nonexclusive;
+use galleon_hardware::util::should_open_serial_nonexclusive;
 
 const PTY_FIRMWARE_PATH: &str = "/tmp/zc-sim-firmware";
 const PTY_HOST_PATH: &str = "/tmp/zc-sim-esp32";

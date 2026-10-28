@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-hardware"
+name = "galleon-hardware"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true

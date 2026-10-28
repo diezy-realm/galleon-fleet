@@ -1792,7 +1792,6 @@ dependencies = [
  "clawcrew-api",
  "clawcrew-channels",
  "clawcrew-config",
- "clawcrew-hardware",
  "clawcrew-infra",
  "clawcrew-log",
  "clawcrew-memory",
@@ -1803,6 +1802,7 @@ dependencies = [
  "clawcrew-tools",
  "directories",
  "futures-util",
+ "galleon-hardware",
  "galleon-i18n",
  "galleon-routing",
  "galleon-security-scrub",
@@ -1843,41 +1843,6 @@ dependencies = [
  "tower-http",
  "uuid",
  "wiremock",
-]
-
-[[package]]
-name = "clawcrew-hardware"
-version = "0.8.5"
-dependencies = [
- "anyhow",
- "async-trait",
- "axum 0.8.9",
- "cap-fs-ext",
- "cap-std",
- "clawcrew-api",
- "clawcrew-config",
- "clawcrew-log",
- "clawcrew-spawn",
- "clawcrew-tools",
- "console",
- "dialoguer",
- "directories",
- "glob",
- "nusb",
- "portable-atomic",
- "probe-rs",
- "reqwest 0.12.28",
- "rppal",
- "same-file",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.20",
- "tokio",
- "tokio-serial",
- "toml 1.1.2+spec-1.1.0",
- "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]
@@ -4894,7 +4859,6 @@ dependencies = [
  "clawcrew-config",
  "clawcrew-eval",
  "clawcrew-gateway",
- "clawcrew-hardware",
  "clawcrew-infra",
  "clawcrew-log",
  "clawcrew-macros",
@@ -4911,6 +4875,7 @@ dependencies = [
  "directories",
  "flate2",
  "futures-util",
+ "galleon-hardware",
  "galleon-tls",
  "galleon-tool-call-parser",
  "hex",
@@ -4941,6 +4906,41 @@ dependencies = [
  "which",
  "wiremock",
  "zip",
+]
+
+[[package]]
+name = "galleon-hardware"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.8.9",
+ "cap-fs-ext",
+ "cap-std",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "clawcrew-tools",
+ "console",
+ "dialoguer",
+ "directories",
+ "glob",
+ "nusb",
+ "portable-atomic",
+ "probe-rs",
+ "reqwest 0.12.28",
+ "rppal",
+ "same-file",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.20",
+ "tokio",
+ "tokio-serial",
+ "toml 1.1.2+spec-1.1.0",
+ "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -13642,10 +13642,10 @@ dependencies = [
  "clawcrew-api",
  "clawcrew-config",
  "clawcrew-gateway",
- "clawcrew-hardware",
  "clawcrew-providers",
  "clawcrew-runtime",
  "fluent-syntax 0.12.0",
+ "galleon-hardware",
  "galleoncode",
  "pulldown-cmark",
  "reqwest 0.12.28",

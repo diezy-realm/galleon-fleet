@@ -62,7 +62,7 @@ The v0.8.0 branch grows the repo by **+17,660 lines total**, of which:
 | clawcrew-api               | 1,511        | 1,536        | +25    |
 | zerocode               | 704          | 705          | +1     |
 | galleon-tool-call-parser  | 1,168        | 1,168        | 0      |
-| clawcrew-hardware          | 5,760        | 5,760        | 0      |
+| galleon-hardware          | 5,760        | 5,760        | 0      |
 | clawcrew-plugins           | 954          | 954          | 0      |
 | robot-kit                  | 1,951        | 1,940        | −11    |
 | clawcrew-infra             | 1,024        | 1,021        | −3     |

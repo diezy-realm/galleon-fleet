@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 #[cfg(feature = "hardware")]
-pub use clawcrew_hardware::peripherals::*;
+pub use galleon_hardware::peripherals::*;
 
 use crate::config::{Config, PeripheralBoardConfig};
 use anyhow::Result;
