@@ -234,14 +234,14 @@ fn enforce_role_restriction(
 
 ## C. Evaluation/Telemetry Loop (advisory, divalidasi lewat BL-60)
 
-- [x] **Eval-01 (dari `decisions/sop-eval-telemetry-loop-design.md`)** Sambungkan `clawcrew-eval` (harness Replay/Live yang sudah matang, CLI sudah ada) sebagai check ADVISORY di CI — TIDAK blocking merge. Dijalankan Lead→Backend→Principle (bukan Owner harian).
+- [x] **Eval-01 (dari `decisions/sop-eval-telemetry-loop-design.md`)** Sambungkan `galleon-eval` (harness Replay/Live yang sudah matang, CLI sudah ada) sebagai check ADVISORY di CI — TIDAK blocking merge. Dijalankan Lead→Backend→Principle (bukan Owner harian).
 
 #### Detail Eksekusi — Eval-01
 
-**TIDAK DIVERIFIKASI sesi ini** — lokasi `clawcrew-eval` crate dan CLI-nya belum dibaca. **Langkah pertama WAJIB:** baca `crates/clawcrew-eval/` struktur dan CLI entry point.
+**TIDAK DIVERIFIKASI sesi ini** — lokasi `galleon-eval` crate dan CLI-nya belum dibaca. **Langkah pertama WAJIB:** baca `crates/galleon-eval/` struktur dan CLI entry point.
 
 **Langkah pengerjaan:**
-1. Baca `clawcrew-eval` CLI command existing.
+1. Baca `galleon-eval` CLI command existing.
 2. Tambah job `.github/workflows/` baru yang menjalankan eval harness terhadap BL-60 (SOP "Engineering Feature Delivery") sebagai test-case — job TIDAK memblokir merge (`continue-on-error: true` atau pola non-required-check yang sudah dipakai workflow lain, cek `.github/workflows/` existing untuk konvensi non-blocking check).
 3. Hasil eval di-post sebagai PR comment/annotation (advisory), bukan status check yang gagal.
 
@@ -292,11 +292,11 @@ fn enforce_role_restriction(
 |---|---|---|
 | A | `crates/clawcrew-runtime/src/sop/types.rs` (field baru), `engine/src/mission/` (Quest Go) | Backend-Rust + Backend-Go |
 | B | `crates/clawcrew-runtime/src/sop/{types.rs,constraint.rs}` (baru), `crates/clawcrew-runtime/src/hooks/` (reuse existing) | Backend-Rust — **serialkan A dan B pada `sop/types.rs` kalau bersinggungan** |
-| C | `crates/clawcrew-eval/`, `.github/workflows/` (check baru, non-blocking), `galleon-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
+| C | `crates/galleon-eval/`, `.github/workflows/` (check baru, non-blocking), `galleon-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
 | D | `crates/clawcrew-config/src/policy.rs` (baca, verifikasi BL-13), `standard-docs/decisions/` (design-spec baru BL-12) | squad-lead (evaluasi/dokumentasi dulu, bukan kode) |
 
 ## Keluaran Sprint
 
 - SOP engine punya Do's/Don'ts + RACI generik lintas departemen (terbukti via contoh Marketing, bukan hanya Engineering).
 - Larangan berbasis role ("Lead tidak boleh coding") ditegakkan struktural via hook, bukan instruksi teks yang bisa diabaikan model.
-- `clawcrew-eval` tersambung CI sebagai advisory check; `SopCounters` terlihat operator tanpa baca log mentah.
+- `galleon-eval` tersambung CI sebagai advisory check; `SopCounters` terlihat operator tanpa baca log mentah.

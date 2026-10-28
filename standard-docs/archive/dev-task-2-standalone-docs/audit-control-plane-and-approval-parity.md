@@ -43,7 +43,7 @@ Sesuai aturan `AGENTS.md`:
   - Lain-lain: `integrations` (10), `i18n` (7), `tools` (7), `quickstart` (10), `doctor` (4), `restart` (4).
 - **Strategi Dekoplasi:**
   - Endpoint `cron`, `sop`, `agent`, dan `tasks` yang bergantung ke runtime akan dialihkan konsumsinya ke Go Client Protocol (BG-E2) dan Go Engine REST API.
-  - Setelah porting dan pengujian `clawcrew-eval` replay selesai (Sprint 4-6), layer handler gateway dapat dipensiunkan ke angka 0.
+  - Setelah porting dan pengujian `galleon-eval` replay selesai (Sprint 4-6), layer handler gateway dapat dipensiunkan ke angka 0.
 
 ### 2.2 Pemecahan Crate Channels (`BR-C6 · R-15`)
 - **Crate yang Sudah Berdiri Sendiri:**

@@ -546,11 +546,11 @@ impl AllToolsResult {
     /// fields are all `pub`, so a caller could already hand-roll this literal;
     /// the helper just centralizes the "all handles empty" shape.) Used by the
     /// paths that already own a fixed / pre-filtered tool set (the skill-review
-    /// harness, bounded delegation, and the `clawcrew-eval` replay harness) and
+    /// harness, bounded delegation, and the `galleon-eval` replay harness) and
     /// route it through `assemble` only to seal it: they pass `skills: &[]`,
     /// `connect_mcp: false`, `connect_peripherals: false`, so the empty handles
     /// here are never read by the assembly. `pub` (not `pub(crate)`) so the
-    /// out-of-crate `clawcrew-eval` harness can reach it.
+    /// out-of-crate `galleon-eval` harness can reach it.
     pub fn from_prebuilt_tools(tools: Vec<Box<dyn Tool>>) -> Self {
         Self {
             tools,

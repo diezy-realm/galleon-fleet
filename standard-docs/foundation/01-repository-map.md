@@ -40,7 +40,7 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 | | `galleon-plugins` | Host WASI/Wasmtime, manifest, signature, catalog, egress |
 | Komposisi | `galleon-gateway` | HTTP/WS gateway (`api_*`), **gRPC `SystemGatewayService`** (`grpc_system_gateway.rs`), vault, pairing |
 | | `galleon-routing` | `DynamicRouter`/`RouteHandler` (kini dependency gateway; belum di-commit) |
-| | `clawcrew-eval` | Harness evaluasi trace |
+| | `galleon-eval` | Harness evaluasi trace |
 
 Fixture (anggota workspace): `crates/galleon-plugins/tests/fixtures/*` (channel, nostr-pilot, egress, tool-*), `crates/clawcrew-log/tests/fixtures/attribution-macro-*`.
 

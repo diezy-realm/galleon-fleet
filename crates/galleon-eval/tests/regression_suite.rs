@@ -5,9 +5,9 @@
 
 use std::path::PathBuf;
 use clawcrew_config::scattered_types::EvalHarnessConfig;
-use clawcrew_eval::case::load_suite;
-use clawcrew_eval::grader::evaluate_expects;
-use clawcrew_eval::{LlmTrace, Mode, RecordedCall, RunRecord, run_case, run_suite};
+use galleon_eval::case::load_suite;
+use galleon_eval::grader::evaluate_expects;
+use galleon_eval::{LlmTrace, Mode, RecordedCall, RunRecord, run_case, run_suite};
 
 /// Resolve the gated suite from the shipped config default rather than a second
 /// hardcoded literal, so the directory this gate certifies cannot drift away

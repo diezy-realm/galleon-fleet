@@ -1,8 +1,8 @@
 # ClawCrew eval suites
 
-Suites of agent evaluation cases for `clawcrew eval run` (crate: `crates/clawcrew-eval`).
+Suites of agent evaluation cases for `clawcrew eval run` (crate: `crates/galleon-eval`).
 
-- `regression/` — must stay at 100% pass. Gated in CI (`crates/clawcrew-eval/tests/regression_suite.rs`). A failure here blocks merge. The corpus is repository-only; the published `clawcrew-eval` crate archive excludes the gate and does not carry these fixtures.
+- `regression/` — must stay at 100% pass. Gated in CI (`crates/galleon-eval/tests/regression_suite.rs`). A failure here blocks merge. The corpus is repository-only; the published `galleon-eval` crate archive excludes the gate and does not carry these fixtures.
 - `capability/` (planned) — hard tasks with a low pass rate; tracked over time, never gated.
 - `live/` (planned) — cases executed against a real provider; cost money, never run in CI by default.
 
@@ -19,4 +19,4 @@ Suites of agent evaluation cases for `clawcrew eval run` (crate: `crates/clawcre
 - Every case must fail when the run produces nothing. A lone bound such as `max_tool_calls: 0` survives load but holds over an idle run, so `regression_suite.rs` grades every gated fixture against an empty run and requires a failed check.
 - Privacy: fixtures ship forever. Placeholder identities only (`clawcrew_user`, `example.com`) per `docs/book/src/contributing/privacy.md`. Never paste real transcripts, names, keys, or hostnames.
 
-Suite owner: the maintainer group for `crates/clawcrew-eval` (update when a named owner volunteers).
+Suite owner: the maintainer group for `crates/galleon-eval` (update when a named owner volunteers).

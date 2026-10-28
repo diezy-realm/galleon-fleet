@@ -6878,7 +6878,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                 format,
             } => {
                 let suite_dir = suite.unwrap_or_else(|| config.eval.suite_dir.clone());
-                let mode: clawcrew_eval::Mode =
+                let mode: galleon_eval::Mode =
                     mode.unwrap_or_else(|| config.eval.mode.clone()).parse()?;
                 let report = commands::eval::run(std::path::PathBuf::from(suite_dir), mode).await?;
                 commands::eval::print_report(&report, format);

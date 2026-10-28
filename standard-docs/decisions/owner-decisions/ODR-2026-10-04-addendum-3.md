@@ -5,4 +5,4 @@
 | ID | Keputusan | Efek |
 |---|---|---|
 | ODR-19 | **Branding konsisten "Galleon Fleet" / `galleon-fleet`**; **tanpa alias** biner/env lama; org = `diezy-realm`, produk = `galleon-fleet` | `naming-map.md` §3,5,8 |
-| ODR-20 | `galleon-sop-graph` dan `clawcrew-eval` **tetap digunakan**; hanya rename (`galleon-sop-graph`, `galleon-eval`) | Eval harus diretarget bila agent loop pindah ke Go (R-37) |
+| ODR-20 | `galleon-sop-graph` dan `galleon-eval` **tetap digunakan**; hanya rename (`galleon-sop-graph`, `galleon-eval`) | Eval harus diretarget bila agent loop pindah ke Go (R-37) |

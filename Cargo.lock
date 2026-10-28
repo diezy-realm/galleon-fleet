@@ -1659,23 +1659,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clawcrew-eval"
-version = "0.8.5"
-dependencies = [
- "anyhow",
- "async-trait",
- "clawcrew-api",
- "clawcrew-config",
- "clawcrew-runtime",
- "galleon-memory",
- "regex",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
-]
-
-[[package]]
 name = "clawcrew-log"
 version = "0.8.5"
 dependencies = [
@@ -4571,6 +4554,23 @@ name = "galleon-dist"
 version = "0.8.5"
 
 [[package]]
+name = "galleon-eval"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-runtime",
+ "galleon-memory",
+ "regex",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
 name = "galleon-fleet"
 version = "0.8.5"
 dependencies = [
@@ -4584,7 +4584,6 @@ dependencies = [
  "clap_complete",
  "clawcrew-api",
  "clawcrew-config",
- "clawcrew-eval",
  "clawcrew-log",
  "clawcrew-runtime",
  "console",
@@ -4595,6 +4594,7 @@ dependencies = [
  "flate2",
  "futures-util",
  "galleon-channels",
+ "galleon-eval",
  "galleon-gateway",
  "galleon-hardware",
  "galleon-infra",
