@@ -55,7 +55,7 @@ use tokio::sync::{Mutex, mpsc};
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message;
-use clawcrew_relay_proto::{
+use galleon_relay_proto::{
     ConnWindow, Control, INITIAL_WINDOW, MAX_CONTROL_FRAME, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL,
     TokenBucket, decode_data, encode_data,
 };

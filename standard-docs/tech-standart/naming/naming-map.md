@@ -27,7 +27,7 @@ Aturan: `clawcrew-X` → `galleon-X`. Crate yang sudah `galleon-*` tetap. Urutan
 | `clawcrew-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |
 | `clawcrew-gateway` | `galleon-gateway` | setelah R-14 |
 | `clawcrew-plugins` | `galleon-plugins` | |
-| `clawcrew-relay-proto` | `galleon-relay-proto` | ikut `galleonrelay` |
+| `galleon-relay-proto` | `galleon-relay-proto` | ikut `galleonrelay` |
 | `galleon-channel-{core,signal,bluesky,imessage}`, `galleon-i18n` | tetap | sudah sesuai |
 
 Identifier Rust: `clawcrew_*` → `galleon_*`; tipe `ClawCrew*` → `Galleon*`.

@@ -31,7 +31,7 @@ use tokio_rustls::TlsConnector;
 // The runtime depends on tokio-rustls (not rustls directly); use its re-export.
 use tokio_rustls::rustls;
 use tokio_util::sync::CancellationToken;
-use clawcrew_relay_proto::{
+use galleon_relay_proto::{
     ConnWindow, Control, INITIAL_WINDOW, MAX_CONTROL_FRAME, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL,
     SUBPROTOCOL, TokenBucket, decode_data, encode_data,
 };
@@ -621,8 +621,8 @@ async fn connect_and_register(
     // Relay-protocol plane: bound the parser at the protocol budget so an
     // oversized message is refused while framing rather than buffered whole.
     let mut relay_ws_cfg = tokio_tungstenite::tungstenite::protocol::WebSocketConfig::default();
-    relay_ws_cfg.max_message_size = Some(clawcrew_relay_proto::MAX_WS_MESSAGE);
-    relay_ws_cfg.max_frame_size = Some(clawcrew_relay_proto::MAX_WS_MESSAGE);
+    relay_ws_cfg.max_message_size = Some(galleon_relay_proto::MAX_WS_MESSAGE);
+    relay_ws_cfg.max_frame_size = Some(galleon_relay_proto::MAX_WS_MESSAGE);
     let (mut ws, _resp) =
         tokio_tungstenite::client_async_with_config(request, tls, Some(relay_ws_cfg))
             .await

@@ -13,7 +13,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use clawcrew_relay_proto::{Control, SUBPROTOCOL, decode_data, encode_data};
+use galleon_relay_proto::{Control, SUBPROTOCOL, decode_data, encode_data};
 use futures_util::{SinkExt, StreamExt};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;

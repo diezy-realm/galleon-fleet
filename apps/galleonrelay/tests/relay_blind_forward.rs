@@ -15,7 +15,7 @@ use sha2::{Digest, Sha256};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::{ClientRequestBuilder, Message};
-use clawcrew_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data};
+use galleon_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data};
 use galleonrelay::{Admission, AdmissionPolicy, PublicOpenGuard, RelayConfig, RelayServer};
 
 type RelayWs =

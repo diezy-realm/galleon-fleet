@@ -24,7 +24,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::{ClientRequestBuilder, Message};
-use clawcrew_relay_proto::{
+use galleon_relay_proto::{
     Control, INITIAL_WINDOW, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data,
 };
 use galleonrelay::{RelayConfig, RelayServer};

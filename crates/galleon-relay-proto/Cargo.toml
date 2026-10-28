@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-relay-proto"
+name = "galleon-relay-proto"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true

@@ -12,7 +12,7 @@ pub const MAX_CONTROL_FRAME: usize = 64 * 1024;
 pub const MAX_DATA_PAYLOAD: usize = 64 * 1024;
 /// Largest legal WebSocket message on the relay plane: a `DATA` message is an
 /// 8-byte `conn_id` header plus at most [`MAX_DATA_PAYLOAD`]; control frames are
-/// bounded by [`MAX_CONTROL_FRAME`]. Mirrors `clawcrew-relay-proto`; zerocode
+/// bounded by [`MAX_CONTROL_FRAME`]. Mirrors `galleon-relay-proto`; zerocode
 /// cannot depend on `clawcrew-*` crates (RPC-boundary gate), so this module is
 /// a deliberate copy and the two must be changed together.
 pub const MAX_WS_MESSAGE: usize = if MAX_CONTROL_FRAME > MAX_DATA_PAYLOAD + 8 {

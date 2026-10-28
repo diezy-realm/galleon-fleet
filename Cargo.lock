@@ -2057,14 +2057,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clawcrew-relay-proto"
-version = "0.8.5"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "clawcrew-routing"
 version = "0.8.5"
 dependencies = [
@@ -2100,7 +2092,6 @@ dependencies = [
  "clawcrew-memory",
  "clawcrew-plugins",
  "clawcrew-providers",
- "clawcrew-relay-proto",
  "clawcrew-sop-graph",
  "clawcrew-spawn",
  "clawcrew-tls",
@@ -2115,6 +2106,7 @@ dependencies = [
  "futures-util",
  "galleon-commands",
  "galleon-i18n",
+ "galleon-relay-proto",
  "galleon-security-scrub",
  "galleonrelay",
  "glob",
@@ -5027,6 +5019,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-relay-proto"
+version = "0.8.5"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "galleon-security-scrub"
 version = "0.8.5"
 dependencies = [
@@ -5085,10 +5085,10 @@ dependencies = [
  "base64",
  "clap",
  "clawcrew-config",
- "clawcrew-relay-proto",
  "clawcrew-runtime",
  "clawcrew-tls",
  "futures-util",
+ "galleon-relay-proto",
  "hex",
  "ring",
  "rustls",

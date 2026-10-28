@@ -25,7 +25,7 @@ use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_util::sync::CancellationToken;
-use clawcrew_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, encode_data};
+use galleon_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, encode_data};
 
 /// Mirrors the bridge's own `SETUP_DEADLINE`. The constant is module-private, so
 /// these tests assert the behaviour it produces with margins wide enough that

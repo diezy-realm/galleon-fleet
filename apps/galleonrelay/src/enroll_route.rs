@@ -33,7 +33,7 @@ use std::sync::atomic::Ordering;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message;
-use clawcrew_relay_proto::{
+use galleon_relay_proto::{
     ConnWindow, Control, INITIAL_WINDOW, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL, encode_data,
 };
 

@@ -6555,7 +6555,7 @@ mod plan_parse_tests {
 }
 
 /// Parser limits for the RELAY-PROTOCOL plane (client <-> relay outer session),
-/// derived from `clawcrew-relay-proto` so transport and application bounds
+/// derived from `galleon-relay-proto` so transport and application bounds
 /// cannot drift apart.
 fn relay_ws_config() -> tokio_tungstenite::tungstenite::protocol::WebSocketConfig {
     let mut cfg = tokio_tungstenite::tungstenite::protocol::WebSocketConfig::default();

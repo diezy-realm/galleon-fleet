@@ -14,7 +14,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-clawcrew-relay-proto = { path = ".." }
+galleon-relay-proto = { path = ".." }
 
 [[bin]]
 name = "control_from_json"
