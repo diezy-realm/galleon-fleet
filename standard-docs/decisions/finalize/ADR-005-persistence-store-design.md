@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Superseded oleh ODR-2026-10-29 / ADR-0018.** Dokumen ini dipertahankan sebagai arsip. Jangan dijadikan acuan implementasi.
+
 # ADR-005 — Desain Store Persistensi Terpadu Go Engine (SQLite, PostgreSQL, Vektor, Migrasi, Enkripsi)
 
 - **Status:** Accepted (Ratifikasi ODR-05)
