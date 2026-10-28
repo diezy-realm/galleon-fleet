@@ -255,7 +255,7 @@ fn enforce_role_restriction(
 
 **Langkah pengerjaan:**
 1. Temukan struct `SopCounters`/`RunSnapshot` dan API yang sudah mengisinya.
-2. Tambah endpoint read-only baru di `clawcrew-gateway/src/` (pola REST GET, konsisten endpoint metrics lain yang sudah ada seperti disebut R-90 Sprint 1 `clawcrew_cache_hit_rate`).
+2. Tambah endpoint read-only baru di `galleon-gateway/src/` (pola REST GET, konsisten endpoint metrics lain yang sudah ada seperti disebut R-90 Sprint 1 `clawcrew_cache_hit_rate`).
 
 **Dependency:** Tidak hard-block tiket lain di sprint ini.
 
@@ -292,7 +292,7 @@ fn enforce_role_restriction(
 |---|---|---|
 | A | `crates/clawcrew-runtime/src/sop/types.rs` (field baru), `engine/src/mission/` (Quest Go) | Backend-Rust + Backend-Go |
 | B | `crates/clawcrew-runtime/src/sop/{types.rs,constraint.rs}` (baru), `crates/clawcrew-runtime/src/hooks/` (reuse existing) | Backend-Rust — **serialkan A dan B pada `sop/types.rs` kalau bersinggungan** |
-| C | `crates/clawcrew-eval/`, `.github/workflows/` (check baru, non-blocking), `clawcrew-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
+| C | `crates/clawcrew-eval/`, `.github/workflows/` (check baru, non-blocking), `galleon-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
 | D | `crates/clawcrew-config/src/policy.rs` (baca, verifikasi BL-13), `standard-docs/decisions/` (design-spec baru BL-12) | squad-lead (evaluasi/dokumentasi dulu, bukan kode) |
 
 ## Keluaran Sprint

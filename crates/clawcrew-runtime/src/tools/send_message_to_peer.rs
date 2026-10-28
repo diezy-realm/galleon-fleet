@@ -243,7 +243,7 @@ impl Tool for SendMessageToPeerTool {
 /// is recorded with recipient attribution and its provider calls participate
 /// in the process-wide budget, mirroring the scope the gateway chat path
 /// installs around `process_message` in
-/// `clawcrew-gateway/src/lib.rs`. Split out from `execute` so the
+/// `galleon-gateway/src/lib.rs`. Split out from `execute` so the
 /// scope-install itself can be exercised directly in tests, independent of
 /// the detached-spawn plumbing around it.
 async fn deliver_peer_turn_with_cost_scope<F, T>(

@@ -1161,7 +1161,7 @@ See all available features:
   echo
 
   # embedded-web includes web/dist at Rust compile time, so the dashboard must
-  # exist before cargo install reaches clawcrew-gateway's build script.
+  # exist before cargo install reaches galleon-gateway's build script.
   if [ "$WANT_EMBEDDED_WEB" = true ]; then
     if [ "$DRY_RUN" = true ]; then
       info "[dry-run] Would build web dashboard before cargo install for embedded-web"

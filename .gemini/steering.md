@@ -141,7 +141,7 @@ Semua pencarian simbol, penelusuran dependensi, pemahaman arsitektur, dan flow p
 3. **Targeted Grep:** Gunakan `Select-String` baris demi baris HANYA setelah file target diidentifikasi oleh Graphify:
    ```powershell
    # BENAR: Graphify menemukan file, lakukan pencarian presisi
-   Select-String -Pattern "pub struct SystemGateway" crates/clawcrew-gateway/src/grpc_system_gateway.rs
+   Select-String -Pattern "pub struct SystemGateway" crates/galleon-gateway/src/grpc_system_gateway.rs
    ```
 4. **Direct File Read:** Buka file hanya pada baris yang relevan dari hasil langkah 2 & 3.
 5. **Dilarang keras:** Melakukan recursive grep buta (`Get-ChildItem -Recurse | Select-String`) ke seluruh repo tanpa memanfaatkan graph.

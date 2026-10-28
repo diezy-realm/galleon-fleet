@@ -10,7 +10,7 @@ use clawcrew_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
-use clawcrew_gateway::{AppState, build_gateway_router};
+use galleon_gateway::{AppState, build_gateway_router};
 use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;
 use tokio_tungstenite::tungstenite::Message as WsMessage;
@@ -320,7 +320,7 @@ async fn test_run_gateway_supervision_and_readiness_lifecycle() {
     };
 
     let server_task = galleon_spawn::spawn!(async move {
-        clawcrew_gateway::run_gateway(
+        galleon_gateway::run_gateway(
             "127.0.0.1",
             0,
             config,

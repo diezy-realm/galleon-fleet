@@ -39,10 +39,10 @@ Namun, dari sudut pandang **Principle Quality Gatekeeper**, PR ini **DITOLAK (RE
 ## 3. Detail Critical Findings (Harus Diperbaiki)
 
 ### 🔴 Finding 1: Penggunaan `unwrap()` / `expect()` pada Kode Produksi Gateway
-**File:** `crates/clawcrew-gateway/src/grpc_system_gateway.rs` & `crates/clawcrew-gateway/src/lib.rs`
+**File:** `crates/galleon-gateway/src/grpc_system_gateway.rs` & `crates/galleon-gateway/src/lib.rs`
 
 - **Lokasi & Kode Pelanggar:**
-  1. `crates/clawcrew-gateway/src/lib.rs` (baris ~48 & ~67):
+  1. `crates/galleon-gateway/src/lib.rs` (baris ~48 & ~67):
      ```rust
      let previous_token = cancel_tokens
          .lock()
@@ -51,7 +51,7 @@ Namun, dari sudut pandang **Principle Quality Gatekeeper**, PR ini **DITOLAK (RE
 
      let mut tokens = cancel_tokens.lock().expect("cancel_tokens lock poisoned"); // ❌ VIOLATION
      ```
-  2. `crates/clawcrew-gateway/src/handlers/mod.rs`:
+  2. `crates/galleon-gateway/src/handlers/mod.rs`:
      - Terdapat pemanggilan `.unwrap()` pada parsing URI / body dispatch handler.
 
 - **Dampak:**
@@ -72,7 +72,7 @@ Namun, dari sudut pandang **Principle Quality Gatekeeper**, PR ini **DITOLAK (RE
 ---
 
 ### 🔴 Finding 2: Unhandled Errors & Unsafe Unwrap pada Production Flow
-**File:** `crates/clawcrew-gateway/src/grpc_system_gateway.rs`
+**File:** `crates/galleon-gateway/src/grpc_system_gateway.rs`
 
 - **Dampak:**
   Meskipun sebagian `unwrap()` berada di dalam test function `#[cfg(test)]`, fungsi helper yang diekspos ke runtime masih menggunakan `.expect("succeeds")`.
@@ -86,9 +86,9 @@ Namun, dari sudut pandang **Principle Quality Gatekeeper**, PR ini **DITOLAK (RE
 Berikut daftar tugas terperinci yang wajib diselesaikan sebelum PR #16 dapat di-approve dan di-merge ke branch `testing`:
 
 ### Task 1: Rust Invariant Cleanup (P0 - Blocker)
-- [x] **1.1:** Ganti `.expect("cancel_tokens lock poisoned")` di `crates/clawcrew-gateway/src/lib.rs` dengan poison recovery (`poisoned.into_inner()`) serta logging `::clawcrew_log::record!(WARN, ...)`. *(Selesai - Verified)*
-- [x] **1.2:** Audit `crates/clawcrew-gateway/src/handlers/mod.rs` dan ganti semua `.unwrap()` pada axum/http routing dengan error propagation `?` atau `StatusCode::INTERNAL_SERVER_ERROR`. *(Selesai - Verified)*
-- [x] **1.3:** Pastikan seluruh fungsi di `crates/clawcrew-gateway/src/grpc_system_gateway.rs` (di luar test) mengembalikan `Result<T, tonic::Status>` tanpa unwrap. *(Selesai - Verified)*
+- [x] **1.1:** Ganti `.expect("cancel_tokens lock poisoned")` di `crates/galleon-gateway/src/lib.rs` dengan poison recovery (`poisoned.into_inner()`) serta logging `::clawcrew_log::record!(WARN, ...)`. *(Selesai - Verified)*
+- [x] **1.2:** Audit `crates/galleon-gateway/src/handlers/mod.rs` dan ganti semua `.unwrap()` pada axum/http routing dengan error propagation `?` atau `StatusCode::INTERNAL_SERVER_ERROR`. *(Selesai - Verified)*
+- [x] **1.3:** Pastikan seluruh fungsi di `crates/galleon-gateway/src/grpc_system_gateway.rs` (di luar test) mengembalikan `Result<T, tonic::Status>` tanpa unwrap. *(Selesai - Verified)*
 
 ### Task 2: Automated Verification Run (P1)
 - [x] **2.1:** Jalankan script checker no-unwrap:
@@ -96,12 +96,12 @@ Berikut daftar tugas terperinci yang wajib diselesaikan sebelum PR #16 dapat di-
   git diff origin/testing...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' | Select-String '^\+[^+]' | Select-String '\.(unwrap|expect)\('
   ```
   *(Hasil: **KOSONG / 0 TEMUAN** — Exit Code 0).*
-- [x] **2.2:** Jalankan `cargo clippy -p galleon-routing -- -D warnings` dan `cargo check -p clawcrew-gateway`. *(Hasil: **PASSED** — Exit Code 0).*
+- [x] **2.2:** Jalankan `cargo clippy -p galleon-routing -- -D warnings` dan `cargo check -p galleon-gateway`. *(Hasil: **PASSED** — Exit Code 0).*
 - [x] **2.3:** Jalankan `cargo-nextest`:
   - `cargo nextest run -p galleon-routing` (4 tests: **ALL PASSED**)
-  - `cargo nextest run -p clawcrew-gateway --test system_gateway_integration_test` (2 tests: **ALL PASSED**)
-  - `cargo nextest run -p clawcrew-gateway -E "test(grpc_system_gateway::tests)"` (9 tests: **ALL PASSED**)
-  - `cargo nextest run -p clawcrew-gateway -E "test(handlers::tests)"` (3 tests: **ALL PASSED**)
+  - `cargo nextest run -p galleon-gateway --test system_gateway_integration_test` (2 tests: **ALL PASSED**)
+  - `cargo nextest run -p galleon-gateway -E "test(grpc_system_gateway::tests)"` (9 tests: **ALL PASSED**)
+  - `cargo nextest run -p galleon-gateway -E "test(handlers::tests)"` (3 tests: **ALL PASSED**)
 
 ### Task 3: PR Metadata & Checklist Update (P2)
 - [x] **3.1:** Perbarui dokumentasi review & DoD PR #16: zero-unwrap invariant terpenuhi, poison recovery aktif, and tests pass.

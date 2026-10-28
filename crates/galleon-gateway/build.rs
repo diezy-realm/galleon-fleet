@@ -19,7 +19,7 @@ fn compile_agent_service_proto() {
         .parent()
         .and_then(|crates_dir| crates_dir.parent())
         .map(|root| root.join("proto/agent_service.proto"))
-        .expect("clawcrew-gateway is always at <repo_root>/crates/clawcrew-gateway");
+        .expect("galleon-gateway is always at <repo_root>/crates/galleon-gateway");
 
     println!("cargo:rerun-if-changed={}", proto_path.display());
 

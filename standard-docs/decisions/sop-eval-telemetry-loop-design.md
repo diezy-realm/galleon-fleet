@@ -21,7 +21,7 @@ context: >
 
 **`clawcrew-runtime/src/sop/metrics.rs`**: `MetricCounters`/`RunSnapshot` sudah menghitung metrik SOP end-to-end — runs completed/failed/cancelled, steps executed/failed/skipped, human approvals, windowed aggregation (ring buffer 1000 run, ~90 hari).
 
-**Gap konkret (terverifikasi grep, bukan asumsi)**: `clawcrew-eval` nol dipanggil di `.github/workflows/`; `SopCounters` nol disurfaceкan ke `clawcrew-gateway/src/`. Infrastruktur ADA, tidak tersambung.
+**Gap konkret (terverifikasi grep, bukan asumsi)**: `clawcrew-eval` nol dipanggil di `.github/workflows/`; `SopCounters` nol disurfaceкan ke `galleon-gateway/src/`. Infrastruktur ADA, tidak tersambung.
 
 **Koreksi penting soal struktur SOP**: `SopRun`/`SopStep`/`SopExecutionMode` (`crates/clawcrew-runtime/src/sop/types.rs`) adalah struktur GENERIK (priority, execution mode Auto/Supervised/StepByStep/PriorityBased/Deterministic). `ApprovalPrincipal` (`sop/approval/principal.rs`) hanya mencatat WHO/transport sebuah approval gate diselesaikan (Agent/Cli/Ws/Http/System/Channel) — **TIDAK ADA konsep native "role Lead/Principle/Quartermaster"** di SOP engine. Jadi validasi lewat skenario squad berarti MEMODELKAN flow kerja nyata sebagai `SopRun` konkret, bukan mencari fitur role yang sudah ada.
 
@@ -61,7 +61,7 @@ Eval case TIDAK dibuat dari dokumen `.md` manapun. Eval case dibuat sebagai **`S
 
 1. **Definisikan 2-3 SOP test-case awal** yang memodelkan flow squad paling established (Lead→Backend→Principle→merge testing-PR; Lead→Design→Lead→FE). Lead menulis struktur `SopRun`/`SopStep` untuk ini.
 2. **Hubungkan `clawcrew-eval` ke CI sebagai advisory check** — satu job baru di `.github/workflows/`, tidak masuk required-status-check.
-3. **Expose `SopCounters` ke satu endpoint read-only** di `clawcrew-gateway` (minimal: JSON dump periodik, BUKAN dashboard UI penuh di tahap awal — itu over-scope untuk kebutuhan advisory).
+3. **Expose `SopCounters` ke satu endpoint read-only** di `galleon-gateway` (minimal: JSON dump periodik, BUKAN dashboard UI penuh di tahap awal — itu over-scope untuk kebutuhan advisory).
 4. **Principle menjalankan siklus pertama** dan melaporkan ke Quartermaster/Lead: SOP test-case lolos/gagal, dengan alasan konkret kalau gagal.
 5. **Owner (Achmad) menerima ringkasan satu-baris per siklus** — "SOP eval: 2/2 lolos" atau "SOP eval: 1 penyimpangan, [detail singkat], menunggu keputusan" — bukan laporan teknis panjang.
 
@@ -75,5 +75,5 @@ Eval case TIDAK dibuat dari dokumen `.md` manapun. Eval case dibuat sebagai **`S
 
 - `crates/clawcrew-eval/src/{lib,runner,case,grader,report}.rs`, `src/commands/eval.rs`.
 - `crates/clawcrew-runtime/src/sop/{types,metrics,approval/principal}.rs`.
-- Verifikasi grep: `.github/workflows/` (nol `clawcrew-eval`), `clawcrew-gateway/src/` (nol `SopCounters`).
+- Verifikasi grep: `.github/workflows/` (nol `clawcrew-eval`), `galleon-gateway/src/` (nol `SopCounters`).
 - `research/agentic-ai-fundamentals-and-lifecycle-phase.md` §6 — kerangka maturity model yang memotivasi loop ini.

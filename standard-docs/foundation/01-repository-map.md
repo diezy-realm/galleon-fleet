@@ -38,7 +38,7 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 | Tepi | `galleon-channels` (198k LOC) | ±35 adapter channel + orchestrator |
 | | `galleon-channel-{core,signal,bluesky,imessage}` | Pola feature-crate channel (Tier B) |
 | | `galleon-plugins` | Host WASI/Wasmtime, manifest, signature, catalog, egress |
-| Komposisi | `clawcrew-gateway` | HTTP/WS gateway (`api_*`), **gRPC `SystemGatewayService`** (`grpc_system_gateway.rs`), vault, pairing |
+| Komposisi | `galleon-gateway` | HTTP/WS gateway (`api_*`), **gRPC `SystemGatewayService`** (`grpc_system_gateway.rs`), vault, pairing |
 | | `galleon-routing` | `DynamicRouter`/`RouteHandler` (kini dependency gateway; belum di-commit) |
 | | `clawcrew-eval` | Harness evaluasi trace |
 

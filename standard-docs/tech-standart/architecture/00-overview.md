@@ -82,7 +82,7 @@
 | Fleet config (crews, policies) | Go | `engine/data/fleet.db` (SQLite) | Go `fleet/store.go` |
 | Chat history | Go | `engine/data/chats.db` (SQLite) | Go `crew/store.go` |
 | Vector embeddings | Go | `engine/data/vectors/` (ChromaDB/Qdrant) | Go `memory/rag.go` |
-| Secrets (API keys, tokens) | Rust | `~/.config/galleon/vault/` (encrypted) | Rust `clawcrew-gateway/vault.rs` |
+| Secrets (API keys, tokens) | Rust | `~/.config/galleon/vault/` (encrypted) | Rust `galleon-gateway/vault.rs` |
 | Tauri window state | Tauri | `~/.config/galleon/window.json` | Tauri `apps/tauri-2/main.rs` |
 
 **No shared database** — each tier owns its persistence boundary.
@@ -106,7 +106,7 @@
 
 See `docs/book/src/architecture/crates.md` (archived KiroCrew upstream) for detailed dependency graph. Key abstractions:
 
-- `clawcrew-gateway`: gRPC server, vault, secret management
+- `galleon-gateway`: gRPC server, vault, secret management
 - `clawcrew-runtime`: Agent turn execution, tool dispatch, message streaming
 - `galleon-providers`: LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**
 - `clawcrew-channel-*`: Channel plugins (Discord, Telegram, Slack, etc.)
@@ -154,7 +154,7 @@ engine/
 - `/api/system/*` — System metrics, health, telemetry
 - `/api/network/*` — [TEMP ADR 0002] QR code generation (should be Nginx)
 
-**WebSocket** (Rust `clawcrew-gateway/ws.rs`):
+**WebSocket** (Rust `galleon-gateway/ws.rs`):
 - `/ws/chat` — Real-time message streaming (LLM tokens, tool events)
 - Handled by Rust (Go has no WebSocket logic)
 

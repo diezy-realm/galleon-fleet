@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-gateway"
+name = "galleon-gateway"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true

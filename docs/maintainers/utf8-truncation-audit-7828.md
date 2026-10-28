@@ -45,7 +45,7 @@ inline blocks flagged separately and not treated as must-fix):
 | D | `.get(..N)`, `.split_at(...)` | 11 |
 
 Crates in scope (runtime-reachable text per #7828): `galleon-channels`,
-`galleon-tools`, `galleon-providers`, `clawcrew-runtime`, `clawcrew-gateway`,
+`galleon-tools`, `galleon-providers`, `clawcrew-runtime`, `galleon-gateway`,
 `galleon-memory`, `apps/zerocode`, and the root `src/` binary.
 
 High-risk surfaces reviewed explicitly: channel message chunking/cards

@@ -57,7 +57,7 @@ The v0.8.0 branch grows the repo by **+17,660 lines total**, of which:
 | web                        | 20,742       | 21,518       | +776   |
 | galleon-macros            | 912          | 1,581        | +669   |
 | galleon-memory            | 5,789        | 6,856        | +1,067 |
-| clawcrew-gateway           | 8,759        | 9,323        | +564   |
+| galleon-gateway           | 8,759        | 9,323        | +564   |
 | galleon-channels          | 34,556       | 34,576       | +20    |
 | clawcrew-api               | 1,511        | 1,536        | +25    |
 | zerocode               | 704          | 705          | +1     |

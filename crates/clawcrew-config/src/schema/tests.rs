@@ -14720,7 +14720,7 @@ api_key = "op://clawcrew/provider/openai-api-key"
     // real value problem (bad type, bad enum variant, ...) and must
     // propagate as-is rather than being swallowed into the generic
     // "Unknown property" fallback (which downstream consumers, e.g.
-    // `clawcrew-gateway`'s `map_prop_error` and `src/main.rs`'s
+    // `galleon-gateway`'s `map_prop_error` and `src/main.rs`'s
     // `config_patch_map_prop_error`, translate into a 404 PathNotFound
     // instead of a 400 ValueTypeMismatch).
 

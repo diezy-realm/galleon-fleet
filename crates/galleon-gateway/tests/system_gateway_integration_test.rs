@@ -1,5 +1,5 @@
 //! Integration test for `SystemGateway` (D1): boots the REAL `tonic`
-//! server used in production (`clawcrew_gateway::start_grpc_server`'s own
+//! server used in production (`galleon_gateway::start_grpc_server`'s own
 //! `SystemGatewayService`, wired the same way) on a loopback TCP port, then
 //! drives it with a real gRPC client over the wire — the same path the Go
 //! engine's `pkg/client.SystemGatewayClient` exercises in production.
@@ -12,7 +12,7 @@
 //! documented gRPC path (`clawcrew.agent.SystemGateway/<Method>`) — proving
 //! the real network+codec round trip without adding a client dependency.
 
-use clawcrew_gateway::grpc_system_gateway::{
+use galleon_gateway::grpc_system_gateway::{
     system_gateway_server::SystemGatewayServer, GetNativeToolCatalogRequest,
     GetNativeToolCatalogResponse, SystemGatewayService, SystemMetricsRequest,
     SystemMetricsResponse, ToolCallRequest, ToolCallResponse,

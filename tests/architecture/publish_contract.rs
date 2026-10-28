@@ -694,18 +694,18 @@ fn published_build_scripts_never_read_outside_their_package() {
 ///
 /// Do not add entries here to silence a new violation — fix the include instead.
 const ESCAPE_EXCEPTIONS: &[(&str, &str)] = &[(
-    "crates/clawcrew-gateway/src/static_files.rs",
+    "crates/galleon-gateway/src/static_files.rs",
     "../../web/dist",
 )];
 
 #[test]
 fn repo_relative_key_normalizes_windows_separators() {
     let root = Path::new("repository");
-    let source = root.join(r"crates\clawcrew-gateway\src\static_files.rs");
+    let source = root.join(r"crates\galleon-gateway\src\static_files.rs");
 
     assert_eq!(
         repo_relative_key(&source, root),
-        "crates/clawcrew-gateway/src/static_files.rs"
+        "crates/galleon-gateway/src/static_files.rs"
     );
 }
 

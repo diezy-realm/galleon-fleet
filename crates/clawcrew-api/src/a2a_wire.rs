@@ -4,7 +4,7 @@
 //! payload, aligned to the official specification and `a2a.proto`
 //! (`package lf.a2a.v1`): camelCase field names, SCREAMING_SNAKE_CASE enum
 //! values, and oneof discriminators expressed as the branch field name (no
-//! `kind` discriminator). Inbound (`clawcrew-gateway/src/a2a.rs`) uses these
+//! `kind` discriminator). Inbound (`galleon-gateway/src/a2a.rs`) uses these
 //! to construct responses; outbound (`galleon-tools/src/a2a_client.rs`) uses
 //! them to build requests and deserialize peer responses. Router/server-only
 //! types stay gateway-local.

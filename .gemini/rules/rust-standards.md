@@ -14,7 +14,7 @@ Edition: **Rust 2024** | MSRV: **1.82+**
 - Shared versions prevent duplicate builds and drift.
 
 ## 3. Crate Boundaries & Clean Architecture
-- `clawcrew-gateway`: gRPC server (`SystemGatewayServer` :50052), Vault, WebSocket server, mDNS discovery.
+- `galleon-gateway`: gRPC server (`SystemGatewayServer` :50052), Vault, WebSocket server, mDNS discovery.
 - `clawcrew-runtime`: Agent turn execution (`execute_turn`), tool dispatch (`ToolDispatcher`), WASI plugin host.
 - `galleon-providers`: LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**. Must remain a **leaf crate** (no dependency on `clawcrew-runtime`).
 - `clawcrew-channel-*`: Channel plugins (one crate per domain/service).

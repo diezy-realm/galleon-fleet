@@ -5280,7 +5280,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 None
                             };
                         Box::pin(async move {
-                            Box::pin(clawcrew_gateway::run_gateway_with_plugin_webhooks(
+                            Box::pin(galleon_gateway::run_gateway_with_plugin_webhooks(
                                 &host,
                                 port,
                                 config,
@@ -5293,7 +5293,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 }),
                                 Some(canvas_store),
                                 sop_runner,
-                                clawcrew_gateway::GatewaySupervision::new(
+                                galleon_gateway::GatewaySupervision::new(
                                     ready_tx,
                                     plugin_webhooks,
                                 ),
@@ -5934,8 +5934,8 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             }
             #[cfg(feature = "gateway")]
             {
-                match clawcrew_gateway::resolve_web_dashboard_availability(&config) {
-                    Some(clawcrew_gateway::WebDashboardAvailability::Embedded) => {
+                match galleon_gateway::resolve_web_dashboard_availability(&config) {
+                    Some(galleon_gateway::WebDashboardAvailability::Embedded) => {
                         let path = "embedded";
                         let fallback = format!("🌐 Web UI:        FOUND ({path})");
                         println!(
@@ -5943,7 +5943,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             ta("cli-status-web-ui-found", &[("path", path)], &fallback)
                         );
                     }
-                    Some(clawcrew_gateway::WebDashboardAvailability::Filesystem(web_dist_dir)) => {
+                    Some(galleon_gateway::WebDashboardAvailability::Filesystem(web_dist_dir)) => {
                         let path = web_dist_dir.display().to_string();
                         let fallback = format!("🌐 Web UI:        FOUND ({path})");
                         println!(

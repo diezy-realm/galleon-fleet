@@ -4202,7 +4202,7 @@ mod tests {
     // ── daemon gateway bind-mode detection (fail-fast) ────────────────
 
     /// Raw HTTP/1.1 `/health` body a real ClawCrew gateway returns (shape
-    /// mirrors `handle_health` in `clawcrew-gateway`): `status: ok` plus the
+    /// mirrors `handle_health` in `galleon-gateway`): `status: ok` plus the
     /// identity fields `require_pairing` and `runtime`.
     fn clawcrew_health_ok_response() -> Vec<u8> {
         http_response(

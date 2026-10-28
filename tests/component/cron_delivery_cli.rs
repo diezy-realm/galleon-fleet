@@ -377,7 +377,7 @@ fn cron_update_rejects_delivery_on_a_declarative_job() {
     // Materialize the declarative row before invoking the CLI. No CLI command
     // runs `sync_declarative_jobs`; the only production caller is the scheduler's
     // daemon-startup path (`cron/scheduler.rs`). Seeding through the library is
-    // how `clawcrew-gateway`'s own declarative test sets this up, and it keeps the
+    // how `galleon-gateway`'s own declarative test sets this up, and it keeps the
     // assertions on what the binary does rather than on how the row got there.
     seed_declarative_job(config_dir);
 

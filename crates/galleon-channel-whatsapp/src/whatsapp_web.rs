@@ -923,7 +923,7 @@ impl WhatsAppWebChannel {
         // ── Approval-reply interception ──
         //
         // Must live here rather than in the gateway: the generic resolver at
-        // clawcrew-gateway lib.rs sits inside the Cloud WEBHOOK handler, and
+        // galleon-gateway lib.rs sits inside the Cloud WEBHOOK handler, and
         // Web never reaches that endpoint because it runs its own listen().
         // So the token is intercepted on this inbound path, the way discord
         // and signal do it.

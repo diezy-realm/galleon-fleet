@@ -34,7 +34,7 @@ fn crate_dependency_direction_strictly_enforced() {
         let content = fs::read_to_string(&api_cargo).expect("clawcrew-api/Cargo.toml readable");
         for forbidden in [
             "clawcrew-runtime",
-            "clawcrew-gateway",
+            "galleon-gateway",
             "galleon-channels",
             "galleon-tools",
             "galleon-providers",

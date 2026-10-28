@@ -49,9 +49,9 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 #### Detail Eksekusi — FW-C4
 
-**Dependency:** BG-C2 (Sprint 0, HARD — endpoint `/api/pairing/*` harus ada; CATATAN dari Sprint 0: BG-C2 scope-nya kemungkinan mendelegasikan storage ke `clawcrew-gateway/src/api_pairing.rs` Rust `DeviceRegistry` existing via Go policy layer — FE di tiket ini konsumsi endpoint Go `/api/pairing/*`, bukan langsung ke Rust).
+**Dependency:** BG-C2 (Sprint 0, HARD — endpoint `/api/pairing/*` harus ada; CATATAN dari Sprint 0: BG-C2 scope-nya kemungkinan mendelegasikan storage ke `galleon-gateway/src/api_pairing.rs` Rust `DeviceRegistry` existing via Go policy layer — FE di tiket ini konsumsi endpoint Go `/api/pairing/*`, bukan langsung ke Rust).
 
-**Langkah pengerjaan:** Setelah BG-C2 selesai, buat halaman FE (`web/src/components/features/`, pola `*View.tsx`) menampilkan `DeviceInfo` list (id, name, device_type, paired_at, last_seen — field sudah terverifikasi ada di `clawcrew-gateway/src/api_pairing.rs`), tombol revoke, dan flow QR pairing (generate QR dari token sekali-pakai yang di-return BG-C2).
+**Langkah pengerjaan:** Setelah BG-C2 selesai, buat halaman FE (`web/src/components/features/`, pola `*View.tsx`) menampilkan `DeviceInfo` list (id, name, device_type, paired_at, last_seen — field sudah terverifikasi ada di `galleon-gateway/src/api_pairing.rs`), tombol revoke, dan flow QR pairing (generate QR dari token sekali-pakai yang di-return BG-C2).
 
 - [x] **FW-C5 · (G-24)** UI persetujuan `MemoryProposal` (learning by consent). Dep: `BG-F4` (Go, lihat §B di bawah).
 

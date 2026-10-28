@@ -14,7 +14,7 @@ mkdir -p "$repo_root/crates/galleon-channels" \
     "$repo_root/crates/clawcrew-config" \
     "$repo_root/crates/galleon-plugins" \
     "$repo_root/crates/clawcrew-runtime" \
-    "$repo_root/crates/clawcrew-gateway" \
+    "$repo_root/crates/galleon-gateway" \
     "$repo_root/crates/galleon-providers" \
     "$repo_root/crates/galleon-plugins/tests/fixtures/channel-fixture" \
     "$repo_root/apps/tauri"
@@ -28,7 +28,7 @@ cat > "$metadata_file" <<EOF
     {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "name": "clawcrew-config", "manifest_path": "crates/clawcrew-config/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "name": "galleon-plugins", "manifest_path": "crates/galleon-plugins/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "name": "clawcrew-runtime", "manifest_path": "crates/clawcrew-runtime/Cargo.toml"},
-    {"id": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4", "name": "clawcrew-gateway", "manifest_path": "crates/clawcrew-gateway/Cargo.toml"},
+    {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "name": "galleon-gateway", "manifest_path": "crates/galleon-gateway/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "name": "galleon-providers", "manifest_path": "crates/galleon-providers/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "name": "clawcrew-channel-plugin-fixture", "manifest_path": "crates/galleon-plugins/tests/fixtures/channel-fixture/Cargo.toml"},
     {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "name": "clawcrew-desktop", "manifest_path": "apps/tauri/Cargo.toml"}
@@ -40,20 +40,20 @@ cat > "$metadata_file" <<EOF
     "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4",
-    "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4",
+    "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4",
     "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0",
     "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4"
   ],
   "resolve": {
     "nodes": [
-      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
+      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "deps": []},
-      {"id": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}]},
+      {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "deps": []},
       {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}]}
@@ -120,16 +120,16 @@ printf '%s\n' 'crates/clawcrew-api/src/lib.rs' > "$paths_file"
 assert_selection "plugin host from reverse-dependent closure" scoped '["clawcrew","clawcrew-api","galleon-plugins"]' '' "$paths_file" true
 
 printf '%s\n' 'crates/galleon-providers/src/lib.rs' 'crates/galleon-channels/src/lib.rs' > "$paths_file"
-assert_selection "multiple packages" scoped '["clawcrew","galleon-channels","clawcrew-gateway","galleon-providers"]' '' "$paths_file" true
+assert_selection "multiple packages" scoped '["clawcrew","galleon-channels","galleon-gateway","galleon-providers"]' '' "$paths_file" true
 
 printf '%s\n' 'crates/galleon-providers/src/lib.rs' > "$paths_file"
-assert_selection "provider feature owner" scoped '["clawcrew","clawcrew-gateway","galleon-providers"]' '' "$paths_file" true
+assert_selection "provider feature owner" scoped '["clawcrew","galleon-gateway","galleon-providers"]' '' "$paths_file" true
 
 printf '%s\n' 'src/lib.rs' 'tests/integration.rs' > "$paths_file"
 assert_selection "root feature owner" scoped '["clawcrew"]' '' "$paths_file" true
 
-printf '%s\n' 'crates/clawcrew-gateway/src/api_plugins.rs' > "$paths_file"
-assert_selection "gateway feature owner" scoped '["clawcrew","clawcrew-gateway"]' '' "$paths_file" true
+printf '%s\n' 'crates/galleon-gateway/src/api_plugins.rs' > "$paths_file"
+assert_selection "gateway feature owner" scoped '["clawcrew","galleon-gateway"]' '' "$paths_file" true
 
 printf '%s\n' 'crates/galleon-channels/src/lib.rs' 'crates/galleon-channels/tests/one.rs' > "$paths_file"
 assert_selection "deduplication" scoped '["clawcrew","galleon-channels"]' '' "$paths_file"
@@ -392,7 +392,7 @@ assert plugin_components_command in windows_job
 assert plugin_lib_command in windows_job
 assert plugin_runtime_config_command in windows_job
 assert plugin_runtime_admission_command in windows_job
-assert "-p clawcrew-gateway" in windows_job
+assert "-p galleon-gateway" in windows_job
 assert "--features plugins-wasm" in windows_job
 assert "--bin clawcrew" in windows_job
 assert "plugin_registry::" in windows_job
@@ -437,8 +437,8 @@ assert windows_job.index('plugin_lib_status=${PIPESTATUS[0]}') < windows_job.ind
 assert windows_job.index(plugin_runtime_config_command) < windows_job.index('plugin_runtime_config_status=${PIPESTATUS[0]}')
 assert windows_job.index('plugin_runtime_config_status=${PIPESTATUS[0]}') < windows_job.index(plugin_runtime_admission_command)
 assert windows_job.index(plugin_runtime_admission_command) < windows_job.index('plugin_runtime_admission_status=${PIPESTATUS[0]}')
-assert windows_job.index('plugin_runtime_admission_status=${PIPESTATUS[0]}') < windows_job.index("-p clawcrew-gateway")
-assert windows_job.index("-p clawcrew-gateway") < windows_job.index('plugin_gateway_status=${PIPESTATUS[0]}')
+assert windows_job.index('plugin_runtime_admission_status=${PIPESTATUS[0]}') < windows_job.index("-p galleon-gateway")
+assert windows_job.index("-p galleon-gateway") < windows_job.index('plugin_gateway_status=${PIPESTATUS[0]}')
 assert windows_job.index('plugin_gateway_status=${PIPESTATUS[0]}') < windows_job.index("--bin clawcrew")
 assert windows_job.index("--bin clawcrew") < windows_job.index('plugin_cli_status=${PIPESTATUS[0]}')
 assert windows_job.index('plugin_cli_status=${PIPESTATUS[0]}') < windows_job.index(plugin_root_command)

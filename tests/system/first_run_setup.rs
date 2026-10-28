@@ -25,7 +25,7 @@
 //! surface and none of them run here: the zerocode TUI form
 //! (`apps/zerocode/src/quickstart_pane.rs::to_submission`), the interactive CLI
 //! quickstart (`src/main.rs`), and the gateway HTTP handler
-//! (`crates/clawcrew-gateway/src/api_quickstart.rs`). A bug that lives purely
+//! (`crates/galleon-gateway/src/api_quickstart.rs`). A bug that lives purely
 //! in one of those adapters — a field the form never collects, a key the HTTP
 //! layer renames — is invisible to this file. Those are follow-up matrix rows,
 //! not something to fake here with a hand-built submission that would only

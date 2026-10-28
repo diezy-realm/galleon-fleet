@@ -14,7 +14,7 @@ from pathlib import PurePosixPath
 
 DESKTOP_PACKAGE = "clawcrew-desktop"
 PLUGIN_HOST_PACKAGE = "galleon-plugins"
-PLUGIN_FEATURE_OWNER_PACKAGES = {"clawcrew", "clawcrew-gateway", "galleon-providers"}
+PLUGIN_FEATURE_OWNER_PACKAGES = {"clawcrew", "galleon-gateway", "galleon-providers"}
 SAFE_PACKAGE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.+-]*$")
 DOC_SUFFIXES = {".md", ".mdx", ".markdown", ".rst"}
 FULL_PATHS = {

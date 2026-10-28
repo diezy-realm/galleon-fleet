@@ -18,7 +18,7 @@ use clawcrew_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
-use clawcrew_gateway::{
+use galleon_gateway::{
     AppState, ConfigDriftSummary, build_gateway_router, persist_and_swap, try_compute_drift,
 };
 use reqwest::StatusCode;

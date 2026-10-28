@@ -23,7 +23,7 @@
 
 ## T-08 — BG-C2 (dua device-registry paralel: Go `TokenStore` vs Rust `DeviceRegistry`)
 
-**Keputusan: Opsi A.** Rust `DeviceRegistry` (`crates/clawcrew-gateway/src/api_pairing.rs`, SQLite-persistent) jadi Single Source of Truth. Go `memoryPairingService`/`TokenStore` (`engine/src/identity/`, in-memory) menjadi cache sinkron di atas Rust via gRPC `SystemGateway` existing — bukan sumber kebenaran independen.
+**Keputusan: Opsi A.** Rust `DeviceRegistry` (`crates/galleon-gateway/src/api_pairing.rs`, SQLite-persistent) jadi Single Source of Truth. Go `memoryPairingService`/`TokenStore` (`engine/src/identity/`, in-memory) menjadi cache sinkron di atas Rust via gRPC `SystemGateway` existing — bukan sumber kebenaran independen.
 
 **Rasional:** field keduanya hampir identik (DeviceID↔id, PairedAt↔paired_at, dst), Rust sudah persistent (survive restart), Go in-memory tidak (restart Go = device hilang dari sisi Go meski masih ada di Rust) — risiko drift nyata di produksi.
 

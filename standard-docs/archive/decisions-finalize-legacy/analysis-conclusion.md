@@ -14,7 +14,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 
 - **~80% pekerjaan Phase 2 sudah selesai** di sesi-sesi sebelumnya (Lane A/B/C/E/F mayoritas ✅).
 - **Phase 2 Lane D (Go→Rust sandboxed tool execution)** adalah satu-satunya lane yang belum dimulai, namun teknisnya sudah *unblocked* (Rust `SystemGatewayService.execute_native_tool` aktif di `:50052`, Go `WithSystemGateway` sudah terpasang di `wire_gen.go`).
-- **Phase 3 (DynamicRouter)** memiliki fondasi prototipe yang sudah ada (`galleon-routing` dengan 3 unit test lolos), namun belum di-wire sama sekali ke `clawcrew-gateway`.
+- **Phase 3 (DynamicRouter)** memiliki fondasi prototipe yang sudah ada (`galleon-routing` dengan 3 unit test lolos), namun belum di-wire sama sekali ke `galleon-gateway`.
 - **ADR 0001 (LLM SSOT Rust)** — sudah diterima prinsipnya, tetapi `ExecuteTurn` di proto belum ada, Go `engine/src/llm/` masih aktif, tidak ada wiring Rust ke gRPC LLM sama sekali.
 - **ADR 0002 & ADR 0003** — diterima, namun pelanggaran kode aktif masih ada: QR + telemetri di `web/server.ts`, dan `get_system_metrics()` di `apps/tauri/src/main.rs` masih mengembalikan konstanta palsu.
 
@@ -56,7 +56,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 | D1 | `builtin_*.go` eksekusi melalui gRPC ke Rust `:50052`, bukan langsung di Go | ❌ Belum. `WithSystemGateway` terpasang, tapi masih ada fallback in-process di setiap `builtin_*.go` |
 | D2 | Verifikasi sisi Rust `SystemGateway.ExecuteTool` menerima panggilan Go, Landlock boundary aktif | ❌ Belum. `execute_native_tool` di Rust sudah ada, tapi belum ada round-trip test + Landlock test |
 
-**Temuan kritis Lane D:** Di `crates/clawcrew-gateway/src/grpc_system_gateway.rs`, method `get_decrypted_secret` masih berupa `// ponytail: stub` (mengembalikan `Status::unimplemented`). Artinya sekalinya D1 dieksekusi, alur `Go → bash/git/read_file via Rust` akan berjalan, tapi alur pengambilan secret (`Go → GetDecryptedSecret → Rust Vault`) masih stub.
+**Temuan kritis Lane D:** Di `crates/galleon-gateway/src/grpc_system_gateway.rs`, method `get_decrypted_secret` masih berupa `// ponytail: stub` (mengembalikan `Status::unimplemented`). Artinya sekalinya D1 dieksekusi, alur `Go → bash/git/read_file via Rust` akan berjalan, tapi alur pengambilan secret (`Go → GetDecryptedSecret → Rust Vault`) masih stub.
 
 #### Lane E — Frontend Tipe & De-mock
 | Kode | Temuan | Status Aktual |
@@ -78,12 +78,12 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 
 ---
 
-### 2.2 Phase 3 — DynamicRouter (`galleon-routing` → `clawcrew-gateway`)
+### 2.2 Phase 3 — DynamicRouter (`galleon-routing` → `galleon-gateway`)
 
 **Temuan kunci:**
 1. `crates/galleon-routing/src/lib.rs` **sudah ada** dengan `RouteHandler` trait + `DynamicRouter` struct + 3 passing unit tests. Namun **tidak ada satu pun crate/binary yang mengimpornya** — orphan crate.
 2. `PluginCapability` enum (`Tool | Channel | Memory | Observer | Skill`) **sudah ada** di `crates/galleon-plugins/src/lib.rs:107`. Gap 1 adalah reuse, bukan membuat baru.
-3. `crates/clawcrew-gateway/src/lib.rs` memiliki **49 `pub mod`** (sebagian feature-gated), membenarkan urgensi dekomposisi.
+3. `crates/galleon-gateway/src/lib.rs` memiliki **49 `pub mod`** (sebagian feature-gated), membenarkan urgensi dekomposisi.
 4. `SlidingWindowRateLimiter` sudah ada di `auth_rate_limit.rs` — bisa di-reuse untuk rate-limit per-IP saat rute miss (Gap 3), tidak perlu membuat limiter baru.
 5. `security_headers::apply` sudah berupa `axum::middleware::Next` layer yang berfungsi (Gap 4).
 

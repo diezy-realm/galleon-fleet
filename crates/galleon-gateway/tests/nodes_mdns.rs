@@ -4,7 +4,7 @@ use std::sync::{
 };
 use std::time::{Duration, Instant};
 
-use clawcrew_gateway::nodes::mdns::{
+use galleon_gateway::nodes::mdns::{
     Announcement, Bye, MdnsAdvertisedGateway, MdnsPeer, MdnsPeerRegistry, PeerPacket,
     evict_stale_peers, handle_datagram, is_advertisable_gateway_addr,
 };

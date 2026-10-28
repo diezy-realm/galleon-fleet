@@ -57,7 +57,7 @@ Rust implementation is **production-mature** and **multi-vendor native** as clai
 
 ### 4. Existing gRPC Boundary
 
-`clawcrew-gateway` already exposes `SystemGatewayService` gRPC at `:50052`. Go engine calls Rust for tool execution (`ToolDispatcher` already delegates correctly). Extending this to LLM execution is **architectural consistency**, not a new pattern.
+`galleon-gateway` already exposes `SystemGatewayService` gRPC at `:50052`. Go engine calls Rust for tool execution (`ToolDispatcher` already delegates correctly). Extending this to LLM execution is **architectural consistency**, not a new pattern.
 
 ---
 

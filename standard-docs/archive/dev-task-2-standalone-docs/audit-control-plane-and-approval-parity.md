@@ -32,7 +32,7 @@ Sesuai aturan `AGENTS.md`:
 ## 2. Inventaris & Rencana Dekoplasi Crate Rust (BR-C5, BR-C6, BR-D4)
 
 ### 2.1 Dekoplasi Gateway (`BR-C5 · R-14`)
-- **Ground Truth Count:** Ditemukan tepat **425 referensi** `clawcrew_runtime::` di dalam `crates/clawcrew-gateway/src/`.
+- **Ground Truth Count:** Ditemukan tepat **425 referensi** `clawcrew_runtime::` di dalam `crates/galleon-gateway/src/`.
 - **Distribusi Utama:**
   - `clawcrew_runtime::cron` (103 ref)
   - `clawcrew_runtime::sop` (85 ref)

@@ -11,7 +11,7 @@
 
 ```
 crates/
-├── clawcrew-gateway/         # gRPC server, vault, secret management
+├── galleon-gateway/         # gRPC server, vault, secret management
 ├── clawcrew-runtime/         # Agent turn execution, tool dispatch
 ├── galleon-providers/       # LLM vendor APIs (SSOT ADR 0001)
 ├── clawcrew-channel-*/       # Channel plugins (Discord, Telegram, etc.)
@@ -23,7 +23,7 @@ crates/
 ```toml
 [workspace]
 members = [
-    "crates/clawcrew-gateway",
+    "crates/galleon-gateway",
     "crates/clawcrew-runtime",
     "crates/galleon-providers",
     "crates/clawcrew-channel-*",
@@ -49,7 +49,7 @@ serde = { version = "1.0", features = ["derive"] }
 
 ## Crate Boundaries (Clean Architecture)
 
-### Gateway Crate (`clawcrew-gateway`)
+### Gateway Crate (`galleon-gateway`)
 
 **Owns:**
 - gRPC server `SystemGatewayService` :50052
@@ -283,7 +283,7 @@ service SystemGatewayService {
 ### Server Implementation
 
 ```rust
-// clawcrew-gateway/src/grpc_server.rs
+// galleon-gateway/src/grpc_server.rs
 use tonic::{Request, Response, Status};
 use proto::system_gateway_service_server::SystemGatewayService;
 
@@ -551,7 +551,7 @@ async fn test_turn_execution_e2e() {
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Crate | `snake_case` | `clawcrew_gateway`, `galleon_providers` |
+| Crate | `snake_case` | `galleon_gateway`, `galleon_providers` |
 | Module | `snake_case` | `mod grpc_server;`, `mod vault;` |
 | Struct | `PascalCase` | `Gateway`, `OpenAIProvider` |
 | Trait | `PascalCase` | `Provider`, `ToolExecutor` |
@@ -566,7 +566,7 @@ async fn test_turn_execution_e2e() {
 ### Crate Layout
 
 ```
-clawcrew-gateway/
+galleon-gateway/
 ├── src/
 │   ├── lib.rs            # Public API exports
 │   ├── grpc_server.rs    # gRPC server implementation

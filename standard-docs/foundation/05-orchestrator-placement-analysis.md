@@ -8,7 +8,7 @@
 |---|---|
 | Aturan normatif: Go = "agent brain (`StartTurn`), fleet governance, RAG"; Rust = leaf service, dilarang crew orchestration | `tech-standart/architecture/01-boundary-policy.md` |
 | Go **sudah** memanggil Rust untuk LLM: `StartTurn` menyusun `ExecuteTurnRequest` dan membuka stream ke Rust | `engine/src/crew/services.go:38,81,100` |
-| Rust `execute_turn` memakai `ModelProvider` (LLM SSOT) | `crates/clawcrew-gateway/src/grpc_system_gateway.rs:24,412` |
+| Rust `execute_turn` memakai `ModelProvider` (LLM SSOT) | `crates/galleon-gateway/src/grpc_system_gateway.rs:24,412` |
 | **Tetapi** Rust punya otak kedua: `runtime/agent` 77k LOC, `sop` 38k, `rpc` 32k, `skills` 12k, `cron` 10k, `control_plane` 7k | ukuran modul runtime |
 | Otak Rust itu **masih dipakai**: `src/main.rs` (CLI), `gateway/{api,api_config,ws,a2a}.rs` | grep `agent::` |
 
