@@ -529,7 +529,7 @@ pub struct ProviderSwitchConfig {
 }
 
 /// Bundle of late-bound channel-map handles owned by an Agent.
-pub use clawcrew_tools::send_via::AgentChannelHandles;
+pub use galleon_tools::send_via::AgentChannelHandles;
 
 pub struct AgentBuilder {
     model_provider: Option<Box<dyn ModelProvider>>,
@@ -943,7 +943,7 @@ impl AgentBuilder {
         // replace the backend with NoneMemory, and force auto_save off.
         let exclude_memory = self.exclude_memory;
         if exclude_memory {
-            tools.retain(|t| !clawcrew_tools::MEMORY_TOOL_NAMES.contains(&t.name()));
+            tools.retain(|t| !galleon_tools::MEMORY_TOOL_NAMES.contains(&t.name()));
         }
 
         let memory: Arc<dyn Memory> = if exclude_memory {

@@ -8,7 +8,7 @@ use clawcrew_config::schema::Config;
 use clawcrew_infra::session_backend::SessionBackend;
 use clawcrew_memory::{self, Memory};
 use clawcrew_providers::{self, ModelProvider};
-use clawcrew_tools::canvas::CanvasStore;
+use galleon_tools::canvas::CanvasStore;
 use parking_lot::RwLock;
 
 /// Shared state for all axum handlers

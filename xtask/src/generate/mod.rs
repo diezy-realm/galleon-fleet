@@ -59,7 +59,7 @@ fn registry() -> Vec<Surface> {
         },
         Surface {
             name: "tools-en-ftl",
-            file: "crates/clawcrew-tools/locales/en/tools.ftl",
+            file: "crates/galleon-tools/locales/en/tools.ftl",
             render: tools_ftl::render_file,
         },
         Surface {

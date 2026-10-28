@@ -152,7 +152,7 @@ Good places to start:
 
 - New channel → `crates/clawcrew-channels/`
 - New provider → `crates/clawcrew-providers/`
-- New tool → `crates/clawcrew-tools/`
+- New tool → `crates/galleon-tools/`
 - Hardware support → `crates/galleon-hardware/`
 - Docs → `docs/book/src/`
 

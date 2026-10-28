@@ -11837,9 +11837,9 @@ Let me check the result."#;
         let stubs = names
             .iter()
             .map(|name| {
-                clawcrew_tools::mcp_deferred::DeferredMcpToolStub::new(
+                galleon_tools::mcp_deferred::DeferredMcpToolStub::new(
                     (*name).to_string(),
-                    clawcrew_tools::mcp_protocol::McpToolDef {
+                    galleon_tools::mcp_protocol::McpToolDef {
                         name: (*name).to_string(),
                         description: Some("test tool".to_string()),
                         input_schema: serde_json::json!({"type": "object", "properties": {}}),
@@ -11923,7 +11923,7 @@ Let me check the result."#;
         let activated = Arc::new(Mutex::new(crate::tools::ActivatedToolSet::new()));
         // The risk-profile denylist always wins over `mode = "always"`.
         let excluded = vec!["files__write".to_string()];
-        let policy = clawcrew_tools::tool_search::ToolAccessPolicy::from_security(
+        let policy = galleon_tools::tool_search::ToolAccessPolicy::from_security(
             None,
             Some(&excluded),
             None,

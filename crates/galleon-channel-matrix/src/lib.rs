@@ -3329,7 +3329,7 @@ mod outbound {
     }
 
     /// 8 MiB cap on the body of an HTTP marker fetch. Matches WebFetchTool's
-    /// streaming-cap pattern in `crates/clawcrew-tools/src/web_fetch.rs`.
+    /// streaming-cap pattern in `crates/galleon-tools/src/web_fetch.rs`.
     const MAX_MARKER_BYTES: usize = 8 * 1024 * 1024;
     /// 30-second connect+request timeout for HTTP marker fetches. Bounds the
     /// agent-driven fetch path so a hung target cannot stall the channel.

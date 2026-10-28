@@ -117,7 +117,7 @@ fn probe_boundary_violations<'a>(reachable: &BTreeSet<&'a str>) -> Vec<&'a str> 
             let dependency_feature_is_active = !weak || active_dependencies.contains(dependency);
             dependency_feature_is_active
                 && ((dependency == "galleon-hardware" && matches!(feature, "hardware" | "probe"))
-                    || (dependency == "clawcrew-tools" && feature == "probe"))
+                    || (dependency == "galleon-tools" && feature == "probe"))
         })
         .collect()
 }
@@ -133,19 +133,19 @@ fn assert_probe_boundary(profile: &str, reachable: &BTreeSet<&str>) {
 
 #[test]
 fn probe_boundary_applies_weak_dependency_feature_semantics() {
-    let active_weak_edge = BTreeSet::from(["dep:clawcrew-tools", "clawcrew-tools?/probe"]);
+    let active_weak_edge = BTreeSet::from(["dep:galleon-tools", "galleon-tools?/probe"]);
     assert_eq!(
         probe_boundary_violations(&active_weak_edge),
-        vec!["clawcrew-tools?/probe"]
+        vec!["galleon-tools?/probe"]
     );
 
-    let inactive_weak_edge = BTreeSet::from(["clawcrew-tools?/probe"]);
+    let inactive_weak_edge = BTreeSet::from(["galleon-tools?/probe"]);
     assert!(probe_boundary_violations(&inactive_weak_edge).is_empty());
 
-    let strong_edge = BTreeSet::from(["clawcrew-tools/probe"]);
+    let strong_edge = BTreeSet::from(["galleon-tools/probe"]);
     assert_eq!(
         probe_boundary_violations(&strong_edge),
-        vec!["clawcrew-tools/probe"]
+        vec!["galleon-tools/probe"]
     );
 }
 
@@ -157,12 +157,12 @@ fn probe_feature_graph_preserves_forwarding_and_distribution_boundaries() {
         "galleon-hardware Cargo.toml",
     );
     let tools = parse_manifest(
-        include_str!("../../crates/clawcrew-tools/Cargo.toml"),
-        "clawcrew-tools Cargo.toml",
+        include_str!("../../crates/galleon-tools/Cargo.toml"),
+        "galleon-tools Cargo.toml",
     );
     let root_features = feature_table(&root, "root Cargo.toml");
     let hardware_features = feature_table(&hardware, "galleon-hardware Cargo.toml");
-    let tools_features = feature_table(&tools, "clawcrew-tools Cargo.toml");
+    let tools_features = feature_table(&tools, "galleon-tools Cargo.toml");
 
     let root_hardware = feature_values(root_features, "hardware");
     assert_feature_contains("root hardware", &root_hardware, "dep:galleon-hardware");
@@ -189,11 +189,11 @@ fn probe_feature_graph_preserves_forwarding_and_distribution_boundaries() {
     assert_feature_contains(
         "galleon-hardware probe",
         &hardware_probe,
-        "clawcrew-tools/probe",
+        "galleon-tools/probe",
     );
 
     let tools_probe = feature_values(tools_features, "probe");
-    assert_feature_contains("clawcrew-tools probe", &tools_probe, "dep:probe-rs");
+    assert_feature_contains("galleon-tools probe", &tools_probe, "dep:probe-rs");
 
     let default_reachable = root_feature_reachable(root_features, &["default"]);
     assert_probe_boundary("root default", &default_reachable);

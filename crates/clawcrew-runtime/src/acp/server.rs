@@ -22,7 +22,7 @@ use clawcrew_api::plan::PlanEntry;
 use clawcrew_config::schema::Config;
 use clawcrew_infra::acp_session_store::AcpSessionStore;
 use crate::agent::agent::{Agent, TurnEvent};
-use clawcrew_tools::canvas::CanvasStore;
+use galleon_tools::canvas::CanvasStore;
 
 use super::channel::AcpChannel;
 use super::embedded as acp_embedded;
@@ -3210,7 +3210,7 @@ fn deliver_file_tool_result_content(
     // replaces the content-addressed file between the tool's write and this read
     // can never load an unbounded blob into memory, and a replacement symlink is
     // refused, not followed. On any mismatch, fall back to text-only content.
-    let bytes = clawcrew_tools::deliver_file::read_delivered_artifact_bounded(Path::new(path)).ok()?;
+    let bytes = galleon_tools::deliver_file::read_delivered_artifact_bounded(Path::new(path)).ok()?;
     // The typed `uri` is a content hash the tool computed over the same file. Recompute
     // it from the bytes we just read and require an exact match: if the file was swapped
     // between the tool's validation and this read, the hash differs and we fall back to
@@ -3220,7 +3220,7 @@ fn deliver_file_tool_result_content(
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or_default();
-    let expected_uri = clawcrew_tools::deliver_file::attachment_deliver_uri(
+    let expected_uri = galleon_tools::deliver_file::attachment_deliver_uri(
         &acp_embedded::content_hash_name(&bytes, ext),
     );
     if artifact.uri != expected_uri {
@@ -5597,7 +5597,7 @@ mod tests {
             .iter()
             .find_map(|content| content.pointer("/content/resource"))
             .expect("outbound resource blob");
-        let expected_uri = clawcrew_tools::deliver_file::attachment_deliver_uri(
+        let expected_uri = galleon_tools::deliver_file::attachment_deliver_uri(
             &acp_embedded::content_hash_name(outbound, "pdf"),
         );
         assert_eq!(resource["uri"], expected_uri);
@@ -6053,7 +6053,7 @@ mod tests {
                 .extension()
                 .and_then(|e| e.to_str())
                 .unwrap_or_default();
-            clawcrew_tools::deliver_file::attachment_deliver_uri(&acp_embedded::content_hash_name(
+            galleon_tools::deliver_file::attachment_deliver_uri(&acp_embedded::content_hash_name(
                 &bytes, ext,
             ))
         } else {
@@ -6201,7 +6201,7 @@ mod tests {
         // opaque content hash, never the filename stem.
         let path = dir.path().join("a1b2c3d4e5f6.pdf");
         std::fs::write(&path, b"%PDF").unwrap();
-        let expected = clawcrew_tools::deliver_file::attachment_deliver_uri(
+        let expected = galleon_tools::deliver_file::attachment_deliver_uri(
             &acp_embedded::content_hash_name(b"%PDF", "pdf"),
         );
 
@@ -6235,7 +6235,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("x.pdf");
         std::fs::write(&path, b"%PDF").unwrap();
-        let expected = clawcrew_tools::deliver_file::attachment_deliver_uri(
+        let expected = galleon_tools::deliver_file::attachment_deliver_uri(
             &acp_embedded::content_hash_name(b"%PDF", "pdf"),
         );
 
@@ -6300,7 +6300,7 @@ mod tests {
         let path = dir.path().join("big.bin");
         std::fs::write(
             &path,
-            vec![0u8; (clawcrew_tools::deliver_file::MAX_DELIVER_FILE_BYTES as usize) + 1],
+            vec![0u8; (galleon_tools::deliver_file::MAX_DELIVER_FILE_BYTES as usize) + 1],
         )
         .unwrap();
         let event = TurnEvent::ToolResult {

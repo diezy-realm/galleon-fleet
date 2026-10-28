@@ -226,7 +226,7 @@ path = pathlib.Path(sys.argv[1])
 report = json.loads(path.read_text(encoding="utf-8"))
 profile = next(item for item in report["profiles"] if item["id"] == "hardware-probe")
 profile["enabled_features"] = [
-    item for item in profile["enabled_features"] if item["name"] != "clawcrew-tools"
+    item for item in profile["enabled_features"] if item["name"] != "galleon-tools"
 ]
 profile["counts"]["enabled_features"] -= 1
 path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -381,7 +381,7 @@ case "${package}|${no_default}|${features}" in
     'clawcrew|false|') profile=root-default ;;
     'clawcrew|true|agent-runtime,channel-matrix') profile=standard-distribution ;;
     'clawcrew|true|ci-all') profile=ci-all ;;
-    'clawcrew|true|agent-runtime,probe,clawcrew-tools/probe') profile=hardware-probe ;;
+    'clawcrew|true|agent-runtime,probe,galleon-tools/probe') profile=hardware-probe ;;
     'clawcrew-channels|true|') profile=channels-minimal ;;
     'clawcrew-channels|false|') profile=channels-default ;;
     *) exit 99 ;;
@@ -658,8 +658,8 @@ assert_contains "$test_root/truncated.err" 'selected root package'
 cp -R "$fixture_root/raw" "$test_root/raw-forwarding"
 replace_text \
     "$test_root/raw-forwarding/hardware-probe.tree" \
-    $'clawcrew-tools v0.8.4\tfeatures:probe' \
-    $'clawcrew-tools v0.8.4\tfeatures:'
+    $'galleon-tools v0.8.4\tfeatures:probe' \
+    $'galleon-tools v0.8.4\tfeatures:'
 set +e
 run_normalize "$test_root/raw-forwarding" "$test_root/should-not-exist.json" 2>"$test_root/forwarding.err"
 status=$?

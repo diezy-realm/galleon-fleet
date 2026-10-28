@@ -31,13 +31,13 @@ use tokio::time::{sleep, timeout};
 use tokio_rustls::TlsConnector;
 
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_tools::email_imap::{ImapSession, TlsStreamTolerant};
+use galleon_tools::email_imap::{ImapSession, TlsStreamTolerant};
 
 pub use clawcrew_config::scattered_types::EmailConfig;
 
 // `TlsStreamTolerant` (the rustls wrapper that turns Exchange's missing
 // `close_notify` into a graceful EOF) and the `ImapSession` alias live in
-// `clawcrew_tools::email_imap`, the canonical IMAP utility shared by the
+// `galleon_tools::email_imap`, the canonical IMAP utility shared by the
 // read-only email tools. Imported here so there is a single definition.
 
 pub struct EmailChannel {

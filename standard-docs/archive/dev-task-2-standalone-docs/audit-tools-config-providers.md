@@ -1,4 +1,4 @@
-# Audit: `clawcrew-tools`, `clawcrew-config`, `clawcrew-providers` (BR-C8)
+# Audit: `galleon-tools`, `clawcrew-config`, `clawcrew-providers` (BR-C8)
 
 **Ticket:** BR-C8 · R-18 · PR-97  
 **Principle:** Single Source of Truth & Ponytail (No speculative splitting / YAGNI)  
@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-Audit ini mengevaluasi apakah `crates/clawcrew-tools`, `crates/clawcrew-config`, dan `crates/clawcrew-providers` memerlukan pemecahan crate (crate splitting) pada fase ini.
+Audit ini mengevaluasi apakah `crates/galleon-tools`, `crates/clawcrew-config`, dan `crates/clawcrew-providers` memerlukan pemecahan crate (crate splitting) pada fase ini.
 
 **Kesimpulan:** **TIDAK PERLU DIPECAH (Keep As-Is, No Speculative Splitting).**  
 Ketiga crate memiliki batas tanggung jawab (cohesion) yang jelas, dependency graph yang satu arah tanpa siklus, dan pemecahan spekulatif hanya akan menambah overhead kompilasi dan boilerplate re-export tanpa manfaat arsitektural yang nyata.
@@ -21,7 +21,7 @@ Ketiga crate memiliki batas tanggung jawab (cohesion) yang jelas, dependency gra
 | :--- | :--- | :--- | :--- |
 | `crates/clawcrew-config` | 46 | 85,838 | Canonical SSOT Schema & Defaults untuk seluruh workspace |
 | `crates/clawcrew-providers` | 49 | 84,251 | Implementasi Model & Inference Providers |
-| `crates/clawcrew-tools` | 97 | 85,720 | Implementasi Native Tools platform |
+| `crates/galleon-tools` | 97 | 85,720 | Implementasi Native Tools platform |
 
 ---
 
@@ -39,7 +39,7 @@ Ketiga crate memiliki batas tanggung jawab (cohesion) yang jelas, dependency gra
 - **Risiko jika dipecah:** Provider sudah diisolasi di balik feature flags (`feature = "provider-openai"`, dsb.). Cargo feature gates sudah cukup untuk mengontrol kompilasi tanpa perlu memecah repo menjadi lusinan sub-crate mini.
 - **Rekomendasi:** Pertahankan arsitektur feature-gated tunggal.
 
-### 3.3 `clawcrew-tools`
+### 3.3 `galleon-tools`
 - **Fungsi:** Menampung implementasi native tools (filesystem, git, terminal, browser, dsb.).
 - **Ketergantungan:** Bergantung pada `clawcrew-api` dan interface runtime.
 - **Risiko jika dipecah:** Tool dispatch dipanggil via satu registry terpadu. Memecah per tool hanya memperumit pendaftaran di `ToolDispatcher`.

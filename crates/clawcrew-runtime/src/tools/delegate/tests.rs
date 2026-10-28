@@ -4445,7 +4445,7 @@
 
     #[test]
     fn caller_allowed_narrowing_excludes_mcp_capability_tools() {
-        use clawcrew_tools::tool_search::ToolAccessPolicy;
+        use galleon_tools::tool_search::ToolAccessPolicy;
         let policy = ToolAccessPolicy::from_security(
             Some(&["shell".to_string()]),
             None,
@@ -4531,18 +4531,18 @@
         let activated = Arc::new(std::sync::Mutex::new(crate::tools::ActivatedToolSet::new()));
         let deferred = crate::tools::DeferredMcpToolSet {
             stubs: vec![{
-                let def = clawcrew_tools::mcp_protocol::McpToolDef {
+                let def = galleon_tools::mcp_protocol::McpToolDef {
                     name: "list_projects".to_string(),
                     description: Some("List projects".to_string()),
                     input_schema: serde_json::json!({"type": "object", "properties": {}}),
                 };
-                clawcrew_tools::mcp_deferred::DeferredMcpToolStub::new(
+                galleon_tools::mcp_deferred::DeferredMcpToolStub::new(
                     "mcp_service_a__list_projects".to_string(),
                     def,
                 )
             }],
             registry: Arc::new(
-                clawcrew_tools::mcp_client::McpRegistry::connect_all(&[])
+                galleon_tools::mcp_client::McpRegistry::connect_all(&[])
                     .await
                     .unwrap(),
             ),

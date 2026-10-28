@@ -11,7 +11,7 @@ use crate::nodes::{NodeInvocation, NodeRegistry};
 use clawcrew_api::attribution::{ToolKind, ToolProvenance};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_api::tool_attribution;
-use clawcrew_tools::node_capabilities::requires_approval;
+use galleon_tools::node_capabilities::requires_approval;
 
 tool_attribution!(NodeTool, ToolKind::Plugin, ToolProvenance::Extension);
 

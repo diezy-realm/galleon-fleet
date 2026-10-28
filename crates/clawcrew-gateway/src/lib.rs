@@ -138,7 +138,7 @@ pub use strangler_runner::{
 pub use clawcrew_api::memory_traits::MemoryStrategy;
 pub use clawcrew_config::pairing::PairingCodePolicy;
 pub use clawcrew_config::schema::Config;
-pub use clawcrew_tools::canvas::CanvasStore;
+pub use galleon_tools::canvas::CanvasStore;
 
 use axum::Json;
 use axum::Router;

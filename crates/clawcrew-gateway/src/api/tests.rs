@@ -225,7 +225,7 @@ pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         pending_pairings: None,
         path_prefix: String::new(),
         web_dist_dir: None,
-        canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
+        canvas_store: galleon_tools::canvas::CanvasStore::new(),
         cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
         pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         tui_registry: None,

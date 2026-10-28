@@ -64,4 +64,4 @@ Riset ini **murni bahan referensi**, tidak diimplementasikan sebagai fitur baru.
 
 ## Sumber
 
-Lihat URL inline di tiap bagian di atas. Repo galleon-fleet sudah dicek: `crates/clawcrew-tools/src/web_fetch.rs` (domain_guard, DNS pinning, Firecrawl fallback) dan `web_search_tool.rs` (multi-provider: AnySearch, Serply) — murni API-based, nol crawler sendiri.
+Lihat URL inline di tiap bagian di atas. Repo galleon-fleet sudah dicek: `crates/galleon-tools/src/web_fetch.rs` (domain_guard, DNS pinning, Firecrawl fallback) dan `web_search_tool.rs` (multi-provider: AnySearch, Serply) — murni API-based, nol crawler sendiri.

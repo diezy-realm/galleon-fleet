@@ -348,7 +348,7 @@ fn section_test_state(config: clawcrew_config::schema::Config) -> AppState {
         )),
         device_registry: None,
         pending_pairings: None,
-        canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
+        canvas_store: galleon_tools::canvas::CanvasStore::new(),
         #[cfg(feature = "webauthn")]
         webauthn: None,
         cancel_tokens: std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),

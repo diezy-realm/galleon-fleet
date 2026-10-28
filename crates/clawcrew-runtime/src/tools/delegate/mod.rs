@@ -28,11 +28,11 @@ use clawcrew_config::schema::{
 use clawcrew_log::Instrument as _;
 use clawcrew_memory::Memory;
 use clawcrew_providers::{self, ChatMessage, ModelProvider, ProviderDispatch};
-use clawcrew_tools::memory_export::MemoryExportTool;
-use clawcrew_tools::memory_forget::MemoryForgetTool;
-use clawcrew_tools::memory_purge::MemoryPurgeTool;
-use clawcrew_tools::memory_recall::MemoryRecallTool;
-use clawcrew_tools::memory_store::MemoryStoreTool;
+use galleon_tools::memory_export::MemoryExportTool;
+use galleon_tools::memory_forget::MemoryForgetTool;
+use galleon_tools::memory_purge::MemoryPurgeTool;
+use galleon_tools::memory_recall::MemoryRecallTool;
+use galleon_tools::memory_store::MemoryStoreTool;
 
 fn current_tool_loop_session_key() -> Option<String> {
     TOOL_LOOP_SESSION_KEY.try_with(Clone::clone).ok().flatten()
@@ -3756,7 +3756,7 @@ impl DelegateTool {
                     let parent_tools = self.parent_tools.read();
                     parent_tools.iter().any(|tool| {
                         self.security.is_tool_allowed(tool.name())
-                            && clawcrew_tools::MEMORY_TOOL_NAMES.contains(&tool.name())
+                            && galleon_tools::MEMORY_TOOL_NAMES.contains(&tool.name())
                             && Self::delegate_admits_with_mcp(&tool_policy, tool.name())
                     })
                 };

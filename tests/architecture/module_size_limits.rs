@@ -47,9 +47,9 @@ fn legacy_size_exceptions() -> HashMap<&'static str, usize> {
     m.insert("crates/clawcrew-runtime/src/tools/delegate/tests.rs", 11000);
     m.insert("crates/clawcrew-runtime/src/tools/mod.rs", 6000);
     m.insert("crates/galleon-tool-call-parser/src/lib.rs", 6000);
-    m.insert("crates/clawcrew-tools/src/a2a_client.rs", 6500);
-    m.insert("crates/clawcrew-tools/src/git_operations.rs", 6000);
-    m.insert("crates/clawcrew-tools/src/web_search_tool.rs", 6500);
+    m.insert("crates/galleon-tools/src/a2a_client.rs", 6500);
+    m.insert("crates/galleon-tools/src/git_operations.rs", 6000);
+    m.insert("crates/galleon-tools/src/web_search_tool.rs", 6500);
     m
 }
 

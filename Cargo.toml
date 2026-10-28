@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/clawcrew-api", "crates/clawcrew-infra", "crates/clawcrew-config", "crates/galleon-dist", "crates/clawcrew-log", "crates/clawcrew-log/tests/fixtures/attribution-macro-support", "crates/clawcrew-log/tests/fixtures/attribution-macro-consumer", "crates/galleon-tls", "crates/galleon-relay-proto", "apps/galleonrelay", "crates/clawcrew-spawn", "crates/galleon-commands", "crates/clawcrew-providers", "crates/clawcrew-memory", "crates/clawcrew-channels", "crates/clawcrew-tools", "crates/galleon-sop-graph", "crates/clawcrew-runtime", "crates/clawcrew-eval", "apps/galleoncode", "crates/galleon-plugins", "crates/galleon-plugins/tests/fixtures/channel-fixture", "crates/galleon-plugins/tests/fixtures/channel-nostr-pilot", "crates/galleon-plugins/tests/fixtures/channel-egress-fixture", "crates/galleon-plugins/tests/fixtures/egress-fixture", "crates/galleon-plugins/tests/fixtures/tool-fixture", "crates/galleon-plugins/tests/fixtures/tool-timeout-fixture", "crates/galleon-plugins/tests/fixtures/tool-sequential-fixture", "crates/galleon-plugins/tests/fixtures/tool-secret-fixture", "crates/clawcrew-gateway", "crates/galleon-hardware", "crates/galleon-tool-call-parser", "crates/galleon-macros", "crates/galleon-i18n", "crates/galleon-security-scrub", "crates/galleon-channel-core", "crates/galleon-channel-signal", "crates/galleon-channel-bluesky", "crates/galleon-channel-imessage", "crates/galleon-channel-irc", "crates/galleon-channel-nostr", "crates/galleon-channel-twitch", "crates/galleon-channel-dingtalk", "crates/galleon-channel-mochat", "crates/galleon-channel-clawdtalk", "crates/galleon-channel-reddit", "crates/galleon-channel-twitter", "crates/galleon-channel-notion", "crates/galleon-channel-linq", "crates/galleon-channel-nextcloud", "crates/galleon-channel-filesystem", "crates/galleon-channel-amqp", "crates/galleon-channel-wecom", "crates/galleon-channel-webhook", "crates/galleon-channel-email", "crates/galleon-channel-qq", "crates/galleon-channel-line", "crates/galleon-channel-mattermost", "crates/galleon-channel-lark", "crates/galleon-channel-wechat", "crates/galleon-channel-telegram", "crates/galleon-channel-wecom-ws", "crates/galleon-channel-discord", "crates/galleon-channel-matrix", "crates/galleon-channel-slack", "crates/galleon-channel-git", "crates/galleon-channel-voice-call", "crates/galleon-channel-whatsapp", "tools/fill-translations", "xtask", "crates/galleon-routing"]
+members = [".", "crates/clawcrew-api", "crates/clawcrew-infra", "crates/clawcrew-config", "crates/galleon-dist", "crates/clawcrew-log", "crates/clawcrew-log/tests/fixtures/attribution-macro-support", "crates/clawcrew-log/tests/fixtures/attribution-macro-consumer", "crates/galleon-tls", "crates/galleon-relay-proto", "apps/galleonrelay", "crates/clawcrew-spawn", "crates/galleon-commands", "crates/clawcrew-providers", "crates/clawcrew-memory", "crates/clawcrew-channels", "crates/galleon-tools", "crates/galleon-sop-graph", "crates/clawcrew-runtime", "crates/clawcrew-eval", "apps/galleoncode", "crates/galleon-plugins", "crates/galleon-plugins/tests/fixtures/channel-fixture", "crates/galleon-plugins/tests/fixtures/channel-nostr-pilot", "crates/galleon-plugins/tests/fixtures/channel-egress-fixture", "crates/galleon-plugins/tests/fixtures/egress-fixture", "crates/galleon-plugins/tests/fixtures/tool-fixture", "crates/galleon-plugins/tests/fixtures/tool-timeout-fixture", "crates/galleon-plugins/tests/fixtures/tool-sequential-fixture", "crates/galleon-plugins/tests/fixtures/tool-secret-fixture", "crates/clawcrew-gateway", "crates/galleon-hardware", "crates/galleon-tool-call-parser", "crates/galleon-macros", "crates/galleon-i18n", "crates/galleon-security-scrub", "crates/galleon-channel-core", "crates/galleon-channel-signal", "crates/galleon-channel-bluesky", "crates/galleon-channel-imessage", "crates/galleon-channel-irc", "crates/galleon-channel-nostr", "crates/galleon-channel-twitch", "crates/galleon-channel-dingtalk", "crates/galleon-channel-mochat", "crates/galleon-channel-clawdtalk", "crates/galleon-channel-reddit", "crates/galleon-channel-twitter", "crates/galleon-channel-notion", "crates/galleon-channel-linq", "crates/galleon-channel-nextcloud", "crates/galleon-channel-filesystem", "crates/galleon-channel-amqp", "crates/galleon-channel-wecom", "crates/galleon-channel-webhook", "crates/galleon-channel-email", "crates/galleon-channel-qq", "crates/galleon-channel-line", "crates/galleon-channel-mattermost", "crates/galleon-channel-lark", "crates/galleon-channel-wechat", "crates/galleon-channel-telegram", "crates/galleon-channel-wecom-ws", "crates/galleon-channel-discord", "crates/galleon-channel-matrix", "crates/galleon-channel-slack", "crates/galleon-channel-git", "crates/galleon-channel-voice-call", "crates/galleon-channel-whatsapp", "tools/fill-translations", "xtask", "crates/galleon-routing"]
 exclude = ["apps/tauri"]
 resolver = "2"
 
@@ -25,7 +25,7 @@ galleon-commands = { path = "crates/galleon-commands", version = "0.8.5" }
 clawcrew-providers = { path = "crates/clawcrew-providers", version = "0.8.5" }
 clawcrew-memory = { path = "crates/clawcrew-memory", version = "0.8.5" }
 clawcrew-channels = { path = "crates/clawcrew-channels", version = "0.8.5", default-features = false }
-clawcrew-tools = { path = "crates/clawcrew-tools", version = "0.8.5" }
+galleon-tools = { path = "crates/galleon-tools", version = "0.8.5" }
 galleon-sop-graph = { path = "crates/galleon-sop-graph", version = "0.8.5", default-features = false }
 clawcrew-runtime = { path = "crates/clawcrew-runtime", version = "0.8.5", default-features = false }
 clawcrew-eval = { path = "crates/clawcrew-eval", version = "0.8.5" }
@@ -136,7 +136,7 @@ clawcrew-log.workspace = true
 clawcrew-providers.workspace = true
 clawcrew-memory.workspace = true
 clawcrew-channels = { workspace = true, optional = true }
-clawcrew-tools = { workspace = true, optional = true }
+galleon-tools = { workspace = true, optional = true }
 clawcrew-runtime = { workspace = true, optional = true }
 galleon-tls = { workspace = true }
 clawcrew-eval = { workspace = true, optional = true }
@@ -289,7 +289,7 @@ default = [
 # Channels are opt-in via the lean `default-channels` bundle, `channels-full`,
 # or individual `channel-*` features.
 agent-runtime = [
-    "dep:clawcrew-runtime", "dep:clawcrew-eval", "dep:clawcrew-channels", "dep:clawcrew-tools",
+    "dep:clawcrew-runtime", "dep:clawcrew-eval", "dep:clawcrew-channels", "dep:galleon-tools",
     "dep:rusqlite",
     "dep:which",
     "dep:crossterm",
@@ -384,7 +384,7 @@ peripheral-rpi = ["dep:galleon-hardware", "galleon-hardware/peripheral-rpi"]
 dev-sim = ["dep:galleon-hardware", "galleon-hardware/dev-sim"]
 sandbox-landlock = ["clawcrew-runtime/sandbox-landlock"]
 sandbox-bubblewrap = ["clawcrew-runtime/sandbox-bubblewrap"]
-browser-native = ["clawcrew-tools/browser-native"]
+browser-native = ["galleon-tools/browser-native"]
 plugins-wasm = [
     "dep:galleon-plugins",
     "clawcrew-runtime/plugins-wasm",

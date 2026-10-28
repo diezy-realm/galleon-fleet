@@ -219,7 +219,7 @@ pub struct StranglerAgentSession {
     memory_session_id: Option<String>,
     history_has_trim_breadcrumb: bool,
     history: Vec<ConversationMessage>,
-    channel_handles: clawcrew_tools::send_via::AgentChannelHandles,
+    channel_handles: galleon_tools::send_via::AgentChannelHandles,
 }
 
 impl StranglerAgentSession {
@@ -233,7 +233,7 @@ impl StranglerAgentSession {
             memory_session_id: None,
             history_has_trim_breadcrumb: false,
             history: Vec::new(),
-            channel_handles: clawcrew_tools::send_via::AgentChannelHandles::default(),
+            channel_handles: galleon_tools::send_via::AgentChannelHandles::default(),
         }
     }
 }

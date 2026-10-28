@@ -4,9 +4,9 @@ use serde_json::{Value, json};
 use std::path::Path;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_tools::embedded_resource::{content_hash_name, materialize_bytes};
+use galleon_tools::embedded_resource::{content_hash_name, materialize_bytes};
 
-pub use clawcrew_tools::deliver_file::{
+pub use galleon_tools::deliver_file::{
     MAX_DELIVER_FILE_BYTES, attachment_deliver_uri, read_delivered_artifact_bounded,
     read_from_dir,
 };
@@ -290,7 +290,7 @@ impl Tool for DeliverFileTool {
 mod tests {
     use super::*;
     use crate::security::{AutonomyLevel, SecurityPolicy};
-    use clawcrew_tools::wrappers::{PathGuardedTool, RateLimitedTool};
+    use galleon_tools::wrappers::{PathGuardedTool, RateLimitedTool};
 
     fn test_tool(workspace: std::path::PathBuf) -> DeliverFileTool {
         let security = Arc::new(SecurityPolicy {

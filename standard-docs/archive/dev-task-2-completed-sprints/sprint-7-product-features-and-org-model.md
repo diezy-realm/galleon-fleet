@@ -160,7 +160,7 @@ impl PaymentLockManager {
 
 #### Detail Eksekusi — BL-42
 
-**Koreksi lokasi:** `ToolManifest` struct ditemukan di `crates/galleon-hardware/src/manifest.rs` — lokasi TAK TERDUGA (hardware crate, bukan `clawcrew-runtime`/`clawcrew-tools` generik). **PERLU VERIFIKASI:** apakah `ToolManifest` di `galleon-hardware` ini genuinely struct yang dimaksud dokumen untuk SEMUA tool (termasuk tool non-hardware), atau ada `ToolManifest` LAIN yang lebih generik di crate berbeda yang belum ditemukan grep sesi ini. **Langkah pertama WAJIB:** baca `galleon-hardware/src/manifest.rs` penuh untuk konteks (kenapa `ToolManifest` di crate hardware), dan `search_symbols` ulang untuk `ToolManifest` dengan cakupan lebih luas sebelum menambah field.
+**Koreksi lokasi:** `ToolManifest` struct ditemukan di `crates/galleon-hardware/src/manifest.rs` — lokasi TAK TERDUGA (hardware crate, bukan `clawcrew-runtime`/`galleon-tools` generik). **PERLU VERIFIKASI:** apakah `ToolManifest` di `galleon-hardware` ini genuinely struct yang dimaksud dokumen untuk SEMUA tool (termasuk tool non-hardware), atau ada `ToolManifest` LAIN yang lebih generik di crate berbeda yang belum ditemukan grep sesi ini. **Langkah pertama WAJIB:** baca `galleon-hardware/src/manifest.rs` penuh untuk konteks (kenapa `ToolManifest` di crate hardware), dan `search_symbols` ulang untuk `ToolManifest` dengan cakupan lebih luas sebelum menambah field.
 
 **Langkah pengerjaan:**
 1. Verifikasi lokasi struct persis (langkah di atas).

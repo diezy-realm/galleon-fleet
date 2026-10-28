@@ -38,7 +38,7 @@ schemas. This crate knows how to run plugins, not what they do.
 
 ## What does NOT belong here
 
-- Concrete tool or channel implementations (those go in `clawcrew-tools` or
+- Concrete tool or channel implementations (those go in `galleon-tools` or
   `clawcrew-channels`, or in a WASM plugin)
 - Plugin business logic (that belongs in the plugin's own crate)
 - Config schema definitions (those go in `clawcrew-config`)

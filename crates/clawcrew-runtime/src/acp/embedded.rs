@@ -1,8 +1,8 @@
 //! ACP re-export of shared embedded-resource materialization.
-//! Implementation lives in `clawcrew_tools::embedded_resource` so MCP and ACP
-//! share one helper without `clawcrew-tools` depending on this crate.
+//! Implementation lives in `galleon_tools::embedded_resource` so MCP and ACP
+//! share one helper without `galleon-tools` depending on this crate.
 
-pub use clawcrew_tools::embedded_resource::{
+pub use galleon_tools::embedded_resource::{
     EmbeddedResourceError, MAX_EMBEDDED_FILE_BYTES, MaterializedResource, content_hash_name,
     decode_embedded_blob, materialize_resource_blob,
 };

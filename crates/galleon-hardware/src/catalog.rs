@@ -10,7 +10,7 @@ pub const BASE_TOOLS: &[&str] = &[
     "device_exec",
 ];
 
-/// probe-rs backed introspection tools (in `clawcrew-tools`).
+/// probe-rs backed introspection tools (in `galleon-tools`).
 pub const PROBE_TOOLS: &[&str] = &[
     "hardware_board_info",
     "hardware_memory_map",

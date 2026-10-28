@@ -932,7 +932,7 @@ mod tests {
     /// structured, detailed body in `output` built via
     /// `ToolOutput::json_with_text`, the same constructor
     /// `http_request.rs` uses for every 4xx/5xx response
-    /// (`crates/clawcrew-tools/src/http_request.rs:672-680`).
+    /// (`crates/galleon-tools/src/http_request.rs:672-680`).
     struct FailingToolWithDetailedOutput;
 
     fn failing_tool_body_data() -> serde_json::Value {
@@ -1165,7 +1165,7 @@ mod tests {
                 .expect("write must succeed");
         });
 
-        let http_tool = clawcrew_tools::http_request::HttpRequestTool::new(
+        let http_tool = galleon_tools::http_request::HttpRequestTool::new(
             Arc::new(clawcrew_config::policy::SecurityPolicy {
                 autonomy: AutonomyLevel::Supervised,
                 ..clawcrew_config::policy::SecurityPolicy::default()
@@ -2107,7 +2107,7 @@ mod tests {
                 .expect("write must succeed");
         });
 
-        let http_tool = clawcrew_tools::http_request::HttpRequestTool::new(
+        let http_tool = galleon_tools::http_request::HttpRequestTool::new(
             Arc::new(clawcrew_config::policy::SecurityPolicy {
                 autonomy: AutonomyLevel::Supervised,
                 ..clawcrew_config::policy::SecurityPolicy::default()

@@ -27,7 +27,7 @@ members = [
     "crates/clawcrew-runtime",
     "crates/clawcrew-providers",
     "crates/clawcrew-channel-*",
-    "crates/clawcrew-tools-*",
+    "crates/galleon-tools-*",
 ]
 resolver = "2"
 

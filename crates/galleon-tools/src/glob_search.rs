@@ -356,7 +356,7 @@ mod tests {
     }
 
     // Rate-limit behavior is covered by RateLimitedTool's own tests in
-    // clawcrew-tools::wrappers; this tool delegates the concern to the wrapper
+    // galleon-tools::wrappers; this tool delegates the concern to the wrapper
     // at registration time.
 
     #[tokio::test]

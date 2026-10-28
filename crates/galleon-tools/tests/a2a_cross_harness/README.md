@@ -37,12 +37,12 @@ curl http://127.0.0.1:43100/.well-known/agent-card.json
 
 # Run the lifecycle (send → poll → cancel) cross-harness test that this PR uses
 # as the cancellation gate:
-cargo test -p clawcrew-tools a2a_client::tests::cross_harness_send_poll_cancel_independent_peer -- --ignored
+cargo test -p galleon-tools a2a_client::tests::cross_harness_send_poll_cancel_independent_peer -- --ignored
 
 # The send → poll → terminal flow (against the official helloworld sample,
 # a different independent peer, default port 9999):
 #   cd a2aproject/a2a-samples/samples/python/agents/helloworld && python3 __main__.py
-cargo test -p clawcrew-tools a2a_client::tests::cross_harness_send_and_poll_official_peer -- --ignored
+cargo test -p galleon-tools a2a_client::tests::cross_harness_send_and_poll_official_peer -- --ignored
 ```
 
 The `#[ignore]` attribute keeps these out of unit CI (no A2A peer in CI), but

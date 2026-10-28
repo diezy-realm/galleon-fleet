@@ -45,7 +45,7 @@ inline blocks flagged separately and not treated as must-fix):
 | D | `.get(..N)`, `.split_at(...)` | 11 |
 
 Crates in scope (runtime-reachable text per #7828): `clawcrew-channels`,
-`clawcrew-tools`, `clawcrew-providers`, `clawcrew-runtime`, `clawcrew-gateway`,
+`galleon-tools`, `clawcrew-providers`, `clawcrew-runtime`, `clawcrew-gateway`,
 `clawcrew-memory`, `apps/zerocode`, and the root `src/` binary.
 
 High-risk surfaces reviewed explicitly: channel message chunking/cards
@@ -67,7 +67,7 @@ repo toolchain (verified: a standalone `--edition 2024` probe compiles and runs;
 reimplementations —
 
 - `crates/clawcrew-channels/src/util.rs:13`
-- `crates/clawcrew-tools/src/util_helpers.rs:10`
+- `crates/galleon-tools/src/util_helpers.rs:10`
 - `crates/clawcrew-runtime/src/agent/history.rs:32`
 
 — plus the several inlined `while !s.is_char_boundary(end) { end -= 1 }`
@@ -90,7 +90,7 @@ one of these shapes or is byte/ASCII data):
 
 | site | decision | reason |
 |------|----------|--------|
-| `clawcrew-tools/src/claude_code.rs:269`, `gemini_cli.rs:194`, `codex_cli.rs:204`, `opencode_cli.rs:189`, `google_workspace.rs:454/462`, `runtime/src/tools/skill_tool.rs:299/307`, `skill_http.rs:160`, `runtime/src/tools/shell.rs:564` | already-fixed | tool stdout/stderr capping; each does the `while !s.is_char_boundary(b) { b -= 1 }` walk-back before `truncate(b)`. |
+| `galleon-tools/src/claude_code.rs:269`, `gemini_cli.rs:194`, `codex_cli.rs:204`, `opencode_cli.rs:189`, `google_workspace.rs:454/462`, `runtime/src/tools/skill_tool.rs:299/307`, `skill_http.rs:160`, `runtime/src/tools/shell.rs:564` | already-fixed | tool stdout/stderr capping; each does the `while !s.is_char_boundary(b) { b -= 1 }` walk-back before `truncate(b)`. |
 | `runtime/src/agent/system_prompt.rs:413` | already-fixed | system-prompt budget truncation; boundary walk-back before `prompt.truncate(end)`. |
 | `runtime/src/rpc/dispatch.rs:4064` | already-fixed | memory-preview content; boundary walk-back. |
 | `gateway/src/api.rs:1001` (`truncate_with_ellipsis_total_chars`) | already-fixed | uses `char_indices().nth()` for the cut index. |
@@ -112,7 +112,7 @@ one of these shapes or is byte/ASCII data):
 - **Helper consolidation onto std `floor_char_boundary`.** With
   `str::floor_char_boundary` stable, the three crate-local copies and the
   inlined walk-back loops are redundant. Collapsing them touches
-  `clawcrew-channels`, `clawcrew-tools`, and `clawcrew-runtime` public/`pub(crate)`
+  `clawcrew-channels`, `galleon-tools`, and `clawcrew-runtime` public/`pub(crate)`
   surfaces and every call site — a multi-crate refactor whose risk/benefit does
   not fit #7828's "narrow audit, no API changes" mandate (compare the excision
   log's deferral of cross-crate consolidation as "risky on a release branch").

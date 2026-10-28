@@ -14,7 +14,7 @@ clawcrew-log.workspace = true
 clawcrew-api.workspace = true
 clawcrew-config.workspace = true
 clawcrew-spawn.workspace = true
-clawcrew-tools.workspace = true
+galleon-tools.workspace = true
 
 anyhow = "1.0"
 async-trait = "0.1"
@@ -46,7 +46,7 @@ rppal = { version = "0.22", optional = true }
 default = []
 hardware = ["dep:nusb", "dep:tokio-serial", "dep:dialoguer", "dep:console"]
 peripheral-rpi = ["rppal"]
-probe = ["dep:probe-rs", "clawcrew-tools/probe"]
+probe = ["dep:probe-rs", "galleon-tools/probe"]
 # Extends the serial peripheral allow-list with `/tmp/zc-sim-*` for hardware-free
 # local testing (paired with the `esp32_sim` example). Off by default; opt-in.
 #

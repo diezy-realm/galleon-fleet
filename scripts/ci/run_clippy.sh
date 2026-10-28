@@ -65,7 +65,7 @@ case "$scope" in
     tools)
         [ -n "$target" ] || usage
         command+=(
-            -p clawcrew-tools
+            -p galleon-tools
             --all-targets
             --all-features
             --target "$target"

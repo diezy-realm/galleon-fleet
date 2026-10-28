@@ -17,7 +17,7 @@
 
 ## T-06 — BL-20/21/22 (MCP client host)
 
-**Keputusan: Bukan keputusan arsitektur — audit awal yang salah.** MCP client host genuinely ADA di `crates/clawcrew-tools/src/mcp_*.rs` (10 file), terpisah total dari WASM plugin host (`galleon-plugins/`). Dokumen gap-analysis-nya (`mcp-sandbox-gap-and-vault-mediation.md`) sudah ditulis solid 2026-10-07, ADR WASM-vs-MCP (`decisions/adr-wasm-plugin-vs-mcp.md`) sudah `Accepted`.
+**Keputusan: Bukan keputusan arsitektur — audit awal yang salah.** MCP client host genuinely ADA di `crates/galleon-tools/src/mcp_*.rs` (10 file), terpisah total dari WASM plugin host (`galleon-plugins/`). Dokumen gap-analysis-nya (`mcp-sandbox-gap-and-vault-mediation.md`) sudah ditulis solid 2026-10-07, ADR WASM-vs-MCP (`decisions/adr-wasm-plugin-vs-mcp.md`) sudah `Accepted`.
 
 **Tindakan:** BL-20/21/22 checkbox dipertahankan `[x]` di `sprint-5-mcp-plugin-and-subagent-resource.md`. **T-06 dihapus dari daftar kerja — tidak ada yang perlu dieksekusi tim.**
 

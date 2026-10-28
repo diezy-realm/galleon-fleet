@@ -121,7 +121,7 @@ pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         session_queue: Arc::new(crate::session_queue::SessionActorQueue::new(8, 30, 600)),
         device_registry: None,
         pending_pairings: None,
-        canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
+        canvas_store: galleon_tools::canvas::CanvasStore::new(),
         #[cfg(feature = "webauthn")]
         webauthn: None,
         cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),

@@ -35,95 +35,95 @@ pub mod sop_workshop;
 pub mod spawn_subagent;
 pub mod todo_write;
 
-// Tool types from clawcrew-tools (direct imports, no shims)
-pub use clawcrew_tools::a2a_client::{
+// Tool types from galleon-tools (direct imports, no shims)
+pub use galleon_tools::a2a_client::{
     A2aCancelTool, A2aDiscoverTool, A2aGetTaskTool, A2aHttpClient, A2aSendTool,
 };
-pub use clawcrew_tools::ask_user::AskUserTool;
-pub use clawcrew_tools::ask_user::ChannelMapHandle;
-pub use clawcrew_tools::backup_tool::BackupTool;
-pub use clawcrew_tools::browser::{BrowserTool, ComputerUseConfig};
-pub use clawcrew_tools::browser_delegate::BrowserDelegateTool;
-pub use clawcrew_tools::browser_open::BrowserOpenTool;
-pub use clawcrew_tools::calculator::CalculatorTool;
-pub use clawcrew_tools::canvas::{ALLOWED_CONTENT_TYPES, MAX_CONTENT_SIZE};
-pub use clawcrew_tools::canvas::{CanvasStore, CanvasTool};
-pub use clawcrew_tools::channel_room::ChannelRoomTool;
-pub use clawcrew_tools::claude_code::ClaudeCodeTool;
-pub use clawcrew_tools::claude_code_runner::ClaudeCodeRunnerTool;
-pub use clawcrew_tools::cli_discovery::{DiscoveredCli, discover_cli_tools};
-pub use clawcrew_tools::cloud_ops::CloudOpsTool;
-pub use clawcrew_tools::cloud_patterns::CloudPatternsTool;
-pub use clawcrew_tools::codex_cli::CodexCliTool;
-pub use clawcrew_tools::composio::ComposioTool;
-pub use clawcrew_tools::content_search::ContentSearchTool;
-pub use clawcrew_tools::data_management::DataManagementTool;
-pub use clawcrew_tools::discord_search::DiscordSearchTool;
-pub use clawcrew_tools::email_read::EmailReadTool;
-pub use clawcrew_tools::email_search::EmailSearchTool;
-pub use clawcrew_tools::escalate::EscalateToHumanTool;
-pub use clawcrew_tools::file_download::FileDownloadTool;
-pub use clawcrew_tools::file_edit::FileEditTool;
-pub use clawcrew_tools::file_upload::FileUploadTool;
-pub use clawcrew_tools::file_upload_bundle::FileUploadBundleTool;
-pub use clawcrew_tools::file_write::FileWriteTool;
-pub use clawcrew_tools::gemini_cli::GeminiCliTool;
-pub use clawcrew_tools::git_forge::GitForgeTool;
-pub use clawcrew_tools::git_operations::{GitCommandBoundary, GitOperationsTool};
-pub use clawcrew_tools::glob_search::GlobSearchTool;
-pub use clawcrew_tools::google_workspace::GoogleWorkspaceTool;
-pub use clawcrew_tools::hardware_board_info::HardwareBoardInfoTool;
-pub use clawcrew_tools::hardware_memory_map::HardwareMemoryMapTool;
-pub use clawcrew_tools::hardware_memory_read::HardwareMemoryReadTool;
-pub use clawcrew_tools::http_request::HttpRequestTool;
-pub use clawcrew_tools::image_gen::ImageGenTool;
-pub use clawcrew_tools::image_info::ImageInfoTool;
-pub use clawcrew_tools::jira_tool::JiraTool;
-pub use clawcrew_tools::knowledge_tool::KnowledgeTool;
-pub use clawcrew_tools::linkedin::LinkedInTool;
-pub use clawcrew_tools::llm_task::LlmTaskTool;
-pub use clawcrew_tools::mcp_client::{McpRegistry, McpServer};
-pub use clawcrew_tools::mcp_context;
-pub use clawcrew_tools::mcp_deferred::{
+pub use galleon_tools::ask_user::AskUserTool;
+pub use galleon_tools::ask_user::ChannelMapHandle;
+pub use galleon_tools::backup_tool::BackupTool;
+pub use galleon_tools::browser::{BrowserTool, ComputerUseConfig};
+pub use galleon_tools::browser_delegate::BrowserDelegateTool;
+pub use galleon_tools::browser_open::BrowserOpenTool;
+pub use galleon_tools::calculator::CalculatorTool;
+pub use galleon_tools::canvas::{ALLOWED_CONTENT_TYPES, MAX_CONTENT_SIZE};
+pub use galleon_tools::canvas::{CanvasStore, CanvasTool};
+pub use galleon_tools::channel_room::ChannelRoomTool;
+pub use galleon_tools::claude_code::ClaudeCodeTool;
+pub use galleon_tools::claude_code_runner::ClaudeCodeRunnerTool;
+pub use galleon_tools::cli_discovery::{DiscoveredCli, discover_cli_tools};
+pub use galleon_tools::cloud_ops::CloudOpsTool;
+pub use galleon_tools::cloud_patterns::CloudPatternsTool;
+pub use galleon_tools::codex_cli::CodexCliTool;
+pub use galleon_tools::composio::ComposioTool;
+pub use galleon_tools::content_search::ContentSearchTool;
+pub use galleon_tools::data_management::DataManagementTool;
+pub use galleon_tools::discord_search::DiscordSearchTool;
+pub use galleon_tools::email_read::EmailReadTool;
+pub use galleon_tools::email_search::EmailSearchTool;
+pub use galleon_tools::escalate::EscalateToHumanTool;
+pub use galleon_tools::file_download::FileDownloadTool;
+pub use galleon_tools::file_edit::FileEditTool;
+pub use galleon_tools::file_upload::FileUploadTool;
+pub use galleon_tools::file_upload_bundle::FileUploadBundleTool;
+pub use galleon_tools::file_write::FileWriteTool;
+pub use galleon_tools::gemini_cli::GeminiCliTool;
+pub use galleon_tools::git_forge::GitForgeTool;
+pub use galleon_tools::git_operations::{GitCommandBoundary, GitOperationsTool};
+pub use galleon_tools::glob_search::GlobSearchTool;
+pub use galleon_tools::google_workspace::GoogleWorkspaceTool;
+pub use galleon_tools::hardware_board_info::HardwareBoardInfoTool;
+pub use galleon_tools::hardware_memory_map::HardwareMemoryMapTool;
+pub use galleon_tools::hardware_memory_read::HardwareMemoryReadTool;
+pub use galleon_tools::http_request::HttpRequestTool;
+pub use galleon_tools::image_gen::ImageGenTool;
+pub use galleon_tools::image_info::ImageInfoTool;
+pub use galleon_tools::jira_tool::JiraTool;
+pub use galleon_tools::knowledge_tool::KnowledgeTool;
+pub use galleon_tools::linkedin::LinkedInTool;
+pub use galleon_tools::llm_task::LlmTaskTool;
+pub use galleon_tools::mcp_client::{McpRegistry, McpServer};
+pub use galleon_tools::mcp_context;
+pub use galleon_tools::mcp_deferred::{
     ActivatedToolSet, DeferredMcpToolSet, build_deferred_tools_section,
     build_deferred_tools_section_excluding, build_deferred_tools_section_filtered,
 };
-pub use clawcrew_tools::mcp_prompts_tool::McpPromptsTool;
-pub use clawcrew_tools::mcp_resources_tool::McpResourcesTool;
-pub use clawcrew_tools::mcp_tool::McpToolWrapper;
-pub use clawcrew_tools::mcp_transport::{
+pub use galleon_tools::mcp_prompts_tool::McpPromptsTool;
+pub use galleon_tools::mcp_resources_tool::McpResourcesTool;
+pub use galleon_tools::mcp_tool::McpToolWrapper;
+pub use galleon_tools::mcp_transport::{
     McpCommandBoundary, current_mcp_command_boundary, set_mcp_command_boundary,
 };
-pub use clawcrew_tools::memory_export::MemoryExportTool;
-pub use clawcrew_tools::memory_forget::MemoryForgetTool;
-pub use clawcrew_tools::memory_purge::MemoryPurgeTool;
-pub use clawcrew_tools::memory_recall::MemoryRecallTool;
-pub use clawcrew_tools::memory_store::MemoryStoreTool;
-pub use clawcrew_tools::microsoft365::Microsoft365Tool;
-pub use clawcrew_tools::model_routing_config::ModelRoutingConfigTool;
-pub use clawcrew_tools::notion_tool::NotionTool;
-pub use clawcrew_tools::opencode_cli::OpenCodeCliTool;
-pub use clawcrew_tools::pipeline::PipelineTool;
-pub use clawcrew_tools::poll::PollTool;
-pub use clawcrew_tools::project_intel::ProjectIntelTool;
-pub use clawcrew_tools::proxy_config::ProxyConfigTool;
-pub use clawcrew_tools::pushover::PushoverTool;
-pub use clawcrew_tools::reaction::ReactionTool;
-pub use clawcrew_tools::report_template_tool::ReportTemplateTool;
-pub use clawcrew_tools::screenshot::ScreenshotTool;
-pub use clawcrew_tools::send_via::{
+pub use galleon_tools::memory_export::MemoryExportTool;
+pub use galleon_tools::memory_forget::MemoryForgetTool;
+pub use galleon_tools::memory_purge::MemoryPurgeTool;
+pub use galleon_tools::memory_recall::MemoryRecallTool;
+pub use galleon_tools::memory_store::MemoryStoreTool;
+pub use galleon_tools::microsoft365::Microsoft365Tool;
+pub use galleon_tools::model_routing_config::ModelRoutingConfigTool;
+pub use galleon_tools::notion_tool::NotionTool;
+pub use galleon_tools::opencode_cli::OpenCodeCliTool;
+pub use galleon_tools::pipeline::PipelineTool;
+pub use galleon_tools::poll::PollTool;
+pub use galleon_tools::project_intel::ProjectIntelTool;
+pub use galleon_tools::proxy_config::ProxyConfigTool;
+pub use galleon_tools::pushover::PushoverTool;
+pub use galleon_tools::reaction::ReactionTool;
+pub use galleon_tools::report_template_tool::ReportTemplateTool;
+pub use galleon_tools::screenshot::ScreenshotTool;
+pub use galleon_tools::send_via::{
     AgentPeerGroupResolver, SendViaTool, TURN_ROUTING, TurnRoutingHandle,
 };
-pub use clawcrew_tools::sessions::{
+pub use galleon_tools::sessions::{
     AcpSessionReadView, SessionDeleteTool, SessionResetTool, SessionsCurrentTool,
     SessionsHistoryTool, SessionsListTool, SessionsSendTool,
 };
-pub use clawcrew_tools::text_browser::TextBrowserTool;
-pub use clawcrew_tools::tool_search::ToolSearchTool;
-pub use clawcrew_tools::weather_tool::WeatherTool;
-pub use clawcrew_tools::web_fetch::WebFetchTool;
-pub use clawcrew_tools::web_search_tool::WebSearchTool;
-pub use clawcrew_tools::wrappers::{PathGuardedTool, RateLimitedTool};
+pub use galleon_tools::text_browser::TextBrowserTool;
+pub use galleon_tools::tool_search::ToolSearchTool;
+pub use galleon_tools::weather_tool::WeatherTool;
+pub use galleon_tools::web_fetch::WebFetchTool;
+pub use galleon_tools::web_search_tool::WebSearchTool;
+pub use galleon_tools::wrappers::{PathGuardedTool, RateLimitedTool};
 
 // Traits from clawcrew-api
 pub use clawcrew_api::schema::{CleaningStrategy, SchemaCleanr};
@@ -179,7 +179,7 @@ use std::sync::{Arc, Mutex};
 pub type PerToolChannelHandle =
     Arc<RwLock<HashMap<String, Arc<dyn clawcrew_api::channel::Channel>>>>;
 
-pub use clawcrew_tools::{ArcToolRef, DelegateParentToolsHandle};
+pub use galleon_tools::{ArcToolRef, DelegateParentToolsHandle};
 
 /// Serply credential override state for `WebSearchTool`.
 ///
@@ -477,7 +477,7 @@ pub async fn collect_mcp_elevation_arcs(
 /// delegates.
 pub fn build_mcp_capability_tools(
     registry: &Arc<McpRegistry>,
-    policy: Option<&clawcrew_tools::tool_search::ToolAccessPolicy>,
+    policy: Option<&galleon_tools::tool_search::ToolAccessPolicy>,
 ) -> Vec<Arc<dyn Tool>> {
     let admit = |name: &str| policy.is_none_or(|p| p.is_tool_allowed(name));
     let mut out: Vec<Arc<dyn Tool>> = Vec::new();
@@ -1415,7 +1415,7 @@ fn all_tools_with_runtime_on_thread(
         // cache survives so a send→poll/cancel lifecycle stays on the endpoint
         // that created the task. Daemon restart (process exit) naturally
         // clears it (orphaned routes are stale after a restart).
-        let a2a_route_cache = clawcrew_tools::a2a_client::shared_a2a_route_cache();
+        let a2a_route_cache = galleon_tools::a2a_client::shared_a2a_route_cache();
         match A2aHttpClient::new(
             live,
             root_config.a2a.client.request_timeout_secs,
@@ -2016,7 +2016,7 @@ fn all_tools_with_runtime_on_thread(
                 };
             }
 
-            let resolved = clawcrew_tools::microsoft365::types::Microsoft365ResolvedConfig {
+            let resolved = galleon_tools::microsoft365::types::Microsoft365ResolvedConfig {
                 tenant_id,
                 client_id,
                 client_secret: ms_cfg.client_secret.clone(),
@@ -2592,7 +2592,7 @@ mod tests {
 
     #[tokio::test]
     async fn mcp_capability_tools_respect_policy() {
-        use clawcrew_tools::tool_search::ToolAccessPolicy;
+        use galleon_tools::tool_search::ToolAccessPolicy;
         let registry = std::sync::Arc::new(McpRegistry::connect_all(&[]).await.unwrap());
 
         // No policy → both tools present.

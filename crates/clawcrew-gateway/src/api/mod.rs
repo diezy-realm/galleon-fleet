@@ -381,7 +381,7 @@ pub async fn handle_api_cli_tools(
     // `discover_cli_tools` spawns child processes and blocks; keep it off the
     // async executor so a slow PATH scan can't stall other gateway requests.
     let tools = match tokio::task::spawn_blocking(|| {
-        clawcrew_tools::cli_discovery::discover_cli_tools(&[], &[])
+        galleon_tools::cli_discovery::discover_cli_tools(&[], &[])
     })
     .await
     {
@@ -450,7 +450,7 @@ pub async fn handle_api_health(
 
 pub async fn handle_claude_code_hook(
     State(state): State<AppState>,
-    Json(payload): Json<clawcrew_tools::claude_code_runner::ClaudeCodeHookEvent>,
+    Json(payload): Json<galleon_tools::claude_code_runner::ClaudeCodeHookEvent>,
 ) -> impl IntoResponse {
     // Do not require bearer-token auth: Claude Code subprocesses cannot easily
     // obtain a pairing token, and the hook carries a session_id that ties it

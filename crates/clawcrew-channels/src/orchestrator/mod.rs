@@ -10018,7 +10018,7 @@ async fn process_channel_message_body(
     };
     let fallback_info: Option<ProviderFallbackInfo> = None;
     let safeguard_notice: Option<SafeguardFallbackNotice> = None;
-    let turn_routing: clawcrew_tools::send_via::TurnRoutingHandle =
+    let turn_routing: galleon_tools::send_via::TurnRoutingHandle =
         std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
 
     if matches!(llm_result, LlmExecutionResult::Completed(Ok(Ok(_))))
@@ -13162,11 +13162,11 @@ pub fn build_channel_map(
 
 pub fn register_channels_for_tools(
     config: &Config,
-    ask_user_handle: &Option<clawcrew_tools::send_via::PerToolChannelHandle>,
-    channel_room_handle: &Option<clawcrew_tools::send_via::PerToolChannelHandle>,
-    reaction_handle: &Option<clawcrew_tools::send_via::PerToolChannelHandle>,
-    poll_handle: &Option<clawcrew_tools::send_via::PerToolChannelHandle>,
-    escalate_handle: &Option<clawcrew_tools::send_via::PerToolChannelHandle>,
+    ask_user_handle: &Option<galleon_tools::send_via::PerToolChannelHandle>,
+    channel_room_handle: &Option<galleon_tools::send_via::PerToolChannelHandle>,
+    reaction_handle: &Option<galleon_tools::send_via::PerToolChannelHandle>,
+    poll_handle: &Option<galleon_tools::send_via::PerToolChannelHandle>,
+    escalate_handle: &Option<galleon_tools::send_via::PerToolChannelHandle>,
 ) -> Vec<String> {
     let config_arc = Arc::new(RwLock::new(config.clone()));
     let configured = collect_configured_channels(&config_arc, "", &[], None);

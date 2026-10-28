@@ -5,7 +5,7 @@ use std::ffi::{OsStr, OsString};
 use std::process::Output;
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_tools::coding_cli::{
+use galleon_tools::coding_cli::{
     CodingCliCommand, CodingCliExecutionError, CodingCliExecutor, host_native_program,
 };
 
@@ -142,7 +142,7 @@ mod tests {
         crate::security::SecurityPolicy, crate::security::traits::Sandbox, serde_json::json,
         std::sync::Mutex, clawcrew_api::runtime_traits::RuntimeAdapter, clawcrew_api::tool::Tool,
         clawcrew_config::autonomy::AutonomyLevel, clawcrew_config::schema::CodexCliConfig,
-        clawcrew_tools::codex_cli::CodexCliTool,
+        galleon_tools::codex_cli::CodexCliTool,
     };
 
     #[test]

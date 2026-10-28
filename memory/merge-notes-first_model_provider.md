@@ -43,7 +43,7 @@ Replacements (per a1665774b):
 - crates/clawcrew-channels/src/orchestrator/mod.rs, acp_server.rs
 - crates/clawcrew-runtime/src/agent/agent.rs, loop_.rs
 - crates/clawcrew-runtime/src/daemon/mod.rs, doctor/mod.rs, onboard/mod.rs, rpc/dispatch.rs, tools/mod.rs
-- crates/clawcrew-tools/src/model_routing_config.rs
+- crates/galleon-tools/src/model_routing_config.rs
 - apps/tui/src/app.rs, chat.rs, client.rs
 - src/commands/self_test.rs, main.rs, memory/cli.rs
 - tests/component/config_persistence.rs, config_schema.rs

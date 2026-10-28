@@ -230,7 +230,7 @@ impl Tool for SkillHttpTool {
 
         let status = response.status();
         let body =
-            match clawcrew_tools::helpers::read_response_text(response, Some(MAX_RESPONSE_BYTES))
+            match galleon_tools::helpers::read_response_text(response, Some(MAX_RESPONSE_BYTES))
                 .await
             {
                 Ok((text, overflowed)) => finalize_response_text(text, overflowed),

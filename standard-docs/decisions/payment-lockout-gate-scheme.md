@@ -17,7 +17,7 @@ Achmad: *"saya takut ada agent yang dibuat untuk transaksi... buat skema untuk m
 
 **Temuan investigasi kode (hari ini) — penting untuk kalibrasi risiko:**
 
-1. **Tidak ada tool/kapabilitas pembayaran apa pun di codebase saat ini.** Grep menyeluruh untuk `payment`, `transfer_funds`, `wallet`, `stripe`, `paypal`, `checkout`, kartu kredit/debit — nol hasil di `crates/clawcrew-tools/` (katalog tool yang bisa dipanggil agent). Jadi ini **bukan menutup kebocoran yang sudah ada** — ini memasang pagar preventif SEBELUM kapabilitas semacam itu pernah dibangun.
+1. **Tidak ada tool/kapabilitas pembayaran apa pun di codebase saat ini.** Grep menyeluruh untuk `payment`, `transfer_funds`, `wallet`, `stripe`, `paypal`, `checkout`, kartu kredit/debit — nol hasil di `crates/galleon-tools/` (katalog tool yang bisa dipanggil agent). Jadi ini **bukan menutup kebocoran yang sudah ada** — ini memasang pagar preventif SEBELUM kapabilitas semacam itu pernah dibangun.
 2. **Treasury sudah invariant read-only secara desain** (`engine/src/treasury/interfaces.go`): *"Treasury REPORTS cost, it never deducts. No internal credit balance debited... Budget caps gate actions via approval, they do not spend a balance."* — ini F1, sudah berlaku, tidak perlu diubah.
 3. **Product definition §5 sudah eksplisit**: *"aksi berdampak tinggi (write/publish/merge/deploy/delete/**bayar**, ubah Fleet Code, lampaui budget) wajib persetujuan; default read-only."* — prinsip "bayar wajib approval" SUDAH ada secara normatif. Yang BELUM ada: mekanisme teknis bernama, dapat dimatikan-total secara eksplisit (bukan sekadar "approval per kejadian"), dan ter-tes.
 4. **Modul `verifiable_intent`** (diaudit sesi riset sebelumnya) adalah fondasi *otorisasi kriptografis* untuk delegated commerce (standar industri AP2/FIDO) — tapi itu jawaban untuk "bagaimana agent membayar DENGAN AMAN kalau diizinkan". Yang Achmad minta sekarang adalah kebalikannya: **bagaimana memastikan agent TIDAK BISA membayar SAMA SEKALI, sampai dibuka sadar oleh Owner.**
@@ -193,8 +193,8 @@ Kekhawatiran Achmad **valid dan tepat waktu** — justru karena belum ada satu p
 - `engine/src/treasury/interfaces.go` — invariant F1, Treasury read-only.
 - `crates/clawcrew-runtime/src/security/estop.rs` — pola kill-switch yang dicontoh (`EstopManager`, fail-closed, OTP-gated resume, test dengan domain finansial `*.chase.com`/`*.paypal.com`).
 - `crates/clawcrew-runtime/src/security/playbook.rs` — pola `requires_approval: bool` existing untuk aksi berdampak tinggi.
-- `crates/clawcrew-tools/src/node_capabilities.rs` — pola `RiskLevel`/`NodeCapabilityDef` yang dicontoh untuk `ToolManifest.payment_category`.
+- `crates/galleon-tools/src/node_capabilities.rs` — pola `RiskLevel`/`NodeCapabilityDef` yang dicontoh untuk `ToolManifest.payment_category`.
 - `standard-docs/product/galleon-product-definition.md` §5 — "aksi berdampak tinggi... bayar... wajib persetujuan; default read-only."
 - `standard-docs/archive/research-closed-loop/verifiable-intent-assessment.md` — konteks AP2/FIDO/G-37, hubungan dengan skema ini.
 - `standard-docs/research/payment-lockout-gate-industry-research.md` — riset pembanding industri (AP2 v0.2 spec, MCP tool annotations, OpenAI/Stripe/Comet, insiden Guardio Labs & Replit, Plaid/PSD2, OWASP Agentic Top 10 ASI03/ASI09/ASI10) yang jadi dasar penguatan §3.1 (expiry), §3.4 (rujukan insiden Replit), §3.5 (state mentah bukan ringkasan agent), §1 (bukti insiden Comet).
-- Grep seluruh repo (2026-10-05): nol hasil untuk tool/kapabilitas pembayaran existing di `crates/clawcrew-tools/`.
+- Grep seluruh repo (2026-10-05): nol hasil untuk tool/kapabilitas pembayaran existing di `crates/galleon-tools/`.

@@ -1,6 +1,6 @@
 //! Project outbound A2A run events onto the canonical control plane (P0.1).
 //!
-//! The A2A tools live in `clawcrew-tools`, below the runtime control plane.
+//! The A2A tools live in `galleon-tools`, below the runtime control plane.
 //! They emit [`A2aRunEvent`]s through the `clawcrew_api::a2a_observer` seam; the
 //! observer installed here projects each event onto `TaskRegistry` as a
 //! `TaskKind::A2a` task (registered on first sight, settled when terminal).

@@ -599,7 +599,7 @@ mod tests {
     use crate::platform::{DockerRuntime, NativeRuntime, RuntimeAdapter};
     use crate::security::{AutonomyLevel, SecurityPolicy};
     use clawcrew_config::schema::DockerRuntimeConfig;
-    use clawcrew_tools::wrappers::RateLimitedTool;
+    use galleon_tools::wrappers::RateLimitedTool;
 
     #[tokio::test]
     async fn get_session_id_returns_scoped_session_key() {

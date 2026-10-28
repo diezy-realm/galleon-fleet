@@ -3,7 +3,7 @@
 - **Tanggal:** 2026-10-07
 - **Referensi Tugas:** Sprint 5 (`BL-20`, `BL-21`)
 - **Implementasi Terkait:**
-  - MCP Transport Host: `crates/clawcrew-tools/src/mcp_transport.rs`
+  - MCP Transport Host: `crates/galleon-tools/src/mcp_transport.rs`
   - Secrets Management: `crates/clawcrew-config/src/secrets.rs`
 
 ---
@@ -11,16 +11,16 @@
 ## 1. Status Implementasi MCP Host Aktual (Hasil Verifikasi Kode)
 
 Berlawanan dengan asumsi awal bahwa MCP client host belum ada atau berada di `galleon-plugins`, verifikasi kode menunjukkan:
-- **Lokasi Nyata:** MCP Client Host berada di `crates/clawcrew-tools/src/mcp_transport.rs`, `mcp_client.rs`, `mcp_deferred.rs`, dan `mcp_protocol.rs`.
+- **Lokasi Nyata:** MCP Client Host berada di `crates/galleon-tools/src/mcp_transport.rs`, `mcp_client.rs`, `mcp_deferred.rs`, dan `mcp_protocol.rs`.
 - **Protokol:** Mendukung JSON-RPC melalui stdio subprocess, SSE, dan HTTP streaming.
-- **WASM vs MCP:** `galleon-plugins` adalah murni host WASM Component Model (`wasmtime`), sedangkan `clawcrew-tools` mengelola koneksi MCP.
+- **WASM vs MCP:** `galleon-plugins` adalah murni host WASM Component Model (`wasmtime`), sedangkan `galleon-tools` mengelola koneksi MCP.
 
 ---
 
 ## 2. Gap Analysis Sandbox MCP (BL-20)
 
 ### Apa yang Sudah Dilindungi di Runtime MCP Saat Ini
-Dalam `crates/clawcrew-tools/src/mcp_transport.rs::apply_default_mcp_sandbox`:
+Dalam `crates/galleon-tools/src/mcp_transport.rs::apply_default_mcp_sandbox`:
 1. **Deny-by-default execution**: Jika `config.sandbox_profile` diset ke `"deny-all"` atau `"blocked"`, eksekusi child process langsung digagalkan sebelum spawn.
 2. **Sanitasi Direktori Kerja**: Jika `config.allowed_paths` ditentukan, working directory anak dipaksa ke jalur yang diizinkan pertama.
 3. **Pembersihan Environment Variables Kritis (CWE-200)**: Host secara otomatis menghapus environment variables berbahaya dari proses induk:

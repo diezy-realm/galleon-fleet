@@ -129,7 +129,7 @@ async fn run_cron_once(config: Config, overrides: AgentRunOverrides) -> Vec<Stri
 }
 
 fn body_advertises_memory_tool(body: &str) -> bool {
-    clawcrew_tools::MEMORY_TOOL_NAMES
+    galleon_tools::MEMORY_TOOL_NAMES
         .iter()
         .any(|name| body.contains(name))
 }

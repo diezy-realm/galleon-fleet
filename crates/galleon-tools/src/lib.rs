@@ -181,7 +181,7 @@ mod memory_tool_names_guard {
         assert_eq!(
             actual, listed,
             "MEMORY_TOOL_NAMES is out of sync with the constructed memory tools — \
-             update the const in clawcrew-tools/src/lib.rs"
+             update the const in galleon-tools/src/lib.rs"
         );
     }
 }

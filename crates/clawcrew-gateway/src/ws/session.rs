@@ -367,7 +367,7 @@ pub(crate) async fn handle_socket(
 
     let channel_names = if let Some(ch) = agent
         .channel_handles_any()
-        .downcast_ref::<clawcrew_tools::send_via::AgentChannelHandles>(
+        .downcast_ref::<galleon_tools::send_via::AgentChannelHandles>(
     ) {
         clawcrew_channels::orchestrator::register_channels_for_tools(
             &config,

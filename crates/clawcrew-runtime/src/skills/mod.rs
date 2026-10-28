@@ -1674,7 +1674,7 @@ pub(crate) fn skills_to_tools_with_context_and_runtime_optional_nat64(
                         security.clone(),
                         runtime.clone(),
                     );
-                    tools.push(Box::new(clawcrew_tools::wrappers::RateLimitedTool::new(
+                    tools.push(Box::new(galleon_tools::wrappers::RateLimitedTool::new(
                         inner,
                         security.clone(),
                     )));

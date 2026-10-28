@@ -276,13 +276,13 @@ pub fn apply_policy_tool_filter(
 /// (`allowed_tools` + `excluded_tools`) and an optional caller-supplied
 /// allowlist. Shared by the runtime agent loop and the channels orchestrator
 /// so every MCP registration site gates through identical logic.
-pub use clawcrew_tools::tool_search::{
+pub use galleon_tools::tool_search::{
     eager_mcp_tool_allowed, mcp_tool_access_policy, register_eager_mcp_tool_if_allowed,
 };
 
 pub(crate) fn mcp_allowed_tool_count<'a>(
     names: impl IntoIterator<Item = &'a str>,
-    policy: Option<&clawcrew_tools::tool_search::ToolAccessPolicy>,
+    policy: Option<&galleon_tools::tool_search::ToolAccessPolicy>,
 ) -> usize {
     names
         .into_iter()
@@ -310,7 +310,7 @@ pub(crate) fn preactivate_always_filter_groups(
     deferred: &crate::tools::DeferredMcpToolSet,
     activated: &Arc<Mutex<crate::tools::ActivatedToolSet>>,
     groups: &[clawcrew_config::schema::ToolFilterGroup],
-    policy: Option<&clawcrew_tools::tool_search::ToolAccessPolicy>,
+    policy: Option<&galleon_tools::tool_search::ToolAccessPolicy>,
     delegate_handle: Option<&tools::DelegateParentToolsHandle>,
 ) -> HashSet<String> {
     use clawcrew_config::schema::ToolFilterGroupMode;

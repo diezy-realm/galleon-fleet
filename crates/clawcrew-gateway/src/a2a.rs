@@ -33,7 +33,7 @@ const WELL_KNOWN_AGENT_CARD_PATH: &str = "/.well-known/agent-card.json";
 // Card DTOs (`AgentInterface`/`AgentCapabilities`/`AgentSkill`/`AgentCard`)
 // and Task/Message DTOs live in the shared wire-model source
 // `clawcrew_api::a2a_wire`, used by both this inbound surface and the
-// outbound client in `clawcrew-tools`. Re-exported here so the gateway's
+// outbound client in `galleon-tools`. Re-exported here so the gateway's
 // existing construction sites keep working under `crate::a2a::AgentCard`.
 pub use clawcrew_api::a2a_wire::{AgentCapabilities, AgentCard, AgentInterface, AgentSkill};
 

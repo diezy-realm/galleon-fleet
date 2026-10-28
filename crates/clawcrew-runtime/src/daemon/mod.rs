@@ -4540,7 +4540,7 @@ mod tests {
     //    would grow to N+1 (one per tick).
     //
     //    Drop semantics: `StdioTransport` is built with
-    //    `kill_on_drop(true)` (see `clawcrew-tools::mcp_transport`),
+    //    `kill_on_drop(true)` (see `galleon-tools::mcp_transport`),
     //    so dropping the only `Arc<McpRegistry>` reaps the child.
     //    The final assertion in this test verifies that the worker
     //    boundary (drop the shared Arc) does indeed tear the child

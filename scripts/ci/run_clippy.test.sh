@@ -105,7 +105,7 @@ run_runner \
 assert_args "targeted tools" \
     clippy \
     --locked \
-    -p clawcrew-tools \
+    -p galleon-tools \
     --all-targets \
     --all-features \
     --target x86_64-pc-windows-msvc \

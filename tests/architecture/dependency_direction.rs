@@ -36,7 +36,7 @@ fn crate_dependency_direction_strictly_enforced() {
             "clawcrew-runtime",
             "clawcrew-gateway",
             "clawcrew-channels",
-            "clawcrew-tools",
+            "galleon-tools",
             "clawcrew-providers",
         ] {
             assert!(

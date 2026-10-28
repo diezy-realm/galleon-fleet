@@ -32,7 +32,7 @@ use anyhow::Result;
 use clawcrew_api::tool::Tool;
 use clawcrew_config::schema::{PeripheralBoardConfig, PeripheralsConfig};
 #[cfg(feature = "hardware")]
-use clawcrew_tools::hardware_memory_map::HardwareMemoryMapTool;
+use galleon_tools::hardware_memory_map::HardwareMemoryMapTool;
 
 /// List configured boards from config (no connection yet).
 pub fn list_configured_boards(config: &PeripheralsConfig) -> Vec<&PeripheralBoardConfig> {
@@ -174,10 +174,10 @@ pub async fn create_peripheral_tools(config: &PeripheralsConfig) -> Result<Vec<B
         let board_names: Vec<String> = config.boards.iter().map(|b| b.board.clone()).collect();
         tools.push(Box::new(HardwareMemoryMapTool::new(board_names.clone())));
         tools.push(Box::new(
-            clawcrew_tools::hardware_board_info::HardwareBoardInfoTool::new(board_names.clone()),
+            galleon_tools::hardware_board_info::HardwareBoardInfoTool::new(board_names.clone()),
         ));
         tools.push(Box::new(
-            clawcrew_tools::hardware_memory_read::HardwareMemoryReadTool::new(board_names),
+            galleon_tools::hardware_memory_read::HardwareMemoryReadTool::new(board_names),
         ));
     }
 
@@ -208,12 +208,12 @@ pub fn create_board_info_tools(config: &PeripheralsConfig) -> Vec<Box<dyn Tool>>
     let board_names: Vec<String> = config.boards.iter().map(|b| b.board.clone()).collect();
     vec![
         Box::new(
-            clawcrew_tools::hardware_memory_map::HardwareMemoryMapTool::new(board_names.clone()),
+            galleon_tools::hardware_memory_map::HardwareMemoryMapTool::new(board_names.clone()),
         ),
         Box::new(
-            clawcrew_tools::hardware_board_info::HardwareBoardInfoTool::new(board_names.clone()),
+            galleon_tools::hardware_board_info::HardwareBoardInfoTool::new(board_names.clone()),
         ),
-        Box::new(clawcrew_tools::hardware_memory_read::HardwareMemoryReadTool::new(board_names)),
+        Box::new(galleon_tools::hardware_memory_read::HardwareMemoryReadTool::new(board_names)),
     ]
 }
 

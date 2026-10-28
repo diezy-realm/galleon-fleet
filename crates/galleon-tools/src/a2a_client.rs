@@ -1,8 +1,8 @@
 //! A2A outbound client (caller role): the `a2a_*` tools that delegate tasks
 //! to remote A2A-compliant agents.
 //!
-//! Lives in `clawcrew-tools` as a sibling to `channel_room` / `http_request` /
-//! `git_forge`, so runtime tool registration depends only on `clawcrew-tools`
+//! Lives in `galleon-tools` as a sibling to `channel_room` / `http_request` /
+//! `git_forge`, so runtime tool registration depends only on `galleon-tools`
 //! (the gateway stays the inbound/server edge). The A2A wire types are shared
 //! with the inbound surface via [`clawcrew_api::a2a_wire`].
 //!
@@ -5600,7 +5600,7 @@ mod tests {
     // This is the accepted cross-harness rollout gate from the RFC vote:
     // a non-ClawCrew peer validating our SendMessage/GetTask wire shape,
     // response-union parsing, and request-id correlation. Run with:
-    //   cargo test -p clawcrew-tools a2a_client::tests::cross_harness -- --ignored
+    //   cargo test -p galleon-tools a2a_client::tests::cross_harness -- --ignored
 
     /// Config wired to the official helloworld peer. Requires the peer at
     /// `A2A_CROSS_HARNESS_URL` (default `http://127.0.0.1:9999`).

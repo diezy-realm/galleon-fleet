@@ -1,13 +1,13 @@
-//! Mirror the canonical English tool catalogue into `clawcrew-tools`.
+//! Mirror the canonical English tool catalogue into `galleon-tools`.
 //!
 //! `crates/clawcrew-runtime/locales/en/tools.ftl` stays the source of truth, and
-//! `cargo fluent fill` keeps translations beside it. `clawcrew-tools` embeds the
+//! `cargo fluent fill` keeps translations beside it. `galleon-tools` embeds the
 //! English strings itself rather than depending on `clawcrew-runtime`, because
 //! the dependency runs runtime -> tools and importing back would invert it.
 //!
 //! That embed used to be `include_str!("../../clawcrew-runtime/locales/en/tools.ftl")`,
 //! which reaches outside the crate directory. `cargo package` copies only the
-//! package directory, so the read made `clawcrew-tools` unpublishable. Mirroring
+//! package directory, so the read made `galleon-tools` unpublishable. Mirroring
 //! the file into the crate keeps the dependency direction intact and puts the
 //! bytes where packaging can see them; CI fails on drift.
 

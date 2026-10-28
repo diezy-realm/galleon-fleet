@@ -791,7 +791,7 @@ fn published_crates_never_include_files_outside_their_own_directory() {
          `cargo publish --dry-run` verifies default features only, so they pass preflight and \
          ship broken.\n\
          Fix by including through an in-crate symlink (see crates/galleon-hardware/firmware \
-         and crates/clawcrew-tools/locales) rather than reaching up out of the crate.",
+         and crates/galleon-tools/locales) rather than reaching up out of the crate.",
         violations.join("\n"),
     );
 }

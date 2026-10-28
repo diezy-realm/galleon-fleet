@@ -9104,7 +9104,7 @@ async fn process_channel_message_scopes_sender_session_key_for_sessions_current_
         )),
         tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
             vec![Box::new(
-                clawcrew_tools::sessions::SessionsCurrentTool::new(Arc::clone(&session_store)),
+                galleon_tools::sessions::SessionsCurrentTool::new(Arc::clone(&session_store)),
             )],
         )),
         observer: Arc::new(NoopObserver),
@@ -19256,7 +19256,7 @@ impl ::clawcrew_api::attribution::Attributable for SendViaTextRoutingProvider {
 #[tokio::test]
 async fn telegram_explicit_text_override_stays_text_on_delivery() {
     let channel_impl = Arc::new(SendMessageRecordingChannel::telegram(false));
-    let send_via = clawcrew_tools::send_via::SendViaTool::new(
+    let send_via = galleon_tools::send_via::SendViaTool::new(
         Arc::new(clawcrew_config::policy::SecurityPolicy::default()),
         Arc::new(parking_lot::RwLock::new(
             HashMap::<String, Arc<dyn Channel>>::new(),
@@ -19385,7 +19385,7 @@ async fn matrix_mirror_text_origin_stays_text_on_delivery() {
 #[tokio::test]
 async fn matrix_explicit_text_override_beats_a_mirror_voice_origin() {
     let channel_impl = Arc::new(SendMessageRecordingChannel::matrix());
-    let send_via = clawcrew_tools::send_via::SendViaTool::new(
+    let send_via = galleon_tools::send_via::SendViaTool::new(
         Arc::new(clawcrew_config::policy::SecurityPolicy::default()),
         Arc::new(parking_lot::RwLock::new(
             HashMap::<String, Arc<dyn Channel>>::new(),

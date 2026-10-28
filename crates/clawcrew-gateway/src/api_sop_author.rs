@@ -99,7 +99,7 @@ pub async fn handle_tools_param_options(
         .or_else(|| config.agents.keys().min().cloned())
         .unwrap_or_default();
 
-    let entries = clawcrew_tools::param_options::resolve_options(
+    let entries = galleon_tools::param_options::resolve_options(
         body.domain,
         &config,
         &agent_alias,

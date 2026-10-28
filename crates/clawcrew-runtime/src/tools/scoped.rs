@@ -208,7 +208,7 @@ impl ScopedAssembled {
 }
 
 fn tool_allowed_in_context(name: &str, exclude_memory: bool, acp_delivery: bool) -> bool {
-    (!exclude_memory || !clawcrew_tools::MEMORY_TOOL_NAMES.contains(&name))
+    (!exclude_memory || !galleon_tools::MEMORY_TOOL_NAMES.contains(&name))
         && (acp_delivery || name != "deliver_file")
 }
 
@@ -279,7 +279,7 @@ impl ScopedToolRegistry {
             Arc::new(tools::PipelineTool::with_access_policy(
                 config.pipeline.clone(),
                 context_filtered_tool_arcs.clone(),
-                clawcrew_tools::tool_search::ToolAccessPolicy::from_security(
+                galleon_tools::tool_search::ToolAccessPolicy::from_security(
                     security.allowed_tools.as_deref(),
                     security.excluded_tools.as_deref(),
                     caller_allowed,

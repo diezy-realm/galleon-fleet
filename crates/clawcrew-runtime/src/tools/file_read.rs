@@ -368,7 +368,7 @@ fn looks_binary(bytes: &[u8]) -> bool {
 mod tests {
     use super::*;
     use crate::security::{AutonomyLevel, SecurityPolicy};
-    use clawcrew_tools::wrappers::{PathGuardedTool, RateLimitedTool};
+    use galleon_tools::wrappers::{PathGuardedTool, RateLimitedTool};
 
     fn test_tool(workspace: std::path::PathBuf) -> FileReadTool {
         let security = Arc::new(SecurityPolicy {

@@ -1,6 +1,6 @@
 //! Outbound A2A run observer seam.
 //!
-//! `clawcrew-tools` dispatches A2A runs but sits below the runtime control
+//! `galleon-tools` dispatches A2A runs but sits below the runtime control
 //! plane. This tiny, dependency-free seam lets the tools emit run-state events
 //! that the runtime observes and projects onto the canonical `TaskRegistry`,
 //! without a backwards crate dependency.

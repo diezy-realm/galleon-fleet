@@ -22,7 +22,7 @@ clawcrew-providers.workspace = true
 clawcrew-channels = { workspace = true, default-features = false }
 clawcrew-runtime.workspace = true
 galleon-sop-graph = { workspace = true, features = ["schema-export"] }
-clawcrew-tools.workspace = true
+galleon-tools.workspace = true
 galleon-hardware.workspace = true
 galleon-plugins = { workspace = true, optional = true }
 galleon-routing.workspace = true

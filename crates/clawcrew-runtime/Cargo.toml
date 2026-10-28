@@ -23,7 +23,7 @@ galleon-commands.workspace = true
 clawcrew-log.workspace = true
 clawcrew-providers.workspace = true
 clawcrew-memory.workspace = true
-clawcrew-tools.workspace = true
+galleon-tools.workspace = true
 galleon-sop-graph.workspace = true
 galleon-plugins = { workspace = true, optional = true }
 galleon-tool-call-parser.workspace = true
@@ -141,9 +141,9 @@ wiremock = "0.6"
 # Test-only registry constructor used by the daemon heartbeat MCP
 # retry-regression tests. Not in default deps so
 # the helper is unreachable from production builds.
-clawcrew-tools = { workspace = true, features = ["test-helpers"] }
+galleon-tools = { workspace = true, features = ["test-helpers"] }
 # Test-only config fault injection for the config/set post-rename sync
-# regression. Same pattern as clawcrew-tools above.
+# regression. Same pattern as galleon-tools above.
 clawcrew-config = { workspace = true, features = ["test-helpers"] }
 
 # Channel features (forwarded to clawcrew-channels)
