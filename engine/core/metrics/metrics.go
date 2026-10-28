@@ -105,7 +105,7 @@ func NewServer(port int) *Server {
 		port: port,
 		mux:  mux,
 		httpServer: &http.Server{
-			Addr:              fmt.Sprintf(":%d", port),
+			Addr:              fmt.Sprintf("127.0.0.1:%d", port),
 			Handler:           mux,
 			ReadHeaderTimeout: 5 * time.Second,
 		},

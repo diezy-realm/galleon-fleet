@@ -107,7 +107,7 @@ func (a *App) Run() error {
 	}()
 
 	// 2. Start gRPC Server
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", a.Cfg.GRPCPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", a.Cfg.GRPCPort))
 	if err != nil {
 		return fmt.Errorf("failed to listen on port %d: %w", a.Cfg.GRPCPort, err)
 	}
