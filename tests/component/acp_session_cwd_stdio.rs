@@ -51,7 +51,7 @@ fn acp_stdio_session_new_omitted_cwd_returns_agent_workspace() {
 
     // Launch the real `clawcrew acp` command against the isolated config/home.
     // stderr is discarded (logs go there); stdout carries only JSON-RPC frames.
-    let mut child = Command::new(env!("CARGO_BIN_EXE_clawcrew"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_galleon"))
         .arg("acp")
         .env("CLAWCREW_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")

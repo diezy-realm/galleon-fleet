@@ -147,9 +147,9 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
       export RUST_TARGET=x86_64-unknown-linux-gnu; \
     fi && \
     if [ -n "$CLAWCREW_CARGO_FLAGS" ]; then \
-      cargo build --release --locked --target "$RUST_TARGET" -p clawcrew -p zerocode $CLAWCREW_CARGO_FLAGS; \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $CLAWCREW_CARGO_FLAGS; \
     else \
-      cargo build --release --locked --target "$RUST_TARGET" -p clawcrew -p zerocode; \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode; \
     fi
 RUN rm -rf src benches crates xtask tools/fill-translations
 
@@ -202,14 +202,15 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
            target/release/.fingerprint/zerocode-* \
            target/release/build/zerocode-* && \
     if [ -n "$CLAWCREW_CARGO_FLAGS" ]; then \
-      cargo build --release --locked --target "$RUST_TARGET" -p clawcrew -p zerocode $CLAWCREW_CARGO_FLAGS; \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $CLAWCREW_CARGO_FLAGS; \
     else \
-      cargo build --release --locked --target "$RUST_TARGET" -p clawcrew -p zerocode; \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode; \
     fi && \
-    cp target/"$RUST_TARGET"/release/clawcrew /app/clawcrew && \
+    cp target/"$RUST_TARGET"/release/galleon /app/galleon && \
+    cp /app/galleon /app/clawcrew && \
     cp target/"$RUST_TARGET"/release/zerocode /app/zerocode && \
-    "$STRIP" /app/clawcrew /app/zerocode
-RUN for b in clawcrew zerocode; do \
+    "$STRIP" /app/galleon /app/clawcrew /app/zerocode
+RUN for b in galleon zerocode; do \
       size=$(stat -c%s "/app/$b") && \
       if [ "$size" -lt 1000000 ]; then echo "ERROR: $b too small (${size} bytes), likely dummy build artifact" && exit 1; fi; \
     done
@@ -248,6 +249,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /clawcrew-data /clawcrew-data
+COPY --from=builder /app/galleon /usr/local/bin/galleon
 COPY --from=builder /app/clawcrew /usr/local/bin/clawcrew
 COPY --from=builder /app/zerocode /usr/local/bin/zerocode
 # Install the dashboard at /usr/share/clawcrewlabs/web/dist (outside the
@@ -276,13 +278,14 @@ WORKDIR /clawcrew-data
 USER 65534:65534
 EXPOSE 42617
 HEALTHCHECK --interval=60s --timeout=10s --retries=3 --start-period=10s \
-    CMD ["clawcrew", "status", "--format=exit-code"]
-ENTRYPOINT ["clawcrew"]
+    CMD ["galleon", "status", "--format=exit-code"]
+ENTRYPOINT ["galleon"]
 CMD ["daemon"]
 
 # ── Stage 3: Production Runtime (Distroless) ─────────────────
 FROM ${CLAWCREW_BASE_DISTROLESS} AS release
 
+COPY --from=builder /app/galleon /usr/local/bin/galleon
 COPY --from=builder /app/clawcrew /usr/local/bin/clawcrew
 COPY --from=builder /app/zerocode /usr/local/bin/zerocode
 COPY --from=builder /clawcrew-data /clawcrew-data
@@ -306,6 +309,6 @@ WORKDIR /clawcrew-data
 USER 65534:65534
 EXPOSE 42617
 HEALTHCHECK --interval=60s --timeout=10s --retries=3 --start-period=10s \
-    CMD ["clawcrew", "status", "--format=exit-code"]
-ENTRYPOINT ["clawcrew"]
+    CMD ["galleon", "status", "--format=exit-code"]
+ENTRYPOINT ["galleon"]
 CMD ["daemon"]

@@ -66,7 +66,6 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use tempfile::TempDir;
 use clawcrew_config::presets::{
     AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
     SelectorChoice,
@@ -74,6 +73,7 @@ use clawcrew_config::presets::{
 use clawcrew_config::schema::{Config, DEFAULT_WEBHOOK_CHANNEL_PORT};
 use clawcrew_config::secrets::SecretStore;
 use clawcrew_runtime::quickstart::{self, FieldSection, Surface};
+use tempfile::TempDir;
 
 // ═════════════════════════════════════════════════════════════════════════════
 // Harness
@@ -420,7 +420,7 @@ fn submission(agent: &str, channels: Vec<SelectorChoice<ChannelQuickStart>>) -> 
 /// safe under parallel test execution — which is exactly why the loader is
 /// exercised in a child process rather than in-process.
 fn run_clawcrew(install_root: &Path, args: &[&str]) -> std::process::Output {
-    let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_clawcrew"));
+    let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_galleon"));
     for (key, _) in std::env::vars_os() {
         if key.to_string_lossy().starts_with("CLAWCREW_") {
             command.env_remove(&key);

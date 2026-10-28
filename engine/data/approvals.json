@@ -6,7 +6,7 @@
     "crewId": "crew-repo-analyst",
     "title": "Authorize GitHub Pull Request Submission: WebSocket CI Fix",
     "actionType": "github_issue_create",
-    "targetResource": "diezy-labs/claw-crew#pulls",
+    "targetResource": "diezy-realm/galleon-fleet#pulls",
     "draftSummary": "Developer Delivery Ship completed the fix for WebSocket teardown. Requires Captain's signature to create PR against master.",
     "justification": "Fixes 100% reproducible socket teardown hang in CI runner.",
     "effect": "Merges cleanly without breaking existing transport ABI.",

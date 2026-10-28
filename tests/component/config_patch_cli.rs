@@ -5,7 +5,7 @@
 //! gated so the CLI-only tests still compile and run with the feature off.
 
 #[cfg(feature = "gateway")]
-use axum::{Router, routing::patch};
+use axum::{routing::patch, Router};
 #[cfg(feature = "gateway")]
 use clawcrew::gateway::{self, AppState};
 #[cfg(feature = "gateway")]
@@ -139,7 +139,7 @@ fn test_state(config: Config) -> AppState {
 }
 
 fn run_cli_patch_output(config_dir: &std::path::Path, patch_doc: &[u8]) -> Output {
-    let bin = env!("CARGO_BIN_EXE_clawcrew");
+    let bin = env!("CARGO_BIN_EXE_galleon");
     Command::new(bin)
         .env("CLAWCREW_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
@@ -165,7 +165,7 @@ fn run_cli_patch_output(config_dir: &std::path::Path, patch_doc: &[u8]) -> Outpu
 /// Run `clawcrew config patch - ` **without** `--json`, exercising the
 /// human-readable failure branch of `config_patch_fail_json_or_human`.
 fn run_cli_patch_output_human(config_dir: &std::path::Path, patch_doc: &[u8]) -> Output {
-    let bin = env!("CARGO_BIN_EXE_clawcrew");
+    let bin = env!("CARGO_BIN_EXE_galleon");
     Command::new(bin)
         .env("CLAWCREW_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
@@ -789,7 +789,7 @@ fn config_patch_replace_on_dotted_resource_id_does_not_plant_phantom_sibling() {
 }
 
 fn run_cli_init(config_dir: &std::path::Path, section: &str) -> serde_json::Value {
-    let bin = env!("CARGO_BIN_EXE_clawcrew");
+    let bin = env!("CARGO_BIN_EXE_galleon");
     let output = Command::new(bin)
         .env("CLAWCREW_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
@@ -808,7 +808,7 @@ fn run_cli_init(config_dir: &std::path::Path, section: &str) -> serde_json::Valu
 }
 
 fn run_cli_get(config_dir: &std::path::Path, path: &str) -> serde_json::Value {
-    let bin = env!("CARGO_BIN_EXE_clawcrew");
+    let bin = env!("CARGO_BIN_EXE_galleon");
     let output = Command::new(bin)
         .env("CLAWCREW_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
@@ -828,7 +828,7 @@ fn run_cli_get(config_dir: &std::path::Path, path: &str) -> serde_json::Value {
 
 /// Run one non-interactive property write in a fresh CLI process.
 fn run_cli_set(config_dir: &std::path::Path, path: &str, value: &str) {
-    let bin = env!("CARGO_BIN_EXE_clawcrew");
+    let bin = env!("CARGO_BIN_EXE_galleon");
     let output = Command::new(bin)
         .env("CLAWCREW_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")

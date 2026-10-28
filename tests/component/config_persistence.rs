@@ -1,7 +1,7 @@
 //! TG2: Config Load/Save Round-Trip Tests
 
-use std::fs;
 use clawcrew::config::{Config, MemoryConfig};
+use std::fs;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Config default construction

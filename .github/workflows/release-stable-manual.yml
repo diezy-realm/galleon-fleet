@@ -1204,8 +1204,8 @@ jobs:
         # Signs by digest so the signature is immutable regardless of tag mutations.
         # Consumers verify with:
         #   cosign verify --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-        #     --certificate-identity-regexp "^https://github.com/clawcrew-labs/clawcrew/" \
-        #     ghcr.io/clawcrew-labs/clawcrew@<digest>
+        #     --certificate-identity-regexp "^https://github.com/diezy-realm/galleon-fleet/" \
+        #     ghcr.io/diezy-realm/galleon-fleet@<digest>
         env:
           DIGEST: ${{ steps.build-push.outputs.digest }}
         run: |

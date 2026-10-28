@@ -757,8 +757,8 @@ mod voice_reply_delivery {
 
 mod voice_reply_gate {
     use super::super::{
-        MatrixChannel,
         allowlist::{voice_peer_matches, voice_peers_verdict},
+        MatrixChannel,
     };
     use clawcrew_api::channel::SendMessage;
     use clawcrew_config::schema::MatrixConfig;
@@ -934,8 +934,8 @@ mod voice_reply_gate {
 }
 
 mod media_filename_resolution {
-    use super::super::AudioTranscriber;
     use super::super::inbound::transcription_safe_filename;
+    use super::super::AudioTranscriber;
     use anyhow::Context;
     use clawcrew_config::schema::TranscriptionConfig;
 
@@ -1241,23 +1241,23 @@ mod media_filename_resolution {
 // insertion, with only the homeserver and STT provider mocked at HTTP.
 mod inbound_route {
     use std::collections::{HashMap, HashSet};
-    use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
+    use std::sync::Arc;
     use std::time::Duration;
 
     use clawcrew_api::channel::ChannelApprovalResponse;
     use clawcrew_config::schema::{MatrixConfig, TranscriptionConfig};
     use matrix_sdk::ruma::events::AnySyncTimelineEvent;
     use matrix_sdk::ruma::serde::Raw;
-    use matrix_sdk::ruma::{RoomId, room_id, user_id};
+    use matrix_sdk::ruma::{room_id, user_id, RoomId};
     use matrix_sdk::test_utils::mocks::MatrixMockServer;
     use matrix_sdk_test::JoinedRoomBuilder;
-    use tokio::sync::{Mutex as TokioMutex, RwLock as TokioRwLock, mpsc, oneshot};
+    use tokio::sync::{mpsc, oneshot, Mutex as TokioMutex, RwLock as TokioRwLock};
     use wiremock::matchers::{method, path, path_regex};
     use wiremock::{Mock, ResponseTemplate};
 
+    use super::super::inbound::{register_event_handlers, HandlerCtx};
     use super::super::MatrixChannel;
-    use super::super::inbound::{HandlerCtx, register_event_handlers};
 
     const TRANSCRIPT: &str = "route level transcript of the voice note";
 
@@ -1801,8 +1801,8 @@ mod inbound_route {
     async fn encrypted_voice_note_decrypts_and_inserts_transcript() {
         use std::io::Read as _;
 
-        use matrix_sdk::ruma::OwnedMxcUri;
         use matrix_sdk::ruma::events::room::EncryptedFile;
+        use matrix_sdk::ruma::OwnedMxcUri;
         use matrix_sdk_base::crypto::AttachmentEncryptor;
 
         let wav = build_wav();
@@ -2173,7 +2173,7 @@ mod inbound_route {
 }
 
 mod markers {
-    use super::super::markers::{MarkerKind, parse};
+    use super::super::markers::{parse, MarkerKind};
 
     #[test]
     fn empty_text_yields_no_markers() {
@@ -2261,11 +2261,11 @@ mod markers {
 
 mod approval {
     use super::super::approval::{
-        TOKEN_LEN, build_prompt_message, generate_token, generate_token_default, parse_reply,
+        build_prompt_message, generate_token, generate_token_default, parse_reply, TOKEN_LEN,
     };
     use clawcrew_api::channel::ChannelApprovalResponse;
-    use rand::SeedableRng;
     use rand::rngs::StdRng;
+    use rand::SeedableRng;
     use std::collections::HashSet;
 
     #[tokio::test]
@@ -2713,6 +2713,7 @@ mod ack_reactions {
     }
 }
 
+#[allow(unused_imports)]
 mod user_boundary {
     use std::sync::Arc;
     use std::time::Duration;
@@ -2729,7 +2730,7 @@ mod user_boundary {
     use wiremock::matchers::{body_partial_json, method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    use super::super::{MatrixChannel, inbound};
+    use super::super::{inbound, MatrixChannel};
 
     #[tokio::test]
     async fn matrix_single_message_inbound_produces_channel_message() {
@@ -2920,7 +2921,7 @@ mod user_boundary {
 
 mod context {
     use super::super::context::{claim_first_visit, format_preamble, mark_seen};
-    use matrix_sdk::ruma::{OwnedEventId, owned_event_id};
+    use matrix_sdk::ruma::{owned_event_id, OwnedEventId};
     use std::{collections::HashSet, sync::Arc};
     use tokio::sync::RwLock;
 
@@ -2958,40 +2959,39 @@ mod context {
 }
 
 mod streaming {
-    use super::super::MatrixChannel;
     use super::super::outbound;
     use super::super::streaming;
     use super::super::streaming::{
-        MultiDraft, PartialDraft, PartialFinalizeAction, SingleDraft, SingleRetainedDraftAction,
-        State, decide_partial_finalize_action, insert_multi, insert_partial, insert_single,
+        decide_partial_finalize_action, insert_multi, insert_partial, insert_single,
         mark_single_edit_delivered, multi_contains, normalize_matrix_progress_line,
         partial_contains, partial_len, partial_should_edit, partial_visible_text,
         push_single_progress, push_single_progress_line, single_cancel_deletes_draft,
         single_contains, single_edit_interval_elapsed, single_finalize_plan, single_render_changed,
         single_retained_draft_action, single_visible_text_with_budget,
-        single_visible_text_with_edit_budget,
+        single_visible_text_with_edit_budget, MultiDraft, PartialDraft, PartialFinalizeAction,
+        SingleDraft, SingleRetainedDraftAction, State,
+    };
+    use super::super::MatrixChannel;
+    use clawcrew_api::channel::{
+        thinking_status_text, DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, THINKING_STATUS_PREFIX,
     };
     use clawcrew_api::channel::{Channel, DraftProgress, DraftProgressKind, SendMessage};
-    use clawcrew_api::channel::{
-        DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, THINKING_STATUS_PREFIX, thinking_status_text,
-    };
     use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
     use matrix_sdk::config::SyncSettings;
     use matrix_sdk::ruma::{
-        OwnedEventId,
         events::room::message::{
             MessageType, ReplacementMetadata, RoomMessageEventContent,
             RoomMessageEventContentWithoutRelation, TextMessageEventContent,
         },
-        owned_event_id, owned_room_id,
+        owned_event_id, owned_room_id, OwnedEventId,
     };
     use std::collections::VecDeque;
     use std::sync::Arc;
     use std::time::{Duration, Instant};
     use tempfile::TempDir;
     use wiremock::{
-        Mock, MockServer, ResponseTemplate,
         matchers::{body_partial_json, method, path_regex},
+        Mock, MockServer, ResponseTemplate,
     };
 
     fn draft(text: &str, last_edit: Instant) -> PartialDraft {
@@ -4379,7 +4379,7 @@ mod live_smoke {
     use matrix_sdk::config::SyncSettings;
     use tempfile::TempDir;
 
-    use super::super::{MatrixChannel, inbound::SYNC_LONGPOLL_TIMEOUT, streaming, streaming_key};
+    use super::super::{inbound::SYNC_LONGPOLL_TIMEOUT, streaming, streaming_key, MatrixChannel};
 
     fn env_first(primary: &str, fallback: &str) -> String {
         env::var(primary)
@@ -4732,7 +4732,7 @@ mod live_smoke {
 }
 
 mod session {
-    use super::super::session::{SessionBlob, load, save};
+    use super::super::session::{load, save, SessionBlob};
     use tempfile::TempDir;
 
     #[test]
@@ -4798,8 +4798,8 @@ mod auth_gating {
     use clawcrew_config::schema::MatrixConfig;
     use tempfile::TempDir;
     use wiremock::{
-        Mock, MockServer, ResponseTemplate,
         matchers::{header, method, path},
+        Mock, MockServer, ResponseTemplate,
     };
 
     const WHOAMI_PATH: &str = "/_matrix/client/v3/account/whoami";
@@ -4994,13 +4994,12 @@ mod auth_gating {
 
         assert_eq!(identity.user_id, "@bot:example.org");
         assert_eq!(identity.device_id.as_deref(), Some("DEVICE42"));
-        assert!(
-            root.received_requests()
-                .await
-                .unwrap()
-                .iter()
-                .all(|request| request.url.path() != WHOAMI_PATH)
-        );
+        assert!(root
+            .received_requests()
+            .await
+            .unwrap()
+            .iter()
+            .all(|request| request.url.path() != WHOAMI_PATH));
     }
 
     #[tokio::test]
@@ -5647,7 +5646,7 @@ mod outbound_sandbox {
     //! untrusted; the sandbox must keep local reads inside `workspace_dir`
     //! and refuse non-http(s) schemes outright.
 
-    use super::super::outbound::{MarkerTarget, validate_marker_target};
+    use super::super::outbound::{validate_marker_target, MarkerTarget};
     use tempfile::TempDir;
 
     #[test]
@@ -5995,7 +5994,7 @@ mod outbound_redirect_ssrf {
 
 mod transcription_gate {
 
-    use super::super::inbound::{MediaCategory, should_transcribe};
+    use super::super::inbound::{should_transcribe, MediaCategory};
     use super::super::legacy_transcription_resolver;
     use clawcrew_config::schema::TranscriptionConfig;
 
@@ -6057,7 +6056,7 @@ mod outbound_send_outcome {
     //! uploads complete. Marker-only messages used to error even though
     //! the attachment had landed; this captures the new contract.
 
-    use super::super::outbound::{SendOutcome, decide_send_outcome};
+    use super::super::outbound::{decide_send_outcome, SendOutcome};
 
     #[test]
     fn non_empty_text_with_attachment_sends_text() {
@@ -6087,7 +6086,7 @@ mod outbound_send_outcome {
 }
 
 mod outbound_attachment_info {
-    use super::super::outbound::{AttachmentKind, attachment_config_for};
+    use super::super::outbound::{attachment_config_for, AttachmentKind};
     use clawcrew_api::media::MediaAttachment;
     use matrix_sdk::{attachment::AttachmentInfo, ruma::UInt};
 
@@ -6204,7 +6203,7 @@ mod outbound_voice_duration {
     use matrix_sdk::test_utils::mocks::MatrixMockServer;
 
     use super::super::outbound::{
-        AttachmentKind, attachment_config_for, opus_duration, upload_attachment,
+        attachment_config_for, opus_duration, upload_attachment, AttachmentKind,
     };
 
     /// One second of tone encoded by `opusenc`, so the parser is measured

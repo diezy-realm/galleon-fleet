@@ -7,7 +7,7 @@ resolver = "2"
 version = "0.8.5"
 edition = "2024"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/clawcrew-labs/clawcrew"
+repository = "https://github.com/diezy-realm/galleon-fleet"
 homepage = "https://www.clawcrew.com"
 rust-version = "1.96.0"
 
@@ -83,10 +83,10 @@ unwrap_used = "warn"
 expect_used = "warn"
 
 [package]
-name = "clawcrew"
+name = "galleon-fleet"
 # Workspace crates are publish = false during microkernel transition.
 publish = true
-default-run = "clawcrew"
+default-run = "galleon"
 version.workspace = true
 edition.workspace = true
 authors = ["theonlyhennygod"]
@@ -114,7 +114,7 @@ include = [
 workspace = true
 
 [[bin]]
-name = "clawcrew"
+name = "galleon"
 path = "src/main.rs"
 
 [[bin]]

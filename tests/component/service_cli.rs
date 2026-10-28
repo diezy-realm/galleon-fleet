@@ -2,7 +2,7 @@ use std::process::Command;
 
 #[test]
 fn test_service_cli_subcommands_symmetric_help() {
-    let exe = env!("CARGO_BIN_EXE_clawcrew");
+    let exe = env!("CARGO_BIN_EXE_galleon");
     for sub in ["install", "status", "uninstall"] {
         let output = Command::new(exe)
             .args(["service", sub, "--help"])

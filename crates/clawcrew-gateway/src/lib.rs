@@ -1,7 +1,9 @@
 #![allow(
     clippy::to_string_in_format_args,
     clippy::useless_format,
-    clippy::collapsible_if
+    clippy::collapsible_if,
+    unused,
+    dead_code
 )]
 
 pub mod gateway;

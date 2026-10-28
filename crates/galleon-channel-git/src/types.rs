@@ -140,6 +140,7 @@ pub enum GitChannelError {
          BEGIN/END lines)"
     )]
     MissingPrivateKey,
+    #[cfg(feature = "provider-github")]
     #[error("git provider JWT error: {0}")]
     Jwt(#[from] jsonwebtoken::errors::Error),
     #[error("git API {endpoint} failed ({status}): {body}")]

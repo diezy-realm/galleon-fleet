@@ -193,7 +193,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
         --target "$TARGET" \
         --no-default-features \
         --features "${CLAWCREW_FEATURES}" \
-        -p clawcrew
+        -p galleon-fleet
 
     # Release build — zerocode (TUI config manager)
     CARGO_TARGET_DIR=/target \
@@ -204,7 +204,8 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
         -p zerocode
 
     mkdir -p /rootfs/usr/bin /rootfs/usr/share/clawcrewlabs/web/dist
-    cp /target/${TARGET}/release/clawcrew /rootfs/usr/bin/clawcrew
+    cp /target/${TARGET}/release/galleon /rootfs/usr/bin/galleon
+    cp /rootfs/usr/bin/galleon /rootfs/usr/bin/clawcrew
     cp /target/${TARGET}/release/zerocode /rootfs/usr/bin/zerocode
 EOF
 
@@ -233,7 +234,7 @@ EXPOSE 42617
 HEALTHCHECK --interval=60s --timeout=10s --retries=3 --start-period=10s \
     CMD ["clawcrew", "status", "--format=exit-code"]
 
-ENTRYPOINT ["/usr/bin/clawcrew"]
+ENTRYPOINT ["/usr/bin/galleon"]
 CMD ["daemon"]
 
 # ── Stage: build-fat (clawcrew + zerocode, all channels) ────
@@ -279,7 +280,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
         --target "$TARGET" \
         --no-default-features \
         --features "${CLAWCREW_FEATURES}" \
-        -p clawcrew
+        -p galleon-fleet
 
     # Release build — zerocode (TUI config manager)
     CARGO_TARGET_DIR=/target \
@@ -290,7 +291,8 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
         -p zerocode
 
     mkdir -p /rootfs/usr/bin /rootfs/usr/share/clawcrewlabs/web/dist
-    cp /target/${TARGET}/release/clawcrew /rootfs/usr/bin/clawcrew
+    cp /target/${TARGET}/release/galleon /rootfs/usr/bin/galleon
+    cp /rootfs/usr/bin/galleon /rootfs/usr/bin/clawcrew
     cp /target/${TARGET}/release/zerocode /rootfs/usr/bin/zerocode
 EOF
 
@@ -319,5 +321,5 @@ EXPOSE 42617
 HEALTHCHECK --interval=60s --timeout=10s --retries=3 --start-period=10s \
     CMD ["clawcrew", "status", "--format=exit-code"]
 
-ENTRYPOINT ["/usr/bin/clawcrew"]
+ENTRYPOINT ["/usr/bin/galleon"]
 CMD ["daemon"]

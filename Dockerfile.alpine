@@ -96,9 +96,9 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry-alpine-${TARGETARCH},target=/u
     esac \
     && rustup target add "$RUST_TARGET" \
     && if [ -n "$CLAWCREW_CARGO_FLAGS" ]; then \
-         cargo zigbuild --release --locked --target "$RUST_TARGET" -p clawcrew -p zerocode $CLAWCREW_CARGO_FLAGS; \
+         cargo zigbuild --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $CLAWCREW_CARGO_FLAGS; \
        else \
-         cargo zigbuild --release --locked --target "$RUST_TARGET" -p clawcrew -p zerocode; \
+         cargo zigbuild --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode; \
        fi
 RUN rm -rf src benches crates xtask tools/fill-translations
 
@@ -136,13 +136,14 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry-alpine-${TARGETARCH},target=/u
            target/release/.fingerprint/zerocode-* \
            target/release/build/zerocode-* \
     && if [ -n "$CLAWCREW_CARGO_FLAGS" ]; then \
-         cargo zigbuild --release --locked --target "$RUST_TARGET" -p clawcrew -p zerocode $CLAWCREW_CARGO_FLAGS; \
+         cargo zigbuild --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $CLAWCREW_CARGO_FLAGS; \
        else \
-         cargo zigbuild --release --locked --target "$RUST_TARGET" -p clawcrew -p zerocode; \
+         cargo zigbuild --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode; \
        fi \
-    && cp target/"$RUST_TARGET"/release/clawcrew /app/clawcrew \
+    && cp target/"$RUST_TARGET"/release/galleon /app/galleon \
+    && cp /app/galleon /app/clawcrew \
     && cp target/"$RUST_TARGET"/release/zerocode /app/zerocode
-RUN for binary in clawcrew zerocode; do \
+RUN for binary in galleon zerocode; do \
       size=$(stat -c%s "/app/$binary"); \
       if [ "$size" -lt 1000000 ]; then \
         echo "ERROR: $binary is only ${size} bytes" >&2; \
@@ -154,6 +155,7 @@ FROM ${CLAWCREW_BASE_ALPINE} AS runtime
 
 RUN apk add --no-cache bash ca-certificates curl git tzdata \
     && mkdir -p /clawcrew-data/.clawcrew /clawcrew-data/data
+COPY --from=builder /app/galleon /usr/local/bin/galleon
 COPY --from=builder /app/clawcrew /usr/local/bin/clawcrew
 COPY --from=builder /app/zerocode /usr/local/bin/zerocode
 COPY --from=web-builder /app/web/dist /usr/share/clawcrewlabs/web/dist
@@ -169,6 +171,6 @@ WORKDIR /clawcrew-data
 USER 65534:65534
 EXPOSE 42617
 HEALTHCHECK --interval=60s --timeout=10s --retries=3 --start-period=10s \
-    CMD ["clawcrew", "status", "--format=exit-code"]
-ENTRYPOINT ["clawcrew"]
+    CMD ["galleon", "status", "--format=exit-code"]
+ENTRYPOINT ["galleon"]
 CMD ["daemon"]

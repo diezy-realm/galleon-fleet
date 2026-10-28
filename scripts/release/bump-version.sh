@@ -194,13 +194,13 @@ bump "marketplace/dokploy/meta-entry.json" \
   "\"version\": \"${VERSION}\""
 
 bump "marketplace/dokploy/blueprints/clawcrew/docker-compose.yml" \
-  'ghcr\.io/clawcrew-labs/clawcrew:[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]*)?' \
-  "ghcr.io/clawcrew-labs/clawcrew:${VERSION}"
+  'ghcr\.io/diezy-realm/galleon-fleet:[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]*)?' \
+  "ghcr.io/diezy-realm/galleon-fleet:${VERSION}"
 
 # ── Marketplace: EasyPanel ─────────────────────────────────────────
 bump "marketplace/easypanel/meta.yaml" \
-  'ghcr\.io/clawcrew-labs/clawcrew:[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]*)?' \
-  "ghcr.io/clawcrew-labs/clawcrew:${VERSION}"
+  'ghcr\.io/diezy-realm/galleon-fleet:[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]*)?' \
+  "ghcr.io/diezy-realm/galleon-fleet:${VERSION}"
 
 # ── Workflow description examples ──────────────────────────────────
 echo "Workflow descriptions..."

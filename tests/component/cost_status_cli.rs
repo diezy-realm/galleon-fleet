@@ -1,5 +1,5 @@
 use chrono::{DateTime, Datelike, Duration, TimeZone, Utc};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::path::Path;
 use std::process::{Command, Output};
 
@@ -85,7 +85,7 @@ fn run_status(records: &[Value]) -> Output {
     ledger.push('\n');
     std::fs::write(state_dir.join("costs.jsonl"), ledger).unwrap();
 
-    Command::new(env!("CARGO_BIN_EXE_clawcrew"))
+    Command::new(env!("CARGO_BIN_EXE_galleon"))
         .env("RUST_LOG", "off")
         .arg("--config-dir")
         .arg(config_dir.path())
