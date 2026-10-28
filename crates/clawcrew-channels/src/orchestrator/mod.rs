@@ -721,7 +721,7 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
                 for native_call in chat_res.tool_calls {
                     let parsed_args = serde_json::from_str(&native_call.arguments)
                         .unwrap_or(serde_json::Value::String(native_call.arguments));
-                    tool_calls.push(clawcrew_tool_call_parser::ParsedToolCall {
+                    tool_calls.push(galleon_tool_call_parser::ParsedToolCall {
                         name: native_call.name,
                         arguments: parsed_args,
                         tool_call_id: Some(native_call.id),
@@ -729,7 +729,7 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
                 }
             } else {
                 let (cleaned, parsed) =
-                    clawcrew_tool_call_parser::parse_tool_calls(&raw_response_text);
+                    galleon_tool_call_parser::parse_tool_calls(&raw_response_text);
                 tool_calls = parsed;
                 if tool_calls.is_empty() && !cleaned.trim().is_empty() {
                     raw_response_text = cleaned;
@@ -5955,7 +5955,7 @@ fn truncate_at_incomplete_protocol_json(s: &str) -> String {
             // Nothing completes from here, so this is the unfinished tail and
             // everything after it belongs to the same value.
             _ => {
-                return if clawcrew_tool_call_parser::looks_like_incomplete_tool_protocol_json(tail)
+                return if galleon_tool_call_parser::looks_like_incomplete_tool_protocol_json(tail)
                 {
                     s[..at].trim_end().to_string()
                 } else {
@@ -6176,33 +6176,33 @@ fn starts_with_visible_tool_call_tag_example(response: &str) -> bool {
         || lower.starts_with("<tool-call")
         || lower.starts_with("<invoke");
 
-    starts_with_tool_tag && clawcrew_tool_call_parser::looks_like_tool_protocol_example(response)
+    starts_with_tool_tag && galleon_tool_call_parser::looks_like_tool_protocol_example(response)
 }
 
 fn should_suppress_top_level_tool_protocol_response(
     response: &str,
     known_tool_names: &HashSet<String>,
 ) -> bool {
-    if clawcrew_tool_call_parser::looks_like_tool_protocol_example(response) {
+    if galleon_tool_call_parser::looks_like_tool_protocol_example(response) {
         return false;
     }
 
-    if clawcrew_tool_call_parser::looks_like_malformed_tool_protocol_envelope_for_known_tools(
+    if galleon_tool_call_parser::looks_like_malformed_tool_protocol_envelope_for_known_tools(
         response,
         known_tool_names,
     ) {
         return true;
     }
 
-    if let Some(kind) = clawcrew_tool_call_parser::classify_tool_protocol_envelope(response) {
+    if let Some(kind) = galleon_tool_call_parser::classify_tool_protocol_envelope(response) {
         return matches!(
             kind,
-            clawcrew_tool_call_parser::ToolProtocolEnvelopeKind::TaggedToolCall
+            galleon_tool_call_parser::ToolProtocolEnvelopeKind::TaggedToolCall
         ) || (!known_tool_names.is_empty()
             && (matches!(
                 kind,
-                clawcrew_tool_call_parser::ToolProtocolEnvelopeKind::ToolResult
-            ) || clawcrew_tool_call_parser::tool_protocol_envelope_mentions_known_tool(
+                galleon_tool_call_parser::ToolProtocolEnvelopeKind::ToolResult
+            ) || galleon_tool_call_parser::tool_protocol_envelope_mentions_known_tool(
                 response,
                 known_tool_names,
             )));
@@ -6210,7 +6210,7 @@ fn should_suppress_top_level_tool_protocol_response(
 
     // If the broad envelope detector still matches after classification failed,
     // this is malformed internal protocol JSON rather than ordinary content.
-    clawcrew_tool_call_parser::looks_like_tool_protocol_envelope(response)
+    galleon_tool_call_parser::looks_like_tool_protocol_envelope(response)
 }
 
 #[cfg(test)]
@@ -6902,7 +6902,7 @@ fn sanitize_tool_json_value(
     saw_tool_call_payload: bool,
 ) -> Option<(String, bool)> {
     if let Some(kind) =
-        clawcrew_tool_call_parser::classify_tool_protocol_envelope(&value.to_string())
+        galleon_tool_call_parser::classify_tool_protocol_envelope(&value.to_string())
     {
         if known_tool_names.is_empty() {
             return None;
@@ -6910,12 +6910,12 @@ fn sanitize_tool_json_value(
 
         if matches!(
             kind,
-            clawcrew_tool_call_parser::ToolProtocolEnvelopeKind::ToolResult
+            galleon_tool_call_parser::ToolProtocolEnvelopeKind::ToolResult
         ) {
             return Some((String::new(), true));
         }
 
-        if !clawcrew_tool_call_parser::tool_protocol_envelope_mentions_known_tool(
+        if !galleon_tool_call_parser::tool_protocol_envelope_mentions_known_tool(
             &value.to_string(),
             known_tool_names,
         ) {
@@ -6973,8 +6973,8 @@ fn safe_protocol_envelope_content(value: &serde_json::Value) -> String {
         .trim();
 
     if content.is_empty()
-        || clawcrew_tool_call_parser::looks_like_tool_protocol_envelope(content)
-        || clawcrew_tool_call_parser::looks_like_malformed_tool_protocol_envelope(content)
+        || galleon_tool_call_parser::looks_like_tool_protocol_envelope(content)
+        || galleon_tool_call_parser::looks_like_malformed_tool_protocol_envelope(content)
     {
         return String::new();
     }
@@ -7029,7 +7029,7 @@ fn isolated_malformed_tool_protocol_segment_end(
         }
         end += line.len();
         let candidate = &message[start..end];
-        if clawcrew_tool_call_parser::looks_like_malformed_tool_protocol_envelope_for_known_tools(
+        if galleon_tool_call_parser::looks_like_malformed_tool_protocol_envelope_for_known_tools(
             candidate,
             known_tool_names,
         ) {
@@ -7055,7 +7055,7 @@ fn strip_fenced_tool_protocol_artifacts(
     message: &str,
     known_tool_names: &HashSet<String>,
 ) -> String {
-    if clawcrew_tool_call_parser::looks_like_tool_protocol_example(message) {
+    if galleon_tool_call_parser::looks_like_tool_protocol_example(message) {
         return message.to_string();
     }
 
@@ -7087,7 +7087,7 @@ fn strip_fenced_tool_protocol_artifacts(
             )
         } else {
             is_tool_protocol_fence_language(language)
-                && clawcrew_tool_call_parser::contains_tool_protocol_tag_call(fence_block)
+                && galleon_tool_call_parser::contains_tool_protocol_tag_call(fence_block)
         };
 
         if should_strip {
@@ -15934,7 +15934,7 @@ pub async fn start_channels_with_plugin_webhooks(
                 orphans_closed += 1;
             }
             let pruned =
-                clawcrew_tool_call_parser::history_pruner::remove_orphaned_tool_messages(&mut msgs);
+                galleon_tool_call_parser::history_pruner::remove_orphaned_tool_messages(&mut msgs);
             if !pruned.is_empty() {
                 ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"category": "agent", "agent_alias": owner_agent.as_deref().unwrap_or(""), "channel": m.channel_id.as_deref().unwrap_or(""), "session_key": m.key, "removed": pruned.removed, "orphan_tool_call_ids": pruned.orphan_tool_call_ids})), "removed orphaned tool messages from restored history (tool_use/tool_result pairing inconsistency auto-healed)");
             }

@@ -1,7 +1,7 @@
 //! Heuristics for detecting tool-protocol fragments in streamed model text.
 
 use std::collections::HashSet;
-use clawcrew_tool_call_parser::{
+use galleon_tool_call_parser::{
     ParsedToolCall, ToolProtocolEnvelopeKind, classify_tool_protocol_envelope,
     contains_tool_protocol_tag_call, looks_like_malformed_tool_protocol_envelope,
     looks_like_malformed_tool_protocol_envelope_for_known_tools, looks_like_tool_protocol_envelope,

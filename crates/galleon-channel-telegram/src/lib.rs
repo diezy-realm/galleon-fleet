@@ -223,7 +223,7 @@ const MULTI_MESSAGE_FINALIZE_RETRIES: u32 = 3;
 
 /// Strip think blocks and orphan tag fragments before multi-message delivery.
 fn sanitize_multi_message_visible_text(text: &str) -> String {
-    let stripped = clawcrew_tool_call_parser::strip_tool_result_blocks(text);
+    let stripped = galleon_tool_call_parser::strip_tool_result_blocks(text);
     ORPHAN_THINK_TAG_RE
         .replace_all(&stripped, "")
         .trim()

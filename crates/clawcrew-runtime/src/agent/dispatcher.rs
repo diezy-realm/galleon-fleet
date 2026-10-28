@@ -34,7 +34,7 @@ impl XmlToolDispatcher {
     fn parse_xml_tool_calls(response: &str) -> (String, Vec<ParsedToolCall>) {
         // Strip `<think>...</think>` blocks before parsing tool calls.
         // Qwen and other reasoning models may embed chain-of-thought inline.
-        let cleaned = clawcrew_tool_call_parser::strip_think_tags(response);
+        let cleaned = galleon_tool_call_parser::strip_think_tags(response);
         let mut text_parts = Vec::new();
         let mut calls = Vec::new();
         let mut remaining = cleaned.as_str();

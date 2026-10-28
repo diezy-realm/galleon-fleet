@@ -15,7 +15,7 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use clawcrew_config::schema::PacingConfig;
 use clawcrew_providers::ChatMessage;
-use clawcrew_tool_call_parser::ParsedToolCall;
+use galleon_tool_call_parser::ParsedToolCall;
 
 /// One round's collected tool results.
 pub(crate) struct CollectedResults {
@@ -234,7 +234,7 @@ mod tests {
     use super::*;
     use crate::agent::loop_detector::{LoopDetector, LoopDetectorConfig};
     use crate::agent::tool_execution::ToolExecutionOutcome;
-    use clawcrew_tool_call_parser::ParsedToolCall;
+    use galleon_tool_call_parser::ParsedToolCall;
 
     const RATE_LIMIT_ERR: &str = "Rate limit exceeded: too many actions in the last hour";
 

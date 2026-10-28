@@ -7,7 +7,7 @@ use super::protocol_detect::{
     starts_suspicious_tag_or_fence_prefix,
 };
 use std::collections::HashSet;
-use clawcrew_tool_call_parser::{
+use galleon_tool_call_parser::{
     TERMINAL_MARKERS, ToolProtocolEnvelopeKind, classify_tool_protocol_envelope,
     contains_tool_protocol_tag_call, looks_like_malformed_tool_protocol_envelope_for_known_tools,
     looks_like_tool_protocol_envelope, looks_like_tool_protocol_example,
@@ -275,7 +275,7 @@ impl StreamThinkTagStripper {
 #[cfg(test)]
 mod terminal_marker_stripper_tests {
     use super::StreamTerminalMarkerStripper;
-    use clawcrew_tool_call_parser::{TERMINAL_MARKERS, strip_trailing_terminal_markers};
+    use galleon_tool_call_parser::{TERMINAL_MARKERS, strip_trailing_terminal_markers};
 
     #[test]
     fn strips_single_marker_at_end() {

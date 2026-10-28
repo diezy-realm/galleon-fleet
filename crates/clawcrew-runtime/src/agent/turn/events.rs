@@ -10,7 +10,7 @@ use tokio_util::sync::CancellationToken;
 use clawcrew_api::agent::ToolArtifact;
 pub use clawcrew_api::agent::TurnEvent;
 pub use clawcrew_api::channel::ProgressEvent;
-use clawcrew_tool_call_parser::ParsedToolCall;
+use galleon_tool_call_parser::ParsedToolCall;
 
 /// Minimum characters per chunk when relaying live model text to draft surfaces.
 pub(crate) const STREAM_CHUNK_MIN_CHARS: usize = 80;

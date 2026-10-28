@@ -427,7 +427,7 @@ pub use clawcrew_api::TOOL_LOOP_SESSION_KEY;
 pub use clawcrew_api::TOOL_LOOP_THREAD_ID;
 
 // Re-export tool call parsing from the standalone parser crate.
-pub use clawcrew_tool_call_parser::{
+pub use galleon_tool_call_parser::{
     ParsedToolCall, ToolProtocolEnvelopeKind, build_native_assistant_history_from_parsed_calls,
     canonicalize_json_for_tool_signature, classify_tool_protocol_envelope,
     contains_tool_protocol_tag_call, detect_tool_call_parse_issue,

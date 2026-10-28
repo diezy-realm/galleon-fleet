@@ -26,7 +26,7 @@ clawcrew-memory.workspace = true
 clawcrew-tools.workspace = true
 galleon-sop-graph.workspace = true
 clawcrew-plugins = { workspace = true, optional = true }
-clawcrew-tool-call-parser.workspace = true
+galleon-tool-call-parser.workspace = true
 anyhow = "1.0"
 async-trait = "0.1"
 base64 = "0.22"

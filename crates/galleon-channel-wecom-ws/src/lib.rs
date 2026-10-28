@@ -5,7 +5,7 @@ use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::NoPadding};
 use clawcrew_api::channel::{Channel, ChannelConversationScope, ChannelMessage, SendMessage};
 use clawcrew_config::schema::{StreamMode, WeComWsConfig};
-use clawcrew_tool_call_parser::TERMINAL_MARKERS;
+use galleon_tool_call_parser::TERMINAL_MARKERS;
 use futures_util::{SinkExt, StreamExt};
 use galleon_i18n as i18n;
 use parking_lot::Mutex;

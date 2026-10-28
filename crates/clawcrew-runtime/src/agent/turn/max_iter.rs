@@ -12,7 +12,7 @@ use tokio_util::sync::CancellationToken;
 use clawcrew_api::agent::TurnEvent;
 use clawcrew_config::schema::{MultimodalConfig, PacingConfig};
 use clawcrew_providers::{ChatMessage, ModelProvider};
-use clawcrew_tool_call_parser::{strip_think_tags, strip_trailing_terminal_markers};
+use galleon_tool_call_parser::{strip_think_tags, strip_trailing_terminal_markers};
 
 /// Project a finished summary call's settled attempts as `TurnEvent::Usage`
 /// so the gateway ledger includes the final-summary billed work. Mirrors

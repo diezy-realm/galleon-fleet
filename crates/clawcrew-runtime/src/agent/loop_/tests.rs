@@ -72,7 +72,7 @@
         Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
     };
     use clawcrew_providers::{ChatMessage, ToolCall};
-    use clawcrew_tool_call_parser::parse_tool_calls;
+    use galleon_tool_call_parser::parse_tool_calls;
 
     fn test_context_limits(
         context_token_budget: usize,

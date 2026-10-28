@@ -15,7 +15,7 @@ use crate::observability::ObserverEvent;
 use std::time::Instant;
 use clawcrew_api::agent::TurnEvent;
 use clawcrew_providers::{ChatMessage, ChatResponse, ToolCall};
-use clawcrew_tool_call_parser::{
+use galleon_tool_call_parser::{
     ParsedToolCall, build_native_assistant_history_from_parsed_calls,
     looks_like_tool_protocol_example, parse_tool_calls, strip_think_tags,
     strip_trailing_terminal_markers,

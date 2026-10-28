@@ -55,7 +55,7 @@ pub const TERMINAL_MARKERS: [&str; 2] = ["<|eom|>", "<eom>"];
 /// # Examples
 ///
 /// ```
-/// use clawcrew_tool_call_parser::strip_trailing_terminal_markers;
+/// use galleon_tool_call_parser::strip_trailing_terminal_markers;
 ///
 /// assert_eq!(strip_trailing_terminal_markers("Summary<eom>"), "Summary");
 /// assert_eq!(strip_trailing_terminal_markers("Summary<|eom|>"), "Summary");
@@ -3771,7 +3771,7 @@ Done."#;
                     .and_then(|value| value.as_str())
                     .is_some_and(|file| {
                         file.replace('\\', "/")
-                            .ends_with("clawcrew-tool-call-parser/src/lib.rs")
+                            .ends_with("galleon-tool-call-parser/src/lib.rs")
                     });
                 if matches_message && matches_source {
                     break 'search event;

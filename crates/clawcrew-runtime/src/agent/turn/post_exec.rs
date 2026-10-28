@@ -6,7 +6,7 @@ use super::context::TurnCtx;
 use super::events::{ProgressEvent, StreamDelta, send_progress};
 use super::redact::scrub_credentials;
 use crate::agent::tool_execution::ToolExecutionOutcome;
-use clawcrew_tool_call_parser::ParsedToolCall;
+use galleon_tool_call_parser::ParsedToolCall;
 
 /// Record each executed tool call's outcome (upstream loop body,
 /// post-execution section): one `tool_call_result` log line, the

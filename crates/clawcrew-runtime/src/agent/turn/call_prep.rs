@@ -13,7 +13,7 @@ use crate::util::truncate_with_ellipsis;
 use anyhow::Result;
 use clawcrew_api::attribution::ToolProvenance;
 use clawcrew_api::hook::ToolCallHookContext;
-use clawcrew_tool_call_parser::{ParsedToolCall, canonicalize_json_for_tool_signature};
+use galleon_tool_call_parser::{ParsedToolCall, canonicalize_json_for_tool_signature};
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration;
@@ -414,7 +414,7 @@ mod tests {
     use async_trait::async_trait;
     use clawcrew_api::attribution::{Attributable, ToolProvenance};
     use clawcrew_config::schema::{PacingConfig, StreamReasoningMode};
-    use clawcrew_tool_call_parser::ParsedToolCall;
+    use galleon_tool_call_parser::ParsedToolCall;
     use std::collections::{HashMap, HashSet};
     use std::sync::Arc;
     use std::time::Duration;

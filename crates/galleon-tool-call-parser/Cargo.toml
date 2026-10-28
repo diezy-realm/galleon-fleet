@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-tool-call-parser"
+name = "galleon-tool-call-parser"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true

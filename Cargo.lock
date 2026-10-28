@@ -1621,7 +1621,6 @@ dependencies = [
  "clawcrew-memory",
  "clawcrew-providers",
  "clawcrew-spawn",
- "clawcrew-tool-call-parser",
  "clawcrew-tools",
  "cpal",
  "directories",
@@ -1662,6 +1661,7 @@ dependencies = [
  "galleon-channel-whatsapp",
  "galleon-i18n",
  "galleon-security-scrub",
+ "galleon-tool-call-parser",
  "glob",
  "hex",
  "hmac 0.12.1",
@@ -2078,7 +2078,6 @@ dependencies = [
  "clawcrew-plugins",
  "clawcrew-providers",
  "clawcrew-spawn",
- "clawcrew-tool-call-parser",
  "clawcrew-tools",
  "console",
  "cron",
@@ -2093,6 +2092,7 @@ dependencies = [
  "galleon-security-scrub",
  "galleon-sop-graph",
  "galleon-tls",
+ "galleon-tool-call-parser",
  "galleonrelay",
  "glob",
  "hex",
@@ -2147,17 +2147,6 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "clawcrew-tool-call-parser"
-version = "0.8.5"
-dependencies = [
- "clawcrew-api",
- "clawcrew-log",
- "regex",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -4672,10 +4661,10 @@ dependencies = [
  "clawcrew-log",
  "clawcrew-providers",
  "clawcrew-spawn",
- "clawcrew-tool-call-parser",
  "galleon-channel-core",
  "galleon-i18n",
  "galleon-security-scrub",
+ "galleon-tool-call-parser",
  "parking_lot",
  "rand 0.10.2",
  "regex",
@@ -4826,11 +4815,11 @@ dependencies = [
  "clawcrew-config",
  "clawcrew-log",
  "clawcrew-spawn",
- "clawcrew-tool-call-parser",
  "futures-util",
  "galleon-channel-core",
  "galleon-i18n",
  "galleon-security-scrub",
+ "galleon-tool-call-parser",
  "parking_lot",
  "rand 0.9.4",
  "reqwest 0.12.28",
@@ -4914,7 +4903,6 @@ dependencies = [
  "clawcrew-providers",
  "clawcrew-runtime",
  "clawcrew-spawn",
- "clawcrew-tool-call-parser",
  "clawcrew-tools",
  "console",
  "criterion",
@@ -4924,6 +4912,7 @@ dependencies = [
  "flate2",
  "futures-util",
  "galleon-tls",
+ "galleon-tool-call-parser",
  "hex",
  "hmac 0.12.1",
  "libc",
@@ -5036,6 +5025,17 @@ dependencies = [
  "tokio-rustls",
  "x509-parser 0.16.0",
  "zeroize",
+]
+
+[[package]]
+name = "galleon-tool-call-parser"
+version = "0.8.5"
+dependencies = [
+ "clawcrew-api",
+ "clawcrew-log",
+ "regex",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
