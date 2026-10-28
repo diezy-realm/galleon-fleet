@@ -13,13 +13,15 @@ fn main() {
 /// Rust native-tool execution) from the shared proto contract. Server-only —
 /// this crate hosts `SystemGateway`, it never calls `AgentEngine` as a client.
 fn compile_agent_service_proto() {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR is always set by cargo for build scripts");
+    let manifest_dir = match std::env::var("CARGO_MANIFEST_DIR") {
+        Ok(dir) => dir,
+        Err(_) => return,
+    };
     let proto_path = std::path::Path::new(&manifest_dir)
         .parent()
         .and_then(|crates_dir| crates_dir.parent())
         .map(|root| root.join("proto/agent_service.proto"))
-        .expect("galleon-gateway is always at <repo_root>/crates/galleon-gateway");
+        .unwrap_or_else(|| std::path::PathBuf::from("../../proto/agent_service.proto"));
 
     println!("cargo:rerun-if-changed={}", proto_path.display());
 
@@ -38,8 +40,10 @@ fn compile_agent_service_proto() {
 }
 
 fn build_web_dashboard() {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR is always set by cargo for build scripts");
+    let manifest_dir = match std::env::var("CARGO_MANIFEST_DIR") {
+        Ok(dir) => dir,
+        Err(_) => return,
+    };
     let web_dir = std::path::Path::new(&manifest_dir)
         .parent()
         .and_then(|p| p.parent())
@@ -97,8 +101,10 @@ fn ensure_embedded_web_dist_when_enabled() {
     }
 
     // See build_web_dashboard for why this reads the var at runtime.
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR is always set by cargo for build scripts");
+    let manifest_dir = match std::env::var("CARGO_MANIFEST_DIR") {
+        Ok(dir) => dir,
+        Err(_) => return,
+    };
     let web_dist = std::path::Path::new(&manifest_dir)
         .parent()
         .and_then(|p| p.parent())

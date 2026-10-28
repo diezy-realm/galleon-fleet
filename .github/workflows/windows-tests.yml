@@ -192,7 +192,7 @@ jobs:
           baseline_duration=$((SECONDS - started_at))
           hardware_started_at=$SECONDS
           set +e
-          cargo nextest run --locked --no-fail-fast -p clawcrew-hardware --features hardware --lib 2>&1 | tee "$hardware_log"
+          cargo nextest run --locked --no-fail-fast -p galleon-hardware --features hardware --lib 2>&1 | tee "$hardware_log"
           hardware_status=${PIPESTATUS[0]}
           set -e
           hardware_duration=$((SECONDS - hardware_started_at))
