@@ -4,20 +4,17 @@
 //! and sending messages through its HTTP endpoints.
 
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use serde_json::json;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Deduplication set capacity — evict half of entries when full.
 const DEDUP_CAPACITY: usize = 10_000;
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -237,7 +234,7 @@ impl Channel for MochatChannel {
                                     c.get("text")
                                         .and_then(|t| t.as_str())
                                         .or_else(|| c.as_str())
-                                    })
+                                })
                                 .unwrap_or("")
                                 .trim();
 

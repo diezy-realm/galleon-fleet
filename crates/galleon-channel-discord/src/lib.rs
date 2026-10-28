@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use futures_util::{SinkExt, StreamExt};
 use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelGatePrompt, ChannelMessage,
     GateChoiceEmphasis, SendMessage,
@@ -6,7 +7,6 @@ use galleon_api::channel::{
 use galleon_api::media::{
     MarkerKind, MediaAttachment, RenderedMarker, provider_loadable_image_mime_for,
 };
-use futures_util::{SinkExt, StreamExt};
 use galleon_i18n as i18n;
 use parking_lot::Mutex;
 use serde_json::json;
@@ -34,12 +34,12 @@ pub mod slash_options;
 pub mod types;
 
 pub(crate) use chunk::*;
+pub use discord_slash_state as slash_state;
 pub(crate) use interaction::*;
 pub(crate) use markers::*;
 pub(crate) use rest::*;
 pub use slash::*;
 pub use types::*;
-pub use discord_slash_state as slash_state;
 
 use embed::DiscordEmbed;
 use pending::ComponentIntent;
@@ -443,7 +443,10 @@ impl DiscordChannel {
     }
 
     /// Configure voice transcription from a `[transcription]` snapshot.
-    pub fn with_transcription(mut self, config: galleon_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(
+        mut self,
+        config: galleon_config::schema::TranscriptionConfig,
+    ) -> Self {
         self.transcription = Some(config);
         self
     }
@@ -753,12 +756,13 @@ impl DiscordChannel {
             // the trace for live diagnostics.
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "event_type": event_type,
                         "emoji": emoji_display,
                         "message_id": message_id,
-                    })),
+                    })
+                ),
                 "discord reaction event (archive disabled, not recorded)"
             );
             return;
@@ -877,11 +881,12 @@ impl DiscordChannel {
         let Some(ref archive_mem) = self.archive_memory else {
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "event_type": event_type,
                         "message_id": message_id,
-                    })),
+                    })
+                ),
                 "discord reaction sweep (archive disabled, nothing to forget)"
             );
             return;
@@ -1394,10 +1399,7 @@ pub async fn process_attachments(
                     if !trimmed.is_empty() {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             &format!(
                                 "transcribed audio attachment {} ({} chars)",
                                 name,
@@ -1787,10 +1789,9 @@ async fn discord_thread_parent(
         Ok(Err(e)) => {
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(
-                        ::serde_json::json!({"channel_id": channel_id, "error": format!("{}", e)})
-                    ),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({"channel_id": channel_id, "error": format!("{}", e)})
+                ),
                 "channel lookup failed"
             );
             return None;
@@ -1903,9 +1904,7 @@ fn requires_new_session_close_code(code: u16) -> bool {
 
 impl ::galleon_api::attribution::Attributable for DiscordChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Discord,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Discord)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -2236,11 +2235,12 @@ impl Channel for DiscordChannel {
                 .await?;
             ::galleon_log::record!(
                 INFO,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "intents": intents,
                         "intent_names": intent_names(intents),
-                    })),
+                    })
+                ),
                 "sent Discord Identify"
             );
         }
@@ -3711,11 +3711,8 @@ impl Channel for DiscordChannel {
                     Err(e) => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "draft update failed"
                         );
                     }
@@ -3788,11 +3785,8 @@ impl Channel for DiscordChannel {
                     if let Err(e) = self.send(&msg).await {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "multi-message paragraph send failed"
                         );
                     }
@@ -3837,11 +3831,8 @@ impl Channel for DiscordChannel {
                     if let Err(e) = self.send(&msg).await {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "multi-message final flush failed"
                         );
                     }
@@ -7047,7 +7038,11 @@ mod tests {
                 anyhow::bail!("transcription failed: {}", resp.status());
             }
             let body = resp.json::<serde_json::Value>().await?;
-            Ok(body.get("text").and_then(|v| v.as_str()).unwrap_or_default().to_string())
+            Ok(body
+                .get("text")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string())
         }
     }
 

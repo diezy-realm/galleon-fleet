@@ -171,10 +171,9 @@ impl FilesystemChannel {
 
             ::galleon_log::record!(
                 INFO,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(
-                        ::serde_json::json!({ "path": path_str, "event": kind.to_string() })
-                    ),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({ "path": path_str, "event": kind.to_string() })
+                ),
                 "Filesystem channel: dispatching '' ''"
             );
 

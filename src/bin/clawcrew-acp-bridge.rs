@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use futures_util::{SinkExt, StreamExt};
+use galleon_config::schema::resolve_runtime_dirs;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use tokio::io::{self, AsyncBufReadExt, AsyncWrite, AsyncWriteExt, BufReader};
@@ -11,7 +12,6 @@ use tokio_tungstenite::{
         http::{HeaderValue, header},
     },
 };
-use galleon_config::schema::resolve_runtime_dirs;
 
 const CONFIG_NOT_FOUND_ERROR: &str = "ERROR: config.toml not found.  Are you sure the bridge and ClawCrew are running on the same host?  Tool use will not work remotely!";
 const PAIRING_TOKEN_NOT_FOUND_ERROR: &str = "ERROR: Gateway pairing is active but no ACP bridge token is cached. Run `clawcrew gateway get-paircode --new`, then run `clawcrew-acp-bridge --pair-code <code>`, or set CLAWCREW_ACP_BRIDGE_TOKEN.";

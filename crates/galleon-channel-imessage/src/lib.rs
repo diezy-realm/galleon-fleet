@@ -20,10 +20,10 @@
 
 use async_trait::async_trait;
 use directories::UserDirs;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use rusqlite::{Connection, OpenFlags};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 fn extract_text_from_attributed_body(blob: &[u8]) -> Option<String> {
     // Find the start-of-text marker: [0x01, 0x2B]
@@ -157,9 +157,7 @@ fn is_valid_imessage_target(target: &str) -> bool {
 
 impl ::galleon_api::attribution::Attributable for IMessageChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::IMessage,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::IMessage)
     }
     fn alias(&self) -> &str {
         &self.alias

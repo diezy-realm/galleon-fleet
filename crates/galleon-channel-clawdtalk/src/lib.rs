@@ -5,10 +5,10 @@
 //! global SIP network for low-latency, high-quality calls.
 
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 pub use galleon_config::scattered_types::ClawdTalkConfig;
 

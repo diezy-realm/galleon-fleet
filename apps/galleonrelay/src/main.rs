@@ -26,12 +26,12 @@ use std::collections::HashSet;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use rustls::pki_types::{CertificateDer, PrivateKeyDer};
-use serde::Deserialize;
-use tokio_rustls::TlsAcceptor;
 use galleonrelay::{
     Admission, AdmissionPolicy, PublicOpenGuard, RelayConfig, RelayServer, RelayStatus,
 };
+use rustls::pki_types::{CertificateDer, PrivateKeyDer};
+use serde::Deserialize;
+use tokio_rustls::TlsAcceptor;
 
 /// Build-time version: `git describe` (tag + commits-since + short hash, `-dirty`
 /// when modified), or the crate version when git is unavailable. Set by build.rs.

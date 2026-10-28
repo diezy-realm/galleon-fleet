@@ -53,12 +53,12 @@
 //! terminal restores its saved title; a stack-less terminal keeps the neutral
 //! fallback instead of a stale working or blocked title.
 
+use galleon_api::lifecycle::{LifecycleActivity, LifecycleState};
 use std::io::Write;
 use std::sync::{
     Mutex, TryLockError,
     atomic::{AtomicU8, AtomicUsize, Ordering},
 };
-use galleon_api::lifecycle::{LifecycleActivity, LifecycleState};
 
 use crate::turn_status::TurnStatus;
 

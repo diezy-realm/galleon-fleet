@@ -1,20 +1,17 @@
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use serde_json::json;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const TWITTER_API_BASE: &str = "https://api.x.com/2";
 
 /// X/Twitter channel — uses the Twitter API v2 with OAuth 2.0 Bearer Token
 /// for sending tweets/DMs and filtered stream for receiving mentions.
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -192,9 +189,7 @@ impl TwitterChannel {
 
 impl ::galleon_api::attribution::Attributable for TwitterChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Twitter,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Twitter)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -404,11 +399,8 @@ impl Channel for TwitterChannel {
                         // Rate limited — back off
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "rate limited, backing off 60s"
                         );
                         tokio::time::sleep(std::time::Duration::from_secs(60)).await;

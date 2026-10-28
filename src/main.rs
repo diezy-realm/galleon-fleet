@@ -1012,6 +1012,7 @@ async fn run_quickstart_cli(
     api_key: Option<String>,
     agent: Option<String>,
 ) -> anyhow::Result<()> {
+    use dialoguer::{Confirm, Editor, FuzzySelect, Input};
     use galleon_config::presets::{
         AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
         RISK_PRESETS, SelectorChoice,
@@ -1020,7 +1021,6 @@ async fn run_quickstart_cli(
         FieldSection, QuickstartTypeOption, Surface, apply_with_surface, field_shape,
         snapshot_state,
     };
-    use dialoguer::{Confirm, Editor, FuzzySelect, Input};
 
     if !std::io::IsTerminal::is_terminal(&std::io::stdin())
         || !std::io::IsTerminal::is_terminal(&std::io::stderr())
@@ -1763,8 +1763,7 @@ async fn run_quickstart_cli(
                                 aborted = true;
                                 break;
                             };
-                            if !value.is_empty() && value != galleon_config::traits::UNSET_DISPLAY
-                            {
+                            if !value.is_empty() && value != galleon_config::traits::UNSET_DISPLAY {
                                 extras.insert(d.key.clone(), value);
                             }
                         }
@@ -1950,13 +1949,12 @@ async fn run_quickstart_cli(
                     .unwrap_or_default();
                 // Pre-render the default template set once; the per-file
                 // [t] Use template option seeds the editor from this map.
-                let template_ctx =
-                    galleon_runtime::agent::personality_templates::TemplateContext {
-                        agent: trimmed_agent_name_for_templates(
-                            form.agent.as_ref().map(|a| a.name.as_str()),
-                        ),
-                        ..Default::default()
-                    };
+                let template_ctx = galleon_runtime::agent::personality_templates::TemplateContext {
+                    agent: trimmed_agent_name_for_templates(
+                        form.agent.as_ref().map(|a| a.name.as_str()),
+                    ),
+                    ..Default::default()
+                };
                 let templates: std::collections::HashMap<String, String> =
                     galleon_runtime::agent::personality_templates::render_preset_default(
                         &template_ctx,
@@ -2406,8 +2404,8 @@ fn prompt_for_field(
     desc: &galleon_runtime::quickstart::FieldDescriptor,
     seed: Option<&str>,
 ) -> anyhow::Result<Option<String>> {
-    use galleon_config::traits::PropKind;
     use dialoguer::{FuzzySelect, Input};
+    use galleon_config::traits::PropKind;
     if !desc.help.is_empty() {
         println!("  {}", desc.help);
     }
@@ -5266,16 +5264,12 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         let sop_runner: Option<std::sync::Arc<dyn galleon_api::sop::SopRunner>> =
                             if sop_engine.is_some() {
                                 let install_root = config.install_root_dir();
-                                Some(std::sync::Arc::new(
-                                    galleon_runtime::RuntimeSopRunner::new(
-                                        sop_engine,
-                                        sop_audit,
-                                        std::sync::Arc::new(parking_lot::RwLock::new(
-                                            config.clone(),
-                                        )),
-                                        install_root,
-                                    ),
-                                ))
+                                Some(std::sync::Arc::new(galleon_runtime::RuntimeSopRunner::new(
+                                    sop_engine,
+                                    sop_audit,
+                                    std::sync::Arc::new(parking_lot::RwLock::new(config.clone())),
+                                    install_root,
+                                )))
                             } else {
                                 None
                             };
@@ -5293,10 +5287,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 }),
                                 Some(canvas_store),
                                 sop_runner,
-                                galleon_gateway::GatewaySupervision::new(
-                                    ready_tx,
-                                    plugin_webhooks,
-                                ),
+                                galleon_gateway::GatewaySupervision::new(ready_tx, plugin_webhooks),
                             ))
                             .await
                         })
@@ -5312,24 +5303,24 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         let sop_audit = sop_a.clone();
                         let plugin_webhooks = plugin_webhooks.clone();
                         Box::pin(async move {
-                            let sop_dispatcher: Option<std::sync::Arc<dyn galleon_api::sop::SopFanInDispatcher>> =
-                                match (sop_engine, sop_audit) {
-                                    (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
-                                        galleon_runtime::sop::SopRuntimeDispatcher::new(
-                                            engine, audit,
-                                        ),
-                                    )),
-                                    _ => None,
-                                };
+                            let sop_dispatcher: Option<
+                                std::sync::Arc<dyn galleon_api::sop::SopFanInDispatcher>,
+                            > = match (sop_engine, sop_audit) {
+                                (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
+                                    galleon_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
+                                )),
+                                _ => None,
+                            };
                             let turn_runner =
                                 std::sync::Arc::new(galleon_api::channel::NoopChannelTurnRunner);
-                            let channels = galleon_channels::orchestrator::start_channels_with_plugin_webhooks(
-                                config,
-                                turn_runner,
-                                cancel,
-                                sop_dispatcher,
-                                plugin_webhooks,
-                            );
+                            let channels =
+                                galleon_channels::orchestrator::start_channels_with_plugin_webhooks(
+                                    config,
+                                    turn_runner,
+                                    cancel,
+                                    sop_dispatcher,
+                                    plugin_webhooks,
+                                );
                             Box::pin(channels).await
                         })
                     }
@@ -5725,10 +5716,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     daemon::DaemonExit::Reload => {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             "🔄 Daemon reload — re-reading config from disk"
                         );
                         current_config = Box::pin(Config::load_or_init()).await?;
@@ -6149,10 +6137,9 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                     std::collections::HashMap::new()
                                 }
                             };
-                            let unpriced =
-                                galleon_runtime::agent::cost::unpriced_models_in_summary(
-                                    &month_by_model,
-                                );
+                            let unpriced = galleon_runtime::agent::cost::unpriced_models_in_summary(
+                                &month_by_model,
+                            );
                             if !unpriced.is_empty() {
                                 let uncosted_tokens: u64 =
                                     unpriced.iter().map(|m| m.unpriced_tokens).sum();

@@ -1,7 +1,7 @@
 //! Status of the current agent turn, surfaced in the input-bar title.
 
-use std::time::Instant;
 use galleon_api::lifecycle::{LifecycleActivity, LifecycleState};
+use std::time::Instant;
 
 /// Public so tests and the input bar can pattern-match.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -188,16 +188,49 @@ mod tests {
 
     #[test]
     fn from_engine_run_status_mapping_and_fallback() {
-        assert_eq!(TurnStatus::from_engine_run_status("queued"), TurnStatus::Working);
-        assert_eq!(TurnStatus::from_engine_run_status("planning"), TurnStatus::Working);
-        assert_eq!(TurnStatus::from_engine_run_status("running"), TurnStatus::Responding);
-        assert_eq!(TurnStatus::from_engine_run_status("cancelling"), TurnStatus::Cancelling);
-        assert_eq!(TurnStatus::from_engine_run_status("cancelled"), TurnStatus::Cancelling);
-        assert_eq!(TurnStatus::from_engine_run_status("waiting_approval"), TurnStatus::WaitingForApproval);
-        assert_eq!(TurnStatus::from_engine_run_status("waiting_for_approval"), TurnStatus::WaitingForApproval);
-        assert_eq!(TurnStatus::from_engine_run_status("waiting_for_input"), TurnStatus::WaitingForInput);
-        assert_eq!(TurnStatus::from_engine_run_status("completed"), TurnStatus::Idle);
-        assert_eq!(TurnStatus::from_engine_run_status("failed"), TurnStatus::Idle);
-        assert_eq!(TurnStatus::from_engine_run_status("unknown_custom_state"), TurnStatus::Idle);
+        assert_eq!(
+            TurnStatus::from_engine_run_status("queued"),
+            TurnStatus::Working
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("planning"),
+            TurnStatus::Working
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("running"),
+            TurnStatus::Responding
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("cancelling"),
+            TurnStatus::Cancelling
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("cancelled"),
+            TurnStatus::Cancelling
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("waiting_approval"),
+            TurnStatus::WaitingForApproval
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("waiting_for_approval"),
+            TurnStatus::WaitingForApproval
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("waiting_for_input"),
+            TurnStatus::WaitingForInput
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("completed"),
+            TurnStatus::Idle
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("failed"),
+            TurnStatus::Idle
+        );
+        assert_eq!(
+            TurnStatus::from_engine_run_status("unknown_custom_state"),
+            TurnStatus::Idle
+        );
     }
 }

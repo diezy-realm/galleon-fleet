@@ -10,11 +10,11 @@
 //!   peer-policy from `galleon_config::schema` without pulling `galleon-runtime`.
 
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use portable_atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{Mutex, mpsc};
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 // Use tokio_rustls's re-export of rustls types
 use tokio_rustls::rustls;
@@ -274,7 +274,11 @@ impl IrcChannel {
 
     fn is_user_allowed(&self, nick: &str) -> bool {
         let peers = (self.peer_resolver)();
-        galleon_channel_core::allowlist::is_user_allowed(&peers, nick, galleon_channel_core::allowlist::Match::CaseInsensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            nick,
+            galleon_channel_core::allowlist::Match::CaseInsensitive,
+        )
     }
 
     fn is_mentioned(my_nick: &str, text: &str) -> bool {
@@ -515,11 +519,8 @@ impl Channel for IrcChannel {
                         // CAP * NAK :sasl — server rejected SASL, proceed without it
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "server does not support SASL, continuing without it"
                         );
                         sasl_pending = false;
@@ -543,11 +544,8 @@ impl Channel for IrcChannel {
                         // SASL was requested but no password is configured; abort SASL
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "SASL authentication requested but no SASL password is configured; aborting SASL"
                         );
                         sasl_pending = false;

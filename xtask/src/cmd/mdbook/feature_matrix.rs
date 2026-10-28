@@ -9,9 +9,9 @@ use std::fmt::Write as _;
 use std::path::Path;
 use std::sync::Arc;
 
-use serde::Deserialize;
 use galleon_config::schema::ChannelsConfig;
 use galleon_runtime::tools::default_tools;
+use serde::Deserialize;
 
 const SNIPPET_DIR: &str = "docs/book/src/_snippets";
 const PARITY_FILE: &str = "docs/book/feature-matrix-parity.toml";

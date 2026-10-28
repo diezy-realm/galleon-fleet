@@ -10,13 +10,13 @@ use std::sync::Arc;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as B64;
 use futures_util::{SinkExt, StreamExt};
+use galleon_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data};
+use galleonrelay::{Admission, AdmissionPolicy, PublicOpenGuard, RelayConfig, RelayServer};
 use ring::signature::{Ed25519KeyPair, KeyPair};
 use sha2::{Digest, Sha256};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::{ClientRequestBuilder, Message};
-use galleon_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data};
-use galleonrelay::{Admission, AdmissionPolicy, PublicOpenGuard, RelayConfig, RelayServer};
 
 type RelayWs =
     tokio_tungstenite::WebSocketStream<tokio_rustls::client::TlsStream<tokio::net::TcpStream>>;

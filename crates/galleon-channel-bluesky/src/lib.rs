@@ -463,9 +463,7 @@ impl BlueskyChannel {
 
 impl ::galleon_api::attribution::Attributable for BlueskyChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Bluesky,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Bluesky)
     }
     fn alias(&self) -> &str {
         &self.alias

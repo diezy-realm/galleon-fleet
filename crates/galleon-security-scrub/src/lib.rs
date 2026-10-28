@@ -8,12 +8,12 @@ pub mod content_safety;
 pub mod leak_detector;
 pub mod prompt_guard;
 
-pub use galleon_config::schema::LeakDetectionConfig;
 pub use content_safety::{
     ContentSafety, FramingPolicy, OutboundPolicy, ScanOutcome, ScanPolicy, ScreenVerdict,
     cap_untrusted, frame_untrusted, new_marker_id, sanitize_untrusted, sanitize_untrusted_topic,
     scan_untrusted, scrub_outbound,
 };
+pub use galleon_config::schema::LeakDetectionConfig;
 pub use leak_detector::{LeakDetector, LeakResult};
 pub use prompt_guard::{GuardAction, GuardResult, PromptGuard};
 

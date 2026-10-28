@@ -2,12 +2,12 @@ use anyhow::Context;
 use async_trait::async_trait;
 use base64::Engine as _;
 use chrono::Utc;
+use futures_util::{SinkExt, StreamExt};
 use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, ProgressEvent,
     SendMessage,
 };
 use galleon_api::media::MediaAttachment;
-use futures_util::{SinkExt, StreamExt};
 use galleon_i18n as i18n;
 use reqwest::header::HeaderMap;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -47,8 +47,10 @@ pub fn approval_position_line(position: Option<(u32, u32)>) -> String {
                     ("total", total.to_string().as_str()),
                 ],
             );
-            format!("{text}
-")
+            format!(
+                "{text}
+"
+            )
         }
         None => String::new(),
     }
@@ -102,7 +104,10 @@ pub fn localized_lifecycle_progress(event: ProgressEvent) -> String {
 #[cfg(test)]
 pub fn conversation_history_key(msg: &ChannelMessage) -> String {
     match &msg.thread_ts {
-        Some(tid) => format!("{}_{}_{}_{}", msg.channel, msg.reply_target, tid, msg.sender),
+        Some(tid) => format!(
+            "{}_{}_{}_{}",
+            msg.channel, msg.reply_target, tid, msg.sender
+        ),
         None => format!("{}_{}_{}", msg.channel, msg.reply_target, msg.sender),
     }
 }
@@ -700,7 +705,10 @@ impl SlackChannel {
     /// the legacy section, so it binds a lone registered provider and
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(mut self, config: galleon_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(
+        mut self,
+        config: galleon_config::schema::TranscriptionConfig,
+    ) -> Self {
         #[cfg(test)]
         {
             if config.enabled {
@@ -1089,12 +1097,13 @@ impl SlackChannel {
             threads.remove(&victim);
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "channel_id": victim.channel_id,
                         "thread_ts": victim.thread_ts,
                         "cap": ASSISTANT_THREAD_REGISTRY_CAP,
-                    })),
+                    })
+                ),
                 "Dropped the least recently seen Assistant thread at cap; a new \
                  event for it will re-register it"
             );
@@ -2445,8 +2454,8 @@ impl SlackChannel {
         if block.is_some() {
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "channel_id": channel_id,
                         "thread_ts": thread_ts,
                         "rendered": total_allowed.saturating_sub(reply_cap_omitted),
@@ -2454,7 +2463,8 @@ impl SlackChannel {
                         "reply_cap_omitted": reply_cap_omitted,
                         "requests_made": requests_made,
                         "fetch_budget_exhausted": fetch_budget_exhausted,
-                    })),
+                    })
+                ),
                 "Slack: thread-context backfill prepended"
             );
         }
@@ -4293,11 +4303,8 @@ impl SlackChannel {
                     Ok(WsMessage::Close(_)) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "Socket Mode: websocket closed by server"
                         );
                         break;
@@ -4306,12 +4313,9 @@ impl SlackChannel {
                     Err(e) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Socket Mode: websocket read failed"
                         );
                         break;
@@ -4323,12 +4327,9 @@ impl SlackChannel {
                     Err(e) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Socket Mode: invalid JSON payload"
                         );
                         continue;
@@ -4340,12 +4341,9 @@ impl SlackChannel {
                     if let Err(e) = write.send(WsMessage::Text(ack.to_string().into())).await {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Socket Mode: ack send failed"
                         );
                         break;
@@ -4503,11 +4501,7 @@ impl SlackChannel {
                     continue;
                 }
                 let allowed_peers = (self.peer_resolver)();
-                if !allowlist::is_user_allowed(
-                    &allowed_peers,
-                    user,
-                    allowlist::Match::Sensitive,
-                ) {
+                if !allowlist::is_user_allowed(&allowed_peers, user, allowlist::Match::Sensitive) {
                     ::galleon_log::record!(
                         WARN,
                         ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
@@ -4942,16 +4936,13 @@ impl SlackChannel {
                     Err(error) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({
-                                "channel_id": channel_id,
-                                "thread_ts": thread_ts,
-                                "error": error.to_string(),
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({
+                                    "channel_id": channel_id,
+                                    "thread_ts": thread_ts,
+                                    "error": error.to_string(),
+                                })),
                             "Slack conversations.replies returned malformed JSON"
                         );
                         return None;
@@ -5260,9 +5251,7 @@ impl Channel for SlackChannel {
         let mut outbound_attachments = message.attachments.clone();
 
         // Detect Block Kit payloads produced by the `/config` command.
-        let body = if let Some(blocks_json) =
-            message.content.strip_prefix(BLOCK_KIT_PREFIX)
-        {
+        let body = if let Some(blocks_json) = message.content.strip_prefix(BLOCK_KIT_PREFIX) {
             let blocks: serde_json::Value = serde_json::from_str(blocks_json)
                 .context("invalid Block Kit JSON in runtime command response")?;
             let mut body = serde_json::json!({
@@ -5493,11 +5482,8 @@ impl Channel for SlackChannel {
                             .unwrap_or("unknown");
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                             "chat.update (draft) failed"
                         );
                     }
@@ -5971,8 +5957,7 @@ impl Channel for SlackChannel {
 
                         let sender = self.resolve_sender_identity(user).await;
 
-                        if let Some((token, response)) =
-                            parse_approval_reply(&normalized_text)
+                        if let Some((token, response)) = parse_approval_reply(&normalized_text)
                             && resolve_pending_approval(
                                 &self.pending_approvals,
                                 &token,
@@ -6078,8 +6063,7 @@ impl Channel for SlackChannel {
 
                     let sender = self.resolve_sender_identity(user).await;
 
-                    if let Some((token, response)) =
-                        parse_approval_reply(&normalized_text)
+                    if let Some((token, response)) = parse_approval_reply(&normalized_text)
                         && resolve_pending_approval(
                             &self.pending_approvals,
                             &token,

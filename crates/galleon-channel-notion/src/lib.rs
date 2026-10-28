@@ -1,9 +1,9 @@
 use anyhow::{Result, bail};
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const NOTION_API_BASE: &str = "https://api.notion.com/v1";
 const NOTION_VERSION: &str = "2022-06-28";
@@ -12,7 +12,6 @@ const MAX_RETRIES: u32 = 3;
 const RETRY_BASE_DELAY_MS: u64 = 2000;
 /// Maximum number of characters to include from an error response body.
 const MAX_ERROR_BODY_CHARS: usize = 500;
-
 
 fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
     match s.char_indices().nth(max_chars) {
@@ -143,19 +142,15 @@ impl NotionChannel {
                     // Only retry on 429 (rate limit) or 5xx (server errors)
                     if status_code != 429 && (400..500).contains(&status_code) {
                         let body_text = resp.text().await.unwrap_or_default();
-                        let truncated =
-                            truncate_with_ellipsis(&body_text, MAX_ERROR_BODY_CHARS);
+                        let truncated = truncate_with_ellipsis(&body_text, MAX_ERROR_BODY_CHARS);
                         ::galleon_log::record!(
                             ERROR,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Fail
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({
-                                "status": status_code,
-                                "body": truncated,
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({
+                                    "status": status_code,
+                                    "body": truncated,
+                                })),
                             "notion: API client error (no retry)"
                         );
                         bail!("API error {status_code}: {truncated}");
@@ -415,10 +410,7 @@ impl Channel for NotionChannel {
                     if !tasks.is_empty() {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             &format!("found {} pending task(s)", tasks.len())
                         );
                     }

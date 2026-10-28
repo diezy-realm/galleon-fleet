@@ -3,11 +3,11 @@
 //! progressive disclosure sub-drawers, and run summary metrics.
 
 use ratatui::{
+    Frame,
     layout::Rect,
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
-    Frame,
 };
 
 /// Terminal color standards according to TASK-6.7
@@ -85,13 +85,17 @@ impl RunWorkspaceState {
 
     /// Render the Crew Panel (TASK-6.2)
     pub fn render_crew_panel(&self, f: &mut Frame, area: Rect) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .title(Span::styled(" Crew Roster ", Style::default().add_modifier(Modifier::BOLD)));
+        let block = Block::default().borders(Borders::ALL).title(Span::styled(
+            " Crew Roster ",
+            Style::default().add_modifier(Modifier::BOLD),
+        ));
 
         if self.crew_members.is_empty() {
-            let empty = Paragraph::new(Span::styled("No active agents in crew.", Style::default().fg(Color::DarkGray)))
-                .block(block);
+            let empty = Paragraph::new(Span::styled(
+                "No active agents in crew.",
+                Style::default().fg(Color::DarkGray),
+            ))
+            .block(block);
             f.render_widget(empty, area);
             return;
         }
@@ -104,7 +108,10 @@ impl RunWorkspaceState {
                 let line = Line::from(vec![
                     Span::styled(" ● ", Style::default().fg(col)),
                     Span::styled(&member.name, Style::default().add_modifier(Modifier::BOLD)),
-                    Span::styled(format!(" ({}) ", member.role), Style::default().fg(Color::DarkGray)),
+                    Span::styled(
+                        format!(" ({}) ", member.role),
+                        Style::default().fg(Color::DarkGray),
+                    ),
                     Span::styled(format!("[{}]", member.status), Style::default().fg(col)),
                 ]);
                 ListItem::new(line)
@@ -117,13 +124,17 @@ impl RunWorkspaceState {
 
     /// Render Task Timeline (TASK-6.3)
     pub fn render_task_timeline(&self, f: &mut Frame, area: Rect) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .title(Span::styled(" Task Timeline (DAG) ", Style::default().add_modifier(Modifier::BOLD)));
+        let block = Block::default().borders(Borders::ALL).title(Span::styled(
+            " Task Timeline (DAG) ",
+            Style::default().add_modifier(Modifier::BOLD),
+        ));
 
         if self.tasks.is_empty() {
-            let empty = Paragraph::new(Span::styled("No tasks scheduled for this run.", Style::default().fg(Color::DarkGray)))
-                .block(block);
+            let empty = Paragraph::new(Span::styled(
+                "No tasks scheduled for this run.",
+                Style::default().fg(Color::DarkGray),
+            ))
+            .block(block);
             f.render_widget(empty, area);
             return;
         }
@@ -141,7 +152,10 @@ impl RunWorkspaceState {
                 };
 
                 let line = Line::from(vec![
-                    Span::styled(format!(" {:02}. ", i + 1), Style::default().fg(Color::DarkGray)),
+                    Span::styled(
+                        format!(" {:02}. ", i + 1),
+                        Style::default().fg(Color::DarkGray),
+                    ),
                     Span::styled("■ ", Style::default().fg(col)),
                     Span::styled(&task.title, Style::default().add_modifier(Modifier::BOLD)),
                     Span::styled(format!(" [{}]", task.status), Style::default().fg(col)),
@@ -157,13 +171,17 @@ impl RunWorkspaceState {
 
     /// Render Artifact Panel (TASK-6.5)
     pub fn render_artifact_panel(&self, f: &mut Frame, area: Rect) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .title(Span::styled(" Artifacts & Diff Review ", Style::default().add_modifier(Modifier::BOLD)));
+        let block = Block::default().borders(Borders::ALL).title(Span::styled(
+            " Artifacts & Diff Review ",
+            Style::default().add_modifier(Modifier::BOLD),
+        ));
 
         if self.artifacts.is_empty() {
-            let empty = Paragraph::new(Span::styled("No artifacts generated yet.", Style::default().fg(Color::DarkGray)))
-                .block(block);
+            let empty = Paragraph::new(Span::styled(
+                "No artifacts generated yet.",
+                Style::default().fg(Color::DarkGray),
+            ))
+            .block(block);
             f.render_widget(empty, area);
             return;
         }
@@ -175,8 +193,14 @@ impl RunWorkspaceState {
                 let line = Line::from(vec![
                     Span::styled(" 📄 ", Style::default().fg(Color::Cyan)),
                     Span::styled(&art.path, Style::default().add_modifier(Modifier::BOLD)),
-                    Span::styled(format!(" ({} bytes)", art.size), Style::default().fg(Color::DarkGray)),
-                    Span::styled(format!(" [{:.8}]", art.checksum), Style::default().fg(Color::DarkGray)),
+                    Span::styled(
+                        format!(" ({} bytes)", art.size),
+                        Style::default().fg(Color::DarkGray),
+                    ),
+                    Span::styled(
+                        format!(" [{:.8}]", art.checksum),
+                        Style::default().fg(Color::DarkGray),
+                    ),
                 ]);
                 ListItem::new(line)
             })
@@ -188,15 +212,19 @@ impl RunWorkspaceState {
 
     /// Render Run Summary (TASK-6.6)
     pub fn render_run_summary(&self, f: &mut Frame, area: Rect) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .title(Span::styled(" Run Summary ", Style::default().add_modifier(Modifier::BOLD)));
+        let block = Block::default().borders(Borders::ALL).title(Span::styled(
+            " Run Summary ",
+            Style::default().add_modifier(Modifier::BOLD),
+        ));
 
         let summary = match &self.summary {
             Some(s) => s,
             None => {
-                let empty = Paragraph::new(Span::styled("Run in progress...", Style::default().fg(Color::DarkGray)))
-                    .block(block);
+                let empty = Paragraph::new(Span::styled(
+                    "Run in progress...",
+                    Style::default().fg(Color::DarkGray),
+                ))
+                .block(block);
                 f.render_widget(empty, area);
                 return;
             }
@@ -206,20 +234,25 @@ impl RunWorkspaceState {
         let text = vec![
             Line::from(vec![
                 Span::raw("Status: "),
-                Span::styled(&summary.status, Style::default().fg(col).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    &summary.status,
+                    Style::default().fg(col).add_modifier(Modifier::BOLD),
+                ),
                 Span::raw(format!(" | Duration: {}s", summary.duration_secs)),
             ]),
             Line::from(vec![
-                Span::raw(format!("Tasks: {}/{} completed", summary.tasks_completed, summary.tasks_total)),
+                Span::raw(format!(
+                    "Tasks: {}/{} completed",
+                    summary.tasks_completed, summary.tasks_total
+                )),
                 Span::raw(format!(" | Artifacts: {}", summary.artifacts_count)),
             ]),
-            Line::from(vec![
-                Span::raw(format!("Token Usage: prompt={} completion={} total={}",
-                    summary.prompt_tokens,
-                    summary.completion_tokens,
-                    summary.prompt_tokens + summary.completion_tokens
-                )),
-            ]),
+            Line::from(vec![Span::raw(format!(
+                "Token Usage: prompt={} completion={} total={}",
+                summary.prompt_tokens,
+                summary.completion_tokens,
+                summary.prompt_tokens + summary.completion_tokens
+            ))]),
         ];
 
         let p = Paragraph::new(text).block(block).wrap(Wrap { trim: true });

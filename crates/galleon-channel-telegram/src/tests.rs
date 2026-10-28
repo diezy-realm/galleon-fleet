@@ -1,11 +1,10 @@
-
 use super::*;
-use galleon_config::schema::{Config, TelegramConfig};
 use galleon_channel_core::allowlist;
 use galleon_channel_core::approval::{
     PendingApproval, PendingApprovalResolution, resolve_pending_approval,
 };
 use galleon_channel_core::model_picker_delivery;
+use galleon_config::schema::{Config, TelegramConfig};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -28,7 +27,6 @@ pub fn channel_ingress_context(msg: &ChannelMessage) -> galleon_api::ingress::In
     ingress.trust = TrustClass::Untrusted;
     ingress
 }
-
 
 fn telegram_alias_config(alias: &str, multi_message_delay_ms: u64) -> Arc<RwLock<Config>> {
     let mut config = Config::default();

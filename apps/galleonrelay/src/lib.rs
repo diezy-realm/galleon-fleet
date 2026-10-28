@@ -40,6 +40,10 @@ use anyhow::Result;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as B64;
 use futures_util::{SinkExt, StreamExt};
+use galleon_relay_proto::{
+    ConnWindow, Control, INITIAL_WINDOW, MAX_CONTROL_FRAME, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL,
+    TokenBucket, decode_data, encode_data,
+};
 use ring::rand::{SecureRandom, SystemRandom};
 use ring::signature::{ED25519, UnparsedPublicKey};
 use serde::{Deserialize, Serialize};
@@ -55,10 +59,6 @@ use tokio::sync::{Mutex, mpsc};
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message;
-use galleon_relay_proto::{
-    ConnWindow, Control, INITIAL_WINDOW, MAX_CONTROL_FRAME, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL,
-    TokenBucket, decode_data, encode_data,
-};
 
 /// How far a client may drive its send window negative before the relay treats it
 /// as ignoring flow control and tears the conn down. One full window of slack

@@ -1,8 +1,8 @@
 //! Channel Matrix — comprehensive capability coverage tests.
 
 use async_trait::async_trait;
-use std::sync::{Arc, Mutex};
 use clawcrew::channels::{Channel, ChannelMessage, SendMessage};
+use std::sync::{Arc, Mutex};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Matrix test channel — records all trait method calls for assertion
@@ -101,9 +101,7 @@ impl MatrixTestChannel {
 
 impl ::galleon_api::attribution::Attributable for MatrixTestChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -1351,9 +1349,7 @@ struct MinimalChannel;
 
 impl ::galleon_api::attribution::Attributable for MinimalChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "minimal"

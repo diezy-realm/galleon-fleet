@@ -5,6 +5,9 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 
 use futures_util::StreamExt;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::sop::{SopFanInDispatcher, SopTriggerSource};
+use galleon_config::schema::SopDispatch;
 use lapin::{
     Connection, ConnectionProperties,
     options::{
@@ -14,9 +17,6 @@ use lapin::{
     tcp::{OwnedIdentity, OwnedTLSConfig},
     types::FieldTable,
 };
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
-use galleon_api::sop::{SopFanInDispatcher, SopTriggerSource};
-use galleon_config::schema::SopDispatch;
 
 static MSG_SEQ: AtomicU64 = AtomicU64::new(0);
 
@@ -857,13 +857,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: true,
             ..Default::default()
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop-only channel with handles constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop-only channel with handles constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(1);
 
         let outcome = ch
@@ -882,13 +877,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: true,
             ..Default::default()
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop-only channel with handles constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop-only channel with handles constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(1);
 
         let outcome = ch
@@ -909,13 +899,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: false,
             runs: Arc::clone(&runs),
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop channel constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop channel constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(4);
         let body = br#"{"name":"curl"}"#;
 
@@ -953,13 +938,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: false,
             runs: Arc::clone(&runs),
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop channel constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop channel constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(8);
         let body = br#"{"name":"curl"}"#;
 
@@ -984,13 +964,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: false,
             runs: Arc::clone(&runs),
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop channel constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop channel constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(8);
         let body = br#"{"name":"curl"}"#;
 

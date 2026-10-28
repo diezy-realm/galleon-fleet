@@ -1,15 +1,15 @@
 use anyhow::{Context, Result, bail};
-use sha2::{Digest, Sha256};
-use std::fs::File;
-use std::io::{Read, Seek, Write};
-use std::path::{Path, PathBuf};
-use tempfile::TempDir;
 use clawcrew::plugins::PluginManifest;
 pub(crate) use clawcrew::plugins::registry::search_entries;
 use clawcrew::plugins::registry::{
     PluginRegistryEntry, PluginRegistryIndex, parse_plugin_spec, resolve_entry,
     write_cached_registry_index,
 };
+use sha2::{Digest, Sha256};
+use std::fs::File;
+use std::io::{Read, Seek, Write};
+use std::path::{Path, PathBuf};
+use tempfile::TempDir;
 
 pub(crate) const DEFAULT_REGISTRY_URL: &str =
     "https://raw.githubusercontent.com/clawcrew-labs/galleon-plugins/main/registry.json";

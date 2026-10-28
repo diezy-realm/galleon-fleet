@@ -70,8 +70,14 @@ fn test_golden_chat_lifecycle() {
     session.update_turn_chunk(turn_idx, "Hello! ");
     session.update_turn_chunk(turn_idx, "How can I help you?");
     assert_eq!(session.messages[turn_idx].status, GoldenTurnState::Running);
-    assert_eq!(session.messages[turn_idx].content, "Hello! How can I help you?");
+    assert_eq!(
+        session.messages[turn_idx].content,
+        "Hello! How can I help you?"
+    );
 
     session.complete_turn(turn_idx);
-    assert_eq!(session.messages[turn_idx].status, GoldenTurnState::Completed);
+    assert_eq!(
+        session.messages[turn_idx].status,
+        GoldenTurnState::Completed
+    );
 }

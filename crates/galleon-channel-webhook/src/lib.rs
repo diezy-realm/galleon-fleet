@@ -221,9 +221,7 @@ impl WebhookChannel {
 
 impl ::galleon_api::attribution::Attributable for WebhookChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         &self.alias

@@ -2230,11 +2230,8 @@ impl WeChatChannel {
                     Ok(Err(e)) => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "QR poll error"
                         );
                         tokio::time::sleep(Duration::from_secs(1)).await;
@@ -2251,11 +2248,8 @@ impl WeChatChannel {
                     Err(e) => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "QR poll parse error"
                         );
                         tokio::time::sleep(Duration::from_secs(1)).await;
@@ -2334,11 +2328,8 @@ impl WeChatChannel {
                     other => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"other": other})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"other": other})),
                             "QR status"
                         );
                     }
@@ -2999,12 +2990,9 @@ impl Channel for WeChatChannel {
                     if let Err(e) = self.ensure_logged_in().await {
                         ::galleon_log::record!(
                             ERROR,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Fail
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "re-login failed"
                         );
                         tokio::time::sleep(BACKOFF_DELAY).await;
@@ -3108,12 +3096,9 @@ impl Channel for WeChatChannel {
                     if let Err(e) = self.ensure_logged_in().await {
                         ::galleon_log::record!(
                             ERROR,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Fail
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "re-login after session expiry failed"
                         );
                     }
@@ -3486,10 +3471,7 @@ impl Channel for WeChatChannel {
                     if tx.send(*channel_msg).await.is_err() {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             "channel receiver dropped, stopping"
                         );
                         // Do NOT commit `next_cursor` here: the batch is

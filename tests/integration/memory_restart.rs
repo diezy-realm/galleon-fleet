@@ -1,8 +1,8 @@
 //! TG5: Memory Restart Resilience Tests
 
-use std::sync::Arc;
 use clawcrew::memory::sqlite::SqliteMemory;
 use clawcrew::memory::traits::{Memory, MemoryCategory};
+use std::sync::Arc;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Deduplication: same key overwrites instead of duplicating

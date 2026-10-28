@@ -14,7 +14,6 @@ use std::process::Command;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use tempfile::TempDir;
 use galleon_api::channel::SendMessage;
 use galleon_api::webhook::{PluginWebhookRegistry, RawWebhook, WebhookOutcome};
 use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
@@ -26,9 +25,9 @@ use galleon_config::schema::{
 use galleon_plugins::PluginCapability;
 use galleon_plugins::host::PluginHost;
 use galleon_plugins::instance::PluginInstanceScope;
+use tempfile::TempDir;
 
-const MANIFEST: &str =
-    "crates/galleon-plugins/tests/fixtures/channel-fixture/plugin-manifest.toml";
+const MANIFEST: &str = "crates/galleon-plugins/tests/fixtures/channel-fixture/plugin-manifest.toml";
 
 /// Build the channel component once per test binary.
 ///

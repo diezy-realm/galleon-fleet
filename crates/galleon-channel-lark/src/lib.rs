@@ -2,10 +2,10 @@ use aes::Aes256;
 use async_trait::async_trait;
 use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
+use futures_util::{SinkExt, StreamExt};
 use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_config::pairing::constant_time_eq;
 use galleon_config::schema::StreamMode;
-use futures_util::{SinkExt, StreamExt};
 use prost::Message as ProstMessage;
 use reqwest::multipart::{Form, Part};
 use sha2::{Digest, Sha256};
@@ -2820,10 +2820,7 @@ impl LarkChannel {
                     None => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             "image message missing image_key"
                         );
                         return messages;
@@ -2867,10 +2864,7 @@ impl LarkChannel {
                     None => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             "file message missing file_key"
                         );
                         return messages;
@@ -3150,11 +3144,12 @@ impl Channel for LarkChannel {
         let Some(reaction_id) = reaction_id else {
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "message_id": message_id,
                         "emoji": emoji,
-                    })),
+                    })
+                ),
                 "Lark remove_reaction: cache miss, skipping"
             );
             return Ok(());
@@ -3526,26 +3521,24 @@ impl LarkChannel {
             self.invalidate_token().await;
             // Retry PATCH after token refresh — same soft-fail discipline:
             // a transport error on the retry must not propagate.
-            let (retry_status, retry_response) = match self
-                .patch_or_send_once(&url, &body, true)
-                .await
-            {
-                Ok(pair) => pair,
-                Err(err) => {
-                    ::galleon_log::record!(
-                        WARN,
-                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note,)
-                            .with_outcome(::galleon_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({
-                                "message_id": message_id,
-                                "error": format!("{err}"),
-                                "error_key": "lark.draft_patch.transport_failure_on_retry",
-                            })),
-                        "Lark: draft PATCH retry transport-failed (soft)"
-                    );
-                    return Ok(());
-                }
-            };
+            let (retry_status, retry_response) =
+                match self.patch_or_send_once(&url, &body, true).await {
+                    Ok(pair) => pair,
+                    Err(err) => {
+                        ::galleon_log::record!(
+                            WARN,
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note,)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({
+                                    "message_id": message_id,
+                                    "error": format!("{err}"),
+                                    "error_key": "lark.draft_patch.transport_failure_on_retry",
+                                })),
+                            "Lark: draft PATCH retry transport-failed (soft)"
+                        );
+                        return Ok(());
+                    }
+                };
             if should_refresh_lark_tenant_token(retry_status, &retry_response) {
                 ::galleon_log::record!(
                     WARN,
@@ -3569,11 +3562,12 @@ impl LarkChannel {
         if code == LARK_DRAFT_RATE_LIMIT_CODE {
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "message_id": message_id,
                         "error_key": "lark.draft_patch.rate_limited",
-                    })),
+                    })
+                ),
                 "Lark: draft PATCH rate-limited (code=230020)"
             );
             return Ok(());
@@ -3681,15 +3675,12 @@ impl LarkChannel {
                     if should_refresh_lark_tenant_token(retry_status, &retry_response) {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Send
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({
-                                "message_id": message_id,
-                                "body": retry_response.to_string(),
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({
+                                    "message_id": message_id,
+                                    "body": retry_response.to_string(),
+                                })),
                             "Lark: approval card PATCH still unauthorized after token refresh"
                         );
                         return;
@@ -4368,7 +4359,8 @@ mod tests {
             &'a self,
             _audio_data: &'a [u8],
             _file_name: &'a str,
-        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>> {
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>>
+        {
             Box::pin(async move { Ok(self.0.to_string()) })
         }
     }

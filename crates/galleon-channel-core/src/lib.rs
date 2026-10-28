@@ -156,7 +156,11 @@ pub mod allowlist {
         #[test]
         fn reexports_full_deny_and_wildcard_policy() {
             // Wildcard grants anyone...
-            assert!(is_user_allowed(&["*".to_string()], "anyone", Match::Sensitive));
+            assert!(is_user_allowed(
+                &["*".to_string()],
+                "anyone",
+                Match::Sensitive
+            ));
             // ...but a `!name` deny outranks it (the policy the signal crate's
             // exact-match ceiling could not express).
             let denied = vec!["*".to_string(), "!alice".to_string()];
@@ -315,7 +319,6 @@ pub mod approval {
         }
     }
 
-
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -327,8 +330,7 @@ pub mod approval {
             let prompt = build_yesno_prompt(&token, "shell", "ls -la", Some((2, 3)));
             assert!(prompt.contains(&format!("[{token}]")));
             assert!(prompt.contains("Tool call 2 of 3"));
-            let (parsed, resp) =
-                parse_approval_reply(&format!("{token} yes")).expect("yes parses");
+            let (parsed, resp) = parse_approval_reply(&format!("{token} yes")).expect("yes parses");
             assert_eq!(parsed, token);
             assert!(matches!(resp, ChannelApprovalResponse::Approve));
             assert!(matches!(

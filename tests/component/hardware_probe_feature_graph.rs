@@ -166,11 +166,7 @@ fn probe_feature_graph_preserves_forwarding_and_distribution_boundaries() {
 
     let root_hardware = feature_values(root_features, "hardware");
     assert_feature_contains("root hardware", &root_hardware, "dep:galleon-hardware");
-    assert_feature_contains(
-        "root hardware",
-        &root_hardware,
-        "galleon-hardware/hardware",
-    );
+    assert_feature_contains("root hardware", &root_hardware, "galleon-hardware/hardware");
 
     let root_probe = feature_values(root_features, "probe");
     assert_feature_contains("root probe", &root_probe, "dep:galleon-hardware");

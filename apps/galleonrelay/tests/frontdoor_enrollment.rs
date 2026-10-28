@@ -19,15 +19,15 @@ use std::sync::Arc;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as B64;
 use futures_util::{SinkExt, StreamExt};
+use galleon_relay_proto::{
+    Control, INITIAL_WINDOW, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data,
+};
+use galleonrelay::{RelayConfig, RelayServer};
 use ring::signature::{Ed25519KeyPair, KeyPair};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::{ClientRequestBuilder, Message};
-use galleon_relay_proto::{
-    Control, INITIAL_WINDOW, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data,
-};
-use galleonrelay::{RelayConfig, RelayServer};
 
 type RelayWs =
     tokio_tungstenite::WebSocketStream<tokio_rustls::client::TlsStream<tokio::net::TcpStream>>;
@@ -115,9 +115,8 @@ async fn start_daemon_enrollment() -> Daemon {
         galleon_tls::testing::gen_server_cert(&ca_cert_pem, &ca_key_pem, &["127.0.0.1".into()]);
     let acceptor = TlsAcceptor::from(Arc::new(server_config_from_pem(&leaf_pem, &leaf_key_pem)));
 
-    let ledger = Arc::new(
-        galleon_runtime::security::cert_ledger::CertLedger::open_in_memory(None).unwrap(),
-    );
+    let ledger =
+        Arc::new(galleon_runtime::security::cert_ledger::CertLedger::open_in_memory(None).unwrap());
     let pairing = Arc::new(galleon_config::pairing::PairingGuard::new(
         true,
         &[],

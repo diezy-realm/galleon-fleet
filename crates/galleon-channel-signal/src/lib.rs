@@ -40,9 +40,11 @@ use galleon_api::channel::{
     ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
 // RF-B1 seam #1 (allowlist) + #2 (approval parse/token/prompt): shared from core.
-use galleon_channel_core::allowlist::{self, Match};
-use galleon_channel_core::approval::{build_yesno_prompt, new_approval_token, parse_approval_reply};
 use futures_util::StreamExt;
+use galleon_channel_core::allowlist::{self, Match};
+use galleon_channel_core::approval::{
+    build_yesno_prompt, new_approval_token, parse_approval_reply,
+};
 use lru::LruCache;
 use parking_lot::Mutex as SyncMutex;
 use reqwest::Client;
@@ -209,7 +211,12 @@ impl SignalChannel {
     /// path); the env-proxy fallback is the documented ceiling.
     fn http_client(&self) -> anyhow::Result<Client> {
         let mut builder = Client::builder().connect_timeout(Duration::from_secs(10));
-        if let Some(url) = self.proxy_url.as_deref().map(str::trim).filter(|u| !u.is_empty()) {
+        if let Some(url) = self
+            .proxy_url
+            .as_deref()
+            .map(str::trim)
+            .filter(|u| !u.is_empty())
+        {
             builder = builder.proxy(reqwest::Proxy::all(url)?);
         }
         Ok(builder.build()?)
@@ -221,7 +228,10 @@ impl SignalChannel {
             .source_number
             .as_deref()
             .filter(|sender| !sender.is_empty())
-            .or(envelope.source.as_deref().filter(|sender| !sender.is_empty()))
+            .or(envelope
+                .source
+                .as_deref()
+                .filter(|sender| !sender.is_empty()))
             .or(envelope
                 .source_uuid
                 .as_deref()
@@ -388,7 +398,10 @@ impl SignalChannel {
         let parsed: serde_json::Value = serde_json::from_str(&text)?;
         if let Some(err) = parsed.get("error") {
             let code = err.get("code").and_then(|c| c.as_i64()).unwrap_or(-1);
-            let msg = err.get("message").and_then(|m| m.as_str()).unwrap_or("unknown");
+            let msg = err
+                .get("message")
+                .and_then(|m| m.as_str())
+                .unwrap_or("unknown");
             anyhow::bail!("Signal RPC error {code}: {msg}");
         }
         Ok(parsed.get("result").cloned())
@@ -428,21 +441,29 @@ impl SignalChannel {
 
         let target = self.reply_target(data_msg, &sender);
 
-        let timestamp = data_msg.timestamp.or(envelope.timestamp).unwrap_or_else(|| {
-            u64::try_from(
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_millis(),
-            )
-            .unwrap_or(u64::MAX)
-        });
+        let timestamp = data_msg
+            .timestamp
+            .or(envelope.timestamp)
+            .unwrap_or_else(|| {
+                u64::try_from(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis(),
+                )
+                .unwrap_or(u64::MAX)
+            });
 
-        let contents: Vec<String> = if let Some(pa) =
-            data_msg.poll_answer.as_ref().or(data_msg.poll_vote.as_ref())
+        let contents: Vec<String> = if let Some(pa) = data_msg
+            .poll_answer
+            .as_ref()
+            .or(data_msg.poll_vote.as_ref())
         {
             if !pa.selected_titles.is_empty() {
-                pa.selected_titles.iter().map(|t| format!("[choice]{t}")).collect()
+                pa.selected_titles
+                    .iter()
+                    .map(|t| format!("[choice]{t}"))
+                    .collect()
             } else if !pa.selected_indices.is_empty() {
                 pa.selected_indices
                     .iter()
@@ -571,7 +592,9 @@ impl Channel for SignalChannel {
             if trimmed_prompt.is_empty() {
                 return Ok(());
             }
-            return self.send(&SendMessage::new(trimmed_prompt, recipient)).await;
+            return self
+                .send(&SendMessage::new(trimmed_prompt, recipient))
+                .await;
         }
         if options.len() >= 2 {
             let labels: Vec<String> = options.iter().map(|(_, l)| l.clone()).collect();
@@ -681,7 +704,12 @@ impl Channel for SignalChannel {
         let Ok(client) = self.http_client() else {
             return false;
         };
-        let Ok(resp) = client.get(&url).timeout(Duration::from_secs(10)).send().await else {
+        let Ok(resp) = client
+            .get(&url)
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await
+        else {
             return false;
         };
         resp.status().is_success()
@@ -754,7 +782,10 @@ impl Channel for SignalChannel {
         );
 
         let (tx, rx) = oneshot::channel();
-        self.pending_approvals.lock().await.insert(token.clone(), tx);
+        self.pending_approvals
+            .lock()
+            .await
+            .insert(token.clone(), tx);
 
         if let Err(err) = self.send(&SendMessage::new(text, recipient)).await {
             self.pending_approvals.lock().await.remove(&token);
@@ -834,9 +865,7 @@ mod tests {
         assert_eq!(ch.alias(), "signal_test_alias");
         assert!(matches!(
             galleon_api::attribution::Attributable::role(&ch),
-            galleon_api::attribution::Role::Channel(
-                galleon_api::attribution::ChannelKind::Signal
-            )
+            galleon_api::attribution::Role::Channel(galleon_api::attribution::ChannelKind::Signal)
         ));
     }
 

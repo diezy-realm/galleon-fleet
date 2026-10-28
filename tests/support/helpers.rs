@@ -2,7 +2,6 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use std::sync::Arc;
 use clawcrew::agent::agent::Agent;
 use clawcrew::agent::dispatcher::{NativeToolDispatcher, XmlToolDispatcher};
 use clawcrew::config::MemoryConfig;
@@ -11,6 +10,7 @@ use clawcrew::memory::Memory;
 use clawcrew::observability::{NoopObserver, Observer};
 use clawcrew::providers::{ChatResponse, ModelProvider, ToolCall};
 use clawcrew::tools::Tool;
+use std::sync::Arc;
 
 /// Create an in-memory "none" backend for tests.
 pub fn make_memory() -> Arc<dyn Memory> {

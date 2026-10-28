@@ -26,6 +26,7 @@ use crate::Inner;
 use crate::enroll_proxy::{self, MAX_FRONTDOOR_REQUEST_BYTES, ProxyError};
 use crate::frontdoor_assets::{APP_JS, INDEX_HTML};
 use anyhow::{Context, Result};
+use galleon_relay_proto::SUBPROTOCOL;
 use std::io::Cursor;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -33,7 +34,6 @@ use std::task::{Context as TaskContext, Poll};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
 use tokio::time::{Duration, timeout};
 use tokio_tungstenite::WebSocketStream;
-use galleon_relay_proto::SUBPROTOCOL;
 
 const MAX_HTTP_HEAD: usize = 16 * 1024;
 

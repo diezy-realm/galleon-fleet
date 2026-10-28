@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use base64::Engine as _;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use futures_util::{SinkExt, StreamExt};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use serde::Deserialize;
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -19,10 +19,7 @@ pub trait AudioTranscriber: Send + Sync {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
 }
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -409,10 +406,7 @@ impl QQChannel {
     }
 
     /// Configure voice transcription manager.
-    pub fn with_audio_transcriber(
-        mut self,
-        manager: Option<Arc<dyn AudioTranscriber>>,
-    ) -> Self {
+    pub fn with_audio_transcriber(mut self, manager: Option<Arc<dyn AudioTranscriber>>) -> Self {
         self.transcription_manager = manager;
         self
     }
@@ -2410,8 +2404,6 @@ allowed_users = ["user1"]
 
     // --- compose_message_content tests (now async) ---
 
-
-
     async fn composed_content(ch: &QQChannel, payload: &serde_json::Value) -> Option<String> {
         ch.compose_qq_message(payload)
             .await
@@ -2523,7 +2515,9 @@ allowed_users = ["user1"]
             Arc::new(Vec::new),
         )
         .with_workspace_dir(workspace.path().to_path_buf())
-        .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber("configured transcript"))));
+        .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber(
+            "configured transcript",
+        ))));
 
         let payload = json!({
             "content": "",

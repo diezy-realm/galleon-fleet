@@ -1,11 +1,8 @@
-use std::sync::Arc;
 use async_trait::async_trait;
 use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use std::sync::Arc;
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }

@@ -305,14 +305,11 @@ impl WhatsAppChannel {
                     Err(e) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(
-                                ::serde_json::json!({"trimmed": trimmed, "e": e.to_string()})
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(
+                                    ::serde_json::json!({"trimmed": trimmed, "e": e.to_string()})
+                                ),
                             "ignoring invalid mention_pattern"
                         );
                         None
@@ -421,12 +418,11 @@ impl WhatsAppChannel {
                     if !self.is_number_allowed(&normalized_from) {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"normalized_from": normalized_from})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(
+                                    ::serde_json::json!({"normalized_from": normalized_from})
+                                ),
                             "ignoring message from unauthorized number: . Add to channels.whatsapp.allowed_numbers in config.toml, or run `clawcrew config set channels.whatsapp.allowed-numbers='[\"<msisdn>\"]'`."
                         );
                         continue;
@@ -502,11 +498,8 @@ impl WhatsAppChannel {
                         // Could be image, audio, etc. — skip for now
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"from": from})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"from": from})),
                             "skipping non-text message from"
                         );
                         continue;

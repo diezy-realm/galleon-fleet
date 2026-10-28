@@ -1,11 +1,11 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_channel_core::allowlist;
 use nostr_sdk::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Protocol used by a sender, tracked so replies use the same protocol.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,11 +90,7 @@ impl NostrChannel {
                 format!("{prefix}{key}")
             })
             .collect();
-        allowlist::is_user_allowed(
-            &peers,
-            &pubkey.to_hex(),
-            allowlist::Match::Sensitive,
-        )
+        allowlist::is_user_allowed(&peers, &pubkey.to_hex(), allowlist::Match::Sensitive)
     }
 }
 

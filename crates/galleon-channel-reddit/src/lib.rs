@@ -1,10 +1,10 @@
 use anyhow::{Result, bail};
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use parking_lot::Mutex;
 use serde::Deserialize;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Reddit channel — polls for mentions, DMs, and comment replies via Reddit OAuth2 API.
 pub struct RedditChannel {

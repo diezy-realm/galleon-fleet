@@ -28,14 +28,14 @@
 use crate::{
     ConnEvent, ConnRoute, DAEMON_HANDOFF_BUDGET, Inner, LiveConnGuard, PAIR_TIMEOUT, release_conn,
 };
+use galleon_relay_proto::{
+    ConnWindow, Control, INITIAL_WINDOW, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL, encode_data,
+};
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message;
-use galleon_relay_proto::{
-    ConnWindow, Control, INITIAL_WINDOW, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL, encode_data,
-};
 
 /// Buffer between the TLS client above and the relay pump below. One credit
 /// window each way, so the duplex never becomes a second, unaccounted queue in

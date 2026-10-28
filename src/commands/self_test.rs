@@ -1,8 +1,8 @@
 //! `clawcrew self-test` — quick and full diagnostic checks.
 
 use anyhow::Result;
-use std::path::Path;
 use galleon_runtime::i18n::get_required_cli_string_with_args;
+use std::path::Path;
 
 /// Result of a single diagnostic check.
 pub struct CheckResult {
@@ -298,9 +298,7 @@ fn check_web_dist_dir(config: &crate::config::Config) -> CheckResult {
     match config.gateway.web_dist_dir.as_deref() {
         None => CheckResult::pass(
             name,
-            galleon_runtime::i18n::get_required_cli_string(
-                "cli-self-test-web-dist-dir-pass-unset",
-            ),
+            galleon_runtime::i18n::get_required_cli_string("cli-self-test-web-dist-dir-pass-unset"),
         ),
         Some(value) => match web_dist_dir_expansion_reason_key(value) {
             None => CheckResult::pass(
@@ -533,16 +531,16 @@ mod tests {
     #[cfg(feature = "gateway")]
     use super::{build_websocket_probe_url, resolve_gateway_bearer_token};
     use super::{format_probe_url, resolve_probe_host, web_dist_dir_expansion_reason_key};
+    #[cfg(any(feature = "gateway", unix))]
+    use galleon_config::schema::Config;
+    #[cfg(unix)]
+    use galleon_config::schema::LucidStorageConfig;
     #[cfg(unix)]
     use std::fs;
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
     #[cfg(unix)]
     use tempfile::TempDir;
-    #[cfg(any(feature = "gateway", unix))]
-    use galleon_config::schema::Config;
-    #[cfg(unix)]
-    use galleon_config::schema::LucidStorageConfig;
 
     #[cfg(unix)]
     #[tokio::test]
@@ -664,9 +662,8 @@ fi
         let result = super::check_web_dist_dir(&config);
         assert!(result.passed);
 
-        let expected_detail = galleon_runtime::i18n::get_required_cli_string(
-            "cli-self-test-web-dist-dir-pass-unset",
-        );
+        let expected_detail =
+            galleon_runtime::i18n::get_required_cli_string("cli-self-test-web-dist-dir-pass-unset");
         assert_eq!(result.detail, expected_detail);
     }
 

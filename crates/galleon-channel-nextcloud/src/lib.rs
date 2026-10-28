@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_config::schema::StreamMode;
 use hmac::{Hmac, Mac};
 use parking_lot::Mutex;
 use reqwest::Method;
@@ -6,8 +8,6 @@ use sha2::Sha256;
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
-use galleon_config::schema::StreamMode;
 
 /// Maximum message length accepted by Nextcloud Talk (characters, not bytes).
 /// The OCS API rejects messages longer than 32 000 characters.
@@ -96,7 +96,11 @@ impl NextcloudTalkChannel {
 
     fn is_user_allowed(&self, actor_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        galleon_channel_core::allowlist::is_user_allowed(&peers, actor_id, galleon_channel_core::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            actor_id,
+            galleon_channel_core::allowlist::Match::Sensitive,
+        )
     }
 
     /// Returns true if the given name/id belongs to this bot itself.

@@ -1,9 +1,9 @@
 //! Credential leak detection for outbound content.
 
+use galleon_config::schema::LeakDetectionConfig;
 use regex::Regex;
 use std::ops::Range;
 use std::sync::OnceLock;
-use galleon_config::schema::LeakDetectionConfig;
 
 /// Minimum token length considered for high-entropy detection.
 const ENTROPY_TOKEN_MIN_LEN: usize = 24;

@@ -20,10 +20,7 @@ pub trait AudioTranscriber: Send + Sync {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
 }
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -425,11 +422,8 @@ async fn handle_webhook(
                     Ok(_) => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"msg_id": msg_id})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"msg_id": msg_id})),
                             "empty transcript for"
                         );
                         continue;
@@ -478,10 +472,7 @@ async fn handle_webhook(
                     if mention_span.is_none() {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             &format!(
                                 "skipping group message without bot mention (userId: {})",
                                 state.bot_user_id
@@ -501,12 +492,9 @@ async fn handle_webhook(
                     if !is_line_user_allowed(&*state, user_id) {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"user_id": user_id})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"user_id": user_id})),
                             "ignoring DM from unauthorized user: . Add to the channel peer group or use dm_policy = pairing."
                         );
                         continue;

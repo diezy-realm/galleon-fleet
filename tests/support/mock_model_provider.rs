@@ -2,9 +2,9 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use std::sync::{Arc, Mutex};
 use clawcrew::providers::traits::{ChatMessage, TokenUsage};
 use clawcrew::providers::{ChatRequest, ChatResponse, ModelProvider, ToolCall};
+use std::sync::{Arc, Mutex};
 
 use super::trace::{LlmTrace, TraceResponse};
 
@@ -58,11 +58,9 @@ impl ModelProvider for MockModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for MockModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "MockModelProvider"
@@ -123,11 +121,9 @@ impl ModelProvider for RecordingModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for RecordingModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "RecordingModelProvider"
@@ -230,11 +226,9 @@ impl ModelProvider for TraceLlmModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for TraceLlmModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "TraceLlmModelProvider"

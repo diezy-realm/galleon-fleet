@@ -2250,12 +2250,9 @@ mod inbound {
                     if let Err(e) = handle_message(ctx, ev, room, raw).await {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "matrix: handle_message failed"
                         );
                     }
@@ -2448,14 +2445,11 @@ mod inbound {
                     Err(e) => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({
-                                "error": format!("{e}"),
-                                "reply_id": reply_id,
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({
+                                    "error": format!("{e}"),
+                                    "reply_id": reply_id,
+                                })),
                             "matrix: failed to fetch reply parent for mention_only gate"
                         );
                         false
@@ -2767,12 +2761,9 @@ mod inbound {
                         Ok(_) => {}
                         Err(e) => ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "matrix: voice transcription failed"
                         ),
                     }
@@ -3650,11 +3641,8 @@ mod outbound {
                     Err(e) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             &format!(
                                 "matrix: skipping outbound marker for {} (read failed): {e}",
                                 marker.target
@@ -3669,11 +3657,8 @@ mod outbound {
                     Err(e) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             &format!(
                                 "matrix: skipping outbound marker for {} (http failed): {e}",
                                 marker.target

@@ -1,8 +1,8 @@
 //! `clawcrew eval` — run the agent evaluation harness.
 
 use anyhow::Result;
-use std::path::PathBuf;
 use galleon_eval::{Mode, SuiteReport};
+use std::path::PathBuf;
 
 /// Run a suite of eval cases and return the aggregated report.
 pub async fn run(suite: PathBuf, mode: Mode) -> Result<SuiteReport> {

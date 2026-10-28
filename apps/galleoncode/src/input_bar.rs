@@ -1261,7 +1261,9 @@ impl InputBarState {
                 ExplorerAction::Confirm(paths) => {
                     match PendingAttachment::from_explorer_paths(&paths) {
                         Ok(atts) => {
-                            if self.pending_attachments.len() + atts.len() > Self::MAX_ATTACHMENTS_PER_MESSAGE {
+                            if self.pending_attachments.len() + atts.len()
+                                > Self::MAX_ATTACHMENTS_PER_MESSAGE
+                            {
                                 self.file_explorer = None;
                                 return InputBarAction::StatusMessage(format!(
                                     "Cannot attach more than {} attachments per message",

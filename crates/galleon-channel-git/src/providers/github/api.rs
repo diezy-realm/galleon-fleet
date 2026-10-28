@@ -258,11 +258,12 @@ impl GithubApi {
         if page.total_count as usize > page.repositories.len() {
             ::galleon_log::record!(
                 WARN,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "total": page.total_count,
                         "polled": page.repositories.len(),
-                    })),
+                    })
+                ),
                 "installation has more than 100 repositories; only the first page is polled — \
                  set `repos` explicitly to choose"
             );

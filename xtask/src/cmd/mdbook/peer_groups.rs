@@ -835,8 +835,8 @@ fn render_model_provider_catalog_table() -> String {
 }
 
 fn render_model_provider_fields() -> String {
-    use std::fmt::Write as _;
     use galleon_providers::ModelProviderCategory as C;
+    use std::fmt::Write as _;
     let category_title = |c: C| match c {
         C::Primary => "Primary",
         C::OpenAiCompatible => "OpenAI-compatible",

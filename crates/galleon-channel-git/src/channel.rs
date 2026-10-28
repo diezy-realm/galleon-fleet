@@ -236,11 +236,8 @@ impl GitChannel {
                     None => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"entry": entry})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"entry": entry})),
                             "ignoring malformed `repos` entry (expected owner/repo)"
                         );
                     }
@@ -547,11 +544,8 @@ impl Channel for GitChannel {
                             + Duration::from_millis(u64::from(rand::random::<u16>()) % 5_000);
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"wait_secs": wait.as_secs()})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"wait_secs": wait.as_secs()})),
                             "git provider rate limited; backing off"
                         );
                         tokio::time::sleep(wait).await;
@@ -560,15 +554,12 @@ impl Channel for GitChannel {
                     Err(e) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({
-                                "repo": repo.to_string(),
-                                "error": e.to_string(),
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({
+                                    "repo": repo.to_string(),
+                                    "error": e.to_string(),
+                                })),
                             "git poll failed for repo; continuing"
                         );
                     }

@@ -5,19 +5,16 @@
 
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::Message;
 use uuid::Uuid;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const DINGTALK_BOT_CALLBACK_TOPIC: &str = "/v1.0/im/bot/messages/get";
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -154,9 +151,7 @@ impl DingTalkChannel {
 
 impl ::galleon_api::attribution::Attributable for DingTalkChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::DingTalk,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::DingTalk)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -285,12 +280,9 @@ impl Channel for DingTalkChannel {
                     if let Err(e) = write.send(Message::Text(pong.to_string().into())).await {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "failed to send pong"
                         );
                         break;
@@ -333,12 +325,9 @@ impl Channel for DingTalkChannel {
                     if !self.is_user_allowed(sender_id) {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"sender_id": sender_id})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"sender_id": sender_id})),
                             "ignoring message from unauthorized user"
                         );
                         continue;
@@ -396,11 +385,8 @@ impl Channel for DingTalkChannel {
                     if tx.send(channel_msg).await.is_err() {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "message channel closed"
                         );
                         break;

@@ -2,9 +2,9 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
+use clawcrew::tools::{Tool, ToolOutput, ToolResult};
 use serde_json::json;
 use std::sync::{Arc, Mutex};
-use clawcrew::tools::{Tool, ToolOutput, ToolResult};
 
 galleon_api::mock_tool_attribution!(EchoTool, CountingTool, FailingTool, RecordingTool);
 

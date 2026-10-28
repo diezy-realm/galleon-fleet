@@ -3,11 +3,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::NoPadding};
+use futures_util::{SinkExt, StreamExt};
 use galleon_api::channel::{Channel, ChannelConversationScope, ChannelMessage, SendMessage};
 use galleon_config::schema::{StreamMode, WeComWsConfig};
-use galleon_tool_call_parser::TERMINAL_MARKERS;
-use futures_util::{SinkExt, StreamExt};
 use galleon_i18n as i18n;
+use galleon_tool_call_parser::TERMINAL_MARKERS;
 use parking_lot::Mutex;
 use rand::Rng;
 use serde_json::Value;
@@ -685,7 +685,8 @@ impl WeComWsChannel {
         let scopes = compute_scopes(&parsed);
 
         // Log inbound info
-        let preview = galleon_channel_core::truncate_with_ellipsis(&inbound_content_preview(&parsed), 80);
+        let preview =
+            galleon_channel_core::truncate_with_ellipsis(&inbound_content_preview(&parsed), 80);
         let msg_id_str = if parsed.msg_id.trim().is_empty() {
             "-"
         } else {
@@ -1487,9 +1488,7 @@ impl WeComWsChannel {
 
 impl ::galleon_api::attribution::Attributable for WeComWsChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::WeComWs,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::WeComWs)
     }
 
     fn alias(&self) -> &str {
@@ -2757,14 +2756,8 @@ mod tests {
         };
 
         let first_key = conversation_history_key(&first);
-        assert_eq!(
-            first_key,
-            conversation_history_key(&second)
-        );
-        assert_eq!(
-            first_key,
-            conversation_history_key(&clear)
-        );
+        assert_eq!(first_key, conversation_history_key(&second));
+        assert_eq!(first_key, conversation_history_key(&clear));
         assert!(!first_key.contains("req-"));
     }
 

@@ -1,11 +1,11 @@
 use anyhow::{Context, Result, bail};
-use serde::Serialize;
-use std::collections::BTreeMap;
 use galleon_config::config::CredentialSurfaceClass;
 use galleon_config::policy::SecurityPolicy;
 use galleon_config::schema::{
     DEFAULT_SANDBOX_IMAGE, RiskProfileConfig, SandboxBackend, SandboxConfig,
 };
+use serde::Serialize;
+use std::collections::BTreeMap;
 
 use crate::config::Config;
 

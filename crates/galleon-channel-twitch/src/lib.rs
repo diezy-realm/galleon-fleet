@@ -2,10 +2,10 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_channel_irc::{IrcChannel, IrcChannelConfig};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const TWITCH_IRC_HOST: &str = "irc.chat.twitch.tv";
 const TWITCH_IRC_PORT: u16 = 6697;

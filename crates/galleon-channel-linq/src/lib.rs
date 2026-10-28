@@ -1,7 +1,7 @@
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use std::sync::Arc;
 use uuid::Uuid;
-use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
 pub struct LinqChannel {
     api_token: String,
@@ -42,7 +42,11 @@ impl LinqChannel {
     /// Check if a sender phone number is allowed (E.164 format: +1234567890)
     fn is_sender_allowed(&self, phone: &str) -> bool {
         let peers = (self.peer_resolver)();
-        galleon_channel_core::allowlist::is_user_allowed(&peers, phone, galleon_channel_core::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            phone,
+            galleon_channel_core::allowlist::Match::Sensitive,
+        )
     }
 
     /// Get the bot's phone number
@@ -212,11 +216,8 @@ impl LinqChannel {
                     _ => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"part_type": part_type})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"part_type": part_type})),
                             "skipping part"
                         );
                         None

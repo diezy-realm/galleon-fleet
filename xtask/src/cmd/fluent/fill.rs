@@ -1,8 +1,8 @@
 use crate::util::*;
 use anyhow::Context as _;
-use std::path::{Path, PathBuf};
 use galleon_api::model_provider::ModelProvider;
 use galleon_providers::ProviderDispatch;
+use std::path::{Path, PathBuf};
 
 const DEFAULT_BATCH_SIZE: usize = 50;
 
