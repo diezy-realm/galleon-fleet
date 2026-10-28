@@ -1693,10 +1693,10 @@ mod tests {
             "$BUILD_CMD --release --locked --no-default-features --features \"${FEATURES}\" --target ${{ matrix.target }}"
         ));
         assert!(manual.contains(
-            "run: $BUILD_CMD --release --locked -p zerocode --target ${{ matrix.target }}"
+            "run: $BUILD_CMD --release --locked -p galleoncode --target ${{ matrix.target }}"
         ));
         assert!(manual.contains(
-            "run: $BUILD_CMD --release --locked -p zerorelay --target ${{ matrix.target }}"
+            "run: $BUILD_CMD --release --locked -p galleonrelay --target ${{ matrix.target }}"
         ));
         assert_eq!(
             manual

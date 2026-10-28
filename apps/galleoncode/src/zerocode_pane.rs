@@ -2344,7 +2344,7 @@ mod tests {
     // Current-head smoke of the Config-pane Todo-tracker save path, driven
     // through the real edit/persist/resolve functions (no interactive TUI is
     // available in CI). Run with:
-    //   cargo test -p zerocode --bin zerocode -- --ignored --nocapture smoke_config_pane_save
+    //   cargo test -p galleoncode --bin zerocode -- --ignored --nocapture smoke_config_pane_save
     // Prints the observable status/disk/effective values for each scenario so
     // the user-facing contract can be eyeballed. Serializes on the env lock
     // because it mutates process env.
