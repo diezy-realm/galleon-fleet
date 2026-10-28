@@ -33,6 +33,7 @@ const DRAFT_EDIT_MIN_INTERVAL: Duration = Duration::from_secs(2);
 /// Resolve the GitHub App private key PEM, preferring the inline `private_key`
 /// and falling back to reading `private_key_path` from disk. Backward-compatible
 /// with configs that predate the inline field.
+#[cfg(feature = "provider-github")]
 fn resolve_github_private_key(cfg: &GitConfig) -> anyhow::Result<Option<String>> {
     if cfg.private_key.is_some() {
         return Ok(cfg.private_key.clone());
@@ -57,7 +58,7 @@ fn resolve_github_private_key(cfg: &GitConfig) -> anyhow::Result<Option<String>>
 /// The private key is a long-lived credential: group/other access on the
 /// key file is operator error worth surfacing, but not worth refusing to
 /// start over.
-#[cfg(unix)]
+#[cfg(all(feature = "provider-github", unix))]
 fn warn_on_loose_permissions(path: &str) {
     use std::os::unix::fs::MetadataExt;
     let Ok(meta) = std::fs::metadata(path) else {
@@ -73,7 +74,7 @@ fn warn_on_loose_permissions(path: &str) {
     }
 }
 
-#[cfg(not(unix))]
+#[cfg(all(feature = "provider-github", not(unix)))]
 fn warn_on_loose_permissions(_path: &str) {}
 
 /// Build the configured forge provider, or a clear error for an unknown

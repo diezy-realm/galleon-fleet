@@ -25,8 +25,8 @@ use std::path::{Component, Path, PathBuf};
 use syn::visit::{self, Visit};
 
 /// The crate the world installs. Renamed from `clawcrewlabs` so that
-/// `cargo install clawcrew` matches the binary name.
-const ROOT_PACKAGE: &str = "clawcrew";
+/// `cargo install galleon-fleet` matches the binary name.
+const ROOT_PACKAGE: &str = "galleon-fleet";
 
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))

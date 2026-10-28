@@ -34,7 +34,7 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let out = Command::new(env!("CARGO_BIN_EXE_clawcrew"))
+    let out = Command::new(env!("CARGO_BIN_EXE_galleon"))
         .args(args)
         .output()
         .expect("failed to run clawcrew --help");

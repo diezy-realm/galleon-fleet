@@ -1323,7 +1323,7 @@ fn reconcile_spawned_daemon_identity(
     Ok(false)
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, test))]
 fn cleanup_spawned_daemon_after_signal(daemon: &mut SpawnedDaemon) -> anyhow::Result<()> {
     daemon
         .terminate_and_wait()

@@ -443,6 +443,7 @@ impl<W: Write> QuickstartSelectorOutput for W {}
 /// is reported as unknown so the caller fails closed instead of fitting rows
 /// to a zero-width frame.
 #[cfg(all(feature = "agent-runtime", unix))]
+#[allow(unsafe_code)]
 fn quickstart_output_terminal_size<W: QuickstartSelectorOutput>(output: &W) -> Option<(u16, u16)> {
     use std::os::fd::AsRawFd;
 
@@ -3828,7 +3829,10 @@ fn main() -> Result<()> {
     {
         // SAFETY: this synchronous bootstrap runs before the Tokio runtime (and
         // therefore its worker threads) is constructed.
-        unsafe { std::env::set_var("CLAWCREW_CONFIG_DIR", config_dir) };
+        #[allow(unsafe_code)]
+        unsafe {
+            std::env::set_var("CLAWCREW_CONFIG_DIR", config_dir)
+        };
     }
 
     async_main(command)
@@ -9845,5 +9849,6 @@ async fn dispatch_models_command(model_command: ModelCommands, config: &mut Conf
 }
 
 #[cfg(test)]
+#[allow(unsafe_code)]
 #[path = "main_tests.rs"]
 mod tests;

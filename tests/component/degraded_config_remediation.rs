@@ -89,7 +89,7 @@ level = "autonomous"
         "PATH clawcrew must accept the fixture config\nstdout:\n{path_stdout}\nstderr:\n{path_stderr}"
     );
 
-    let daemon_bin = Path::new(env!("CARGO_BIN_EXE_clawcrew"));
+    let daemon_bin = Path::new(env!("CARGO_BIN_EXE_galleon"));
     let output = Command::new(daemon_bin)
         .arg("--config-dir")
         .arg(config_dir.path())
@@ -137,7 +137,7 @@ level = "autonomous"
     )
     .expect("write degraded config");
 
-    let clawcrew = Path::new(env!("CARGO_BIN_EXE_clawcrew"));
+    let clawcrew = Path::new(env!("CARGO_BIN_EXE_galleon"));
     let output = Command::new(clawcrew)
         .arg("--config-dir")
         .arg(config_dir.path())

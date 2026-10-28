@@ -2713,6 +2713,7 @@ mod ack_reactions {
     }
 }
 
+#[allow(unused_imports)]
 mod user_boundary {
     use std::sync::Arc;
     use std::time::Duration;

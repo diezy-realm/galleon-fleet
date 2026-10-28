@@ -42,7 +42,7 @@ fn english_config_dir(tmp: &Path) {
 }
 
 fn run(config_dir: &Path, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_clawcrew"))
+    Command::new(env!("CARGO_BIN_EXE_galleon"))
         .env("CLAWCREW_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
         .args(args)
