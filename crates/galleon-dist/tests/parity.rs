@@ -1,4 +1,4 @@
-//! Ratcheting parity tests between the canonical registry in `clawcrew_dist`
+//! Ratcheting parity tests between the canonical registry in `galleon_dist`
 //! and every repository surface that names a published distribution target.
 //!
 //! Each test reads a consuming source as text, relative to
@@ -11,7 +11,7 @@ use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
 
-use clawcrew_dist::{DIST_TARGETS, PlatformFamily, ReleaseTier, find_target, required_targets};
+use galleon_dist::{DIST_TARGETS, PlatformFamily, ReleaseTier, find_target, required_targets};
 
 /// Required release assets that are not per-target archives: the macOS
 /// desktop bundle and the two SBOM documents (listed with the literal
