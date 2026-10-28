@@ -1,5 +1,5 @@
 [package]
-name = "zerocode"
+name = "galleoncode"
 rust-version.workspace = true
 version.workspace = true
 homepage.workspace = true
@@ -13,8 +13,12 @@ publish = true
 default = []
 
 [[bin]]
-name = "zerocode"
+name = "galleoncode"
 path = "src/main.rs"
+
+[lib]
+name = "galleoncode"
+path = "src/lib.rs"
 
 [dependencies]
 clawcrew-api.workspace = true

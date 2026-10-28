@@ -1,5 +1,5 @@
 [package]
-name = "zerorelay"
+name = "galleonrelay"
 rust-version.workspace = true
 version.workspace = true
 homepage.workspace = true
@@ -10,11 +10,11 @@ description = "ClawCrew nominated relay: a standalone blind forwarder that tunne
 publish = true
 
 [[bin]]
-name = "zerorelay"
+name = "galleonrelay"
 path = "src/main.rs"
 
 [lib]
-name = "zerorelay"
+name = "galleonrelay"
 path = "src/lib.rs"
 
 [dependencies]

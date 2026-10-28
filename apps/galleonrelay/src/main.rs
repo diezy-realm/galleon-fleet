@@ -29,7 +29,7 @@ use clap::{Parser, Subcommand};
 use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use serde::Deserialize;
 use tokio_rustls::TlsAcceptor;
-use zerorelay::{
+use galleonrelay::{
     Admission, AdmissionPolicy, PublicOpenGuard, RelayConfig, RelayServer, RelayStatus,
 };
 

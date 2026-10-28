@@ -569,12 +569,12 @@ fn cargo_cache_guard_parses_option_order_and_exact_values() {
 
 #[test]
 fn published_relay_image_pins_its_base_images_by_digest() {
-    let dockerfile = repository_file("apps/zerorelay/Dockerfile");
+    let dockerfile = repository_file("apps/galleonrelay/Dockerfile");
 
     let unpinned = unpinned_base_images(&dockerfile);
     assert!(
         unpinned.is_empty(),
-        "apps/zerorelay/Dockerfile ships as a signed release image, so a mutable \
+        "apps/galleonrelay/Dockerfile ships as a signed release image, so a mutable \
          base tag would let the published image drift from the pinned source ref; \
          unpinned: {unpinned:?}"
     );

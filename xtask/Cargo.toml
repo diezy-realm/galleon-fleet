@@ -42,7 +42,7 @@ clawcrew-hardware = { workspace = true }
 clawcrew-providers = { workspace = true }
 clawcrew-runtime = { workspace = true, features = ["schema-export"] }
 clawcrew-gateway = { workspace = true, features = ["schema-export"] }
-zerocode = { workspace = true }
+galleoncode = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3"

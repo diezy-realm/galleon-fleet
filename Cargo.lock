@@ -2127,6 +2127,7 @@ dependencies = [
  "futures-util",
  "galleon-i18n",
  "galleon-security-scrub",
+ "galleonrelay",
  "glob",
  "hex",
  "hmac 0.12.1",
@@ -2169,7 +2170,6 @@ dependencies = [
  "windows",
  "wiremock",
  "zeroize",
- "zerorelay",
 ]
 
 [[package]]
@@ -5036,6 +5036,73 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "galleoncode"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "clawcrew-api",
+ "crossterm",
+ "directories",
+ "fluent",
+ "futures-util",
+ "hex",
+ "inkjet",
+ "libc",
+ "mime_guess",
+ "pulldown-cmark",
+ "ratatui",
+ "rcgen",
+ "rustls",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "shellexpand",
+ "similar",
+ "tempfile",
+ "tokio",
+ "tokio-rustls",
+ "tokio-tungstenite 0.29.0",
+ "toml 1.1.2+spec-1.1.0",
+ "unic-langid",
+ "unicode-segmentation",
+ "unicode-width 0.2.2",
+ "url",
+ "webpki-roots 0.26.11",
+ "zeroize",
+]
+
+[[package]]
+name = "galleonrelay"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "base64",
+ "clap",
+ "clawcrew-config",
+ "clawcrew-relay-proto",
+ "clawcrew-runtime",
+ "clawcrew-tls",
+ "futures-util",
+ "hex",
+ "ring",
+ "rustls",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+ "tokio-rustls",
+ "tokio-tungstenite 0.29.0",
+ "tokio-util",
+ "toml 1.1.2+spec-1.1.0",
+ "zeroize",
 ]
 
 [[package]]
@@ -13579,6 +13646,7 @@ dependencies = [
  "clawcrew-providers",
  "clawcrew-runtime",
  "fluent-syntax 0.12.0",
+ "galleoncode",
  "pulldown-cmark",
  "reqwest 0.12.28",
  "schemars",
@@ -13589,7 +13657,6 @@ dependencies = [
  "tokio",
  "toml 0.8.23",
  "tower-http",
- "zerocode",
 ]
 
 [[package]]
@@ -13655,45 +13722,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "zerocode"
-version = "0.8.5"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "clawcrew-api",
- "crossterm",
- "directories",
- "fluent",
- "futures-util",
- "hex",
- "inkjet",
- "libc",
- "mime_guess",
- "pulldown-cmark",
- "ratatui",
- "rcgen",
- "rustls",
- "rustls-pemfile",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "shellexpand",
- "similar",
- "tempfile",
- "tokio",
- "tokio-rustls",
- "tokio-tungstenite 0.29.0",
- "toml 1.1.2+spec-1.1.0",
- "unic-langid",
- "unicode-segmentation",
- "unicode-width 0.2.2",
- "url",
- "webpki-roots 0.26.11",
- "zeroize",
-]
-
-[[package]]
 name = "zerocopy"
 version = "0.8.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13752,34 +13780,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
-]
-
-[[package]]
-name = "zerorelay"
-version = "0.8.5"
-dependencies = [
- "anyhow",
- "base64",
- "clap",
- "clawcrew-config",
- "clawcrew-relay-proto",
- "clawcrew-runtime",
- "clawcrew-tls",
- "futures-util",
- "hex",
- "ring",
- "rustls",
- "rustls-pemfile",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "tokio",
- "tokio-rustls",
- "tokio-tungstenite 0.29.0",
- "tokio-util",
- "toml 1.1.2+spec-1.1.0",
- "zeroize",
 ]
 
 [[package]]
