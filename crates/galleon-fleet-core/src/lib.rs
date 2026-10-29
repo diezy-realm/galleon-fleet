@@ -10,6 +10,7 @@ pub mod snapshots;
 pub mod store;
 
 pub use error::FleetError;
+pub use store::{FLEET_MAX_BODY, FleetStore, ImportReport};
 
 #[cfg(test)]
 mod tests {
