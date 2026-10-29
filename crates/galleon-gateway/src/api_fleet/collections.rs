@@ -9,13 +9,13 @@
 
 use std::sync::Arc;
 
+use axum::Router;
 use axum::body::Bytes;
 use axum::extract::{Path, State};
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
-use galleon_fleet_core::{FleetError, FleetStore, FLEET_MAX_BODY};
+use galleon_fleet_core::{FLEET_MAX_BODY, FleetError, FleetStore};
 use serde_json::json;
 use tower_http::limit::RequestBodyLimitLayer;
 
@@ -168,7 +168,9 @@ mod tests {
     use http_body_util::BodyExt;
     use tower::ServiceExt;
 
-    async fn response_to_json(resp: Response) -> Result<(StatusCode, serde_json::Value), Box<dyn std::error::Error>> {
+    async fn response_to_json(
+        resp: Response,
+    ) -> Result<(StatusCode, serde_json::Value), Box<dyn std::error::Error>> {
         let status = resp.status();
         let body_bytes = resp.into_body().collect().await?.to_bytes();
         let json_val = serde_json::from_slice(&body_bytes)?;
@@ -322,7 +324,10 @@ mod tests {
             let resp = app.clone().oneshot(req).await?;
             let (status, val) = response_to_json(resp).await?;
             assert_eq!(status, StatusCode::BAD_REQUEST);
-            assert_eq!(val, json!({"error": "collection body must be a JSON array"}));
+            assert_eq!(
+                val,
+                json!({"error": "collection body must be a JSON array"})
+            );
         }
         Ok(())
     }

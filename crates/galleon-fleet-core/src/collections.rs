@@ -29,10 +29,7 @@ pub const CANONICAL_COLLECTIONS: &[&str] = &[
 ];
 
 /// Policy data files seeded alongside collections in fleet storage.
-pub const POLICY_DATA_COLLECTIONS: &[&str] = &[
-    "policies",
-    "riskTiers",
-];
+pub const POLICY_DATA_COLLECTIONS: &[&str] = &["policies", "riskTiers"];
 
 /// Check whether a name is one of the 15 canonical camelCase collections.
 pub fn is_canonical_collection(name: &str) -> bool {
@@ -77,8 +74,8 @@ pub fn validate_collection_payload(bytes: &[u8]) -> Result<(), FleetError> {
         });
     }
 
-    let val: serde_json::Value = serde_json::from_slice(bytes)
-        .map_err(|_| FleetError::NotAJsonArray)?;
+    let val: serde_json::Value =
+        serde_json::from_slice(bytes).map_err(|_| FleetError::NotAJsonArray)?;
 
     if !val.is_array() {
         return Err(FleetError::NotAJsonArray);
@@ -116,7 +113,15 @@ mod tests {
 
     #[test]
     fn test_allowlist_rejects_unknown_collections() {
-        let unknown = ["notes", "users", "passwords", "config", "data", "foo", "bar"];
+        let unknown = [
+            "notes",
+            "users",
+            "passwords",
+            "config",
+            "data",
+            "foo",
+            "bar",
+        ];
         for name in unknown {
             assert!(!is_canonical_collection(name));
             assert!(!is_allowed_collection(name));
@@ -149,7 +154,11 @@ mod tests {
         ];
         for attack in attacks {
             assert!(!is_allowed_collection(attack), "failed for {attack}");
-            assert_eq!(resolve_allowed_collection(attack), None, "resolved traversal {attack}");
+            assert_eq!(
+                resolve_allowed_collection(attack),
+                None,
+                "resolved traversal {attack}"
+            );
         }
     }
 
@@ -181,12 +190,7 @@ mod tests {
 
     #[test]
     fn test_validate_payload_rejects_invalid_json() {
-        let invalid: &[&[u8]] = &[
-            b"[1, 2, ",
-            b"[{foo: bar}]",
-            b"not json at all",
-            b"[\0]",
-        ];
+        let invalid: &[&[u8]] = &[b"[1, 2, ", b"[{foo: bar}]", b"not json at all", b"[\0]"];
         for item in invalid {
             let res = validate_collection_payload(item);
             assert!(matches!(res, Err(FleetError::NotAJsonArray)));

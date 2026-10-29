@@ -1,6 +1,6 @@
 use galleon_fleet_core::{
+    CANONICAL_COLLECTIONS, FLEET_MAX_BODY, FleetError, FleetStore, POLICY_DATA_COLLECTIONS,
     is_allowed_collection, is_canonical_collection, resolve_allowed_collection,
-    FleetError, FleetStore, CANONICAL_COLLECTIONS, FLEET_MAX_BODY, POLICY_DATA_COLLECTIONS,
 };
 
 #[test]
@@ -45,7 +45,8 @@ fn test_allowlist_policy_data_collections() {
 }
 
 #[test]
-fn test_unknown_collection_rejected_with_404_equivalent() -> Result<(), Box<dyn std::error::Error>> {
+fn test_unknown_collection_rejected_with_404_equivalent() -> Result<(), Box<dyn std::error::Error>>
+{
     let tmp = tempfile::tempdir()?;
     let store = FleetStore::new(tmp.path());
 

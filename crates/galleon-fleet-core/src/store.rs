@@ -650,7 +650,9 @@ mod tests {
 
         // Save with non-array rejected
         assert!(matches!(
-            store.save_collection("squads", br#"{"object":"not-array"}"#).await,
+            store
+                .save_collection("squads", br#"{"object":"not-array"}"#)
+                .await,
             Err(FleetError::NotAJsonArray)
         ));
 

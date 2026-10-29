@@ -5,8 +5,8 @@
 
 pub mod collections;
 
-use axum::Router;
 use crate::state::AppState;
+use axum::Router;
 
 /// Assembles fleet routes.
 ///
