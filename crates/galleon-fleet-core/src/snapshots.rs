@@ -14,7 +14,7 @@ use sha2::{Digest, Sha256};
 
 use crate::collections::{CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS};
 use crate::error::FleetError;
-use crate::store::{current_timestamp_iso8601, FleetStore};
+use crate::store::{FleetStore, current_timestamp_iso8601};
 
 /// Maximum number of snapshots preserved in the store before oldest are pruned.
 pub const MAX_SNAPSHOTS: usize = 20;

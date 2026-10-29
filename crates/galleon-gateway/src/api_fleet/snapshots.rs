@@ -8,13 +8,13 @@
 
 use std::sync::Arc;
 
+use axum::Router;
 use axum::body::Bytes;
 use axum::extract::State;
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
-use galleon_fleet_core::{CreateSnapshotRequest, FleetStore, FLEET_MAX_BODY};
+use galleon_fleet_core::{CreateSnapshotRequest, FLEET_MAX_BODY, FleetStore};
 use serde_json::json;
 use tower_http::limit::RequestBodyLimitLayer;
 
@@ -192,10 +192,12 @@ mod tests {
         assert_eq!(status, StatusCode::CREATED);
         assert_eq!(snap_val["label"], "Genesis Commissioning State");
         assert_eq!(snap_val["entityCount"], 1);
-        assert!(snap_val["checksum"]
-            .as_str()
-            .unwrap_or("")
-            .starts_with("sha256:"));
+        assert!(
+            snap_val["checksum"]
+                .as_str()
+                .unwrap_or("")
+                .starts_with("sha256:")
+        );
         assert_eq!(snap_val["includes"], json!(["ships"]));
 
         let app = router_for_store(store);

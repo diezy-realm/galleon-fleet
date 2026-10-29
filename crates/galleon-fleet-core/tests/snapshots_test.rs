@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::Path;
 
-use galleon_fleet_core::{FleetError, FleetStore, SnapshotItem, MAX_SNAPSHOTS};
+use galleon_fleet_core::{FleetError, FleetStore, MAX_SNAPSHOTS, SnapshotItem};
 
 #[tokio::test]
 async fn test_snapshot_checksum_changes_when_collection_changes() -> Result<(), FleetError> {
