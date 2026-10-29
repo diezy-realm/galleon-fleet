@@ -13,7 +13,7 @@ pub const RATE_LIMIT_MAX_KEYS_DEFAULT: usize = 10_000;
 pub const IDEMPOTENCY_MAX_KEYS_DEFAULT: usize = 10_000;
 
 /// How often the rate limiter sweeps stale IP entries from its map.
-const RATE_LIMITER_SWEEP_INTERVAL_SECS: u64 = 300;
+pub(crate) const RATE_LIMITER_SWEEP_INTERVAL_SECS: u64 = 300;
 
 /// Sliding window rate limiter
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub struct SlidingWindowRateLimiter {
     limit_per_window: u32,
     window: Duration,
     max_keys: usize,
-    requests: Mutex<(HashMap<String, Vec<Instant>>, Instant)>,
+    pub(crate) requests: Mutex<(HashMap<String, Vec<Instant>>, Instant)>,
 }
 
 impl SlidingWindowRateLimiter {
@@ -114,14 +114,14 @@ impl GatewayRateLimiter {
 pub struct IdempotencyStore {
     ttl: Duration,
     max_keys: usize,
-    entries: Mutex<IdempotencyEntries>,
+    pub(crate) entries: Mutex<IdempotencyEntries>,
     #[cfg(feature = "plugins-wasm")]
     next_generation: std::sync::atomic::AtomicU64,
 }
 
 #[derive(Debug, Default)]
-struct IdempotencyEntries {
-    committed: HashMap<String, Instant>,
+pub(crate) struct IdempotencyEntries {
+    pub(crate) committed: HashMap<String, Instant>,
     #[cfg(feature = "plugins-wasm")]
     pending: HashMap<String, PendingIdempotencyReservation>,
 }

@@ -70,6 +70,9 @@ pub mod voice_duplex;
 mod webhook_ingress;
 pub mod ws;
 
+#[cfg(test)]
+pub(crate) mod tests;
+
 /// Maximum request body size (64KB) — prevents memory exhaustion
 pub const MAX_BODY_SIZE: usize = 65_536;
 /// Default request timeout (30s) — prevents slow-loris attacks.
@@ -107,13 +110,169 @@ pub fn resolve_web_dashboard_availability(
     }
     #[cfg(not(feature = "embedded-web"))]
     {
-        config
-            .gateway
-            .web_dist_dir
-            .as_ref()
-            .map(std::path::PathBuf::from)
-            .map(WebDashboardAvailability::Filesystem)
+        resolve_web_dist_dir(config).map(WebDashboardAvailability::Filesystem)
     }
+}
+
+pub(crate) fn has_servable_dashboard_index(dir: &std::path::Path) -> bool {
+    let Ok(canonical_root) = std::fs::canonicalize(dir) else {
+        return false;
+    };
+    let Ok(canonical_index) = std::fs::canonicalize(dir.join("index.html")) else {
+        return false;
+    };
+    canonical_index.starts_with(&canonical_root) && canonical_index.is_file()
+}
+
+pub fn resolve_web_dist_dir(
+    config: &galleon_config::schema::Config,
+) -> Option<std::path::PathBuf> {
+    match config
+        .gateway
+        .web_dist_dir
+        .as_ref()
+        .map(std::path::PathBuf::from)
+    {
+        Some(dir) if has_servable_dashboard_index(&dir) => Some(dir),
+        _ => None,
+    }
+}
+
+pub fn static_file_routes() -> axum::Router<AppState> {
+    axum::Router::new()
+        .route("/_app/", axum::routing::get(static_files::handle_static))
+        .route("/_app/{*path}", axum::routing::get(static_files::handle_static))
+}
+
+pub(crate) fn normalize_max_keys(configured: usize, fallback: usize) -> usize {
+    if configured == 0 {
+        fallback.max(1)
+    } else {
+        configured
+    }
+}
+
+pub(crate) fn default_agent_alias(config: &galleon_config::schema::Config) -> Option<String> {
+    config
+        .agents
+        .iter()
+        .filter(|(_, a)| a.enabled)
+        .map(|(alias, _)| alias.clone())
+        .min()
+}
+
+pub(crate) fn format_paircode_recovery_command(_host: &str, port: u16) -> String {
+    format!("clawcrew gateway get-paircode --new --port {port}")
+}
+
+pub(crate) fn already_paired_pairing_notice(
+    host: &str,
+    port: u16,
+    path_prefix: &str,
+) -> Vec<String> {
+    vec![
+        "  🔒 Pairing: ACTIVE — this gateway is already paired, so no new \
+         one-time code was generated on this start."
+            .to_string(),
+        format!(
+            "     To pair another device, run: {}",
+            format_paircode_recovery_command(host, port)
+        ),
+        format!(
+            "     Fallback (localhost only): {}",
+            format_paircode_recovery_curl(host, port, path_prefix)
+        ),
+    ]
+}
+
+pub(crate) fn format_paircode_recovery_curl(
+    host: &str,
+    port: u16,
+    path_prefix: &str,
+) -> String {
+    let recovery_host = paircode_recovery_curl_host(host);
+    format!("curl -s -X POST http://{recovery_host}:{port}{path_prefix}/admin/paircode/new")
+}
+
+pub(crate) fn paircode_recovery_curl_host(host: &str) -> &str {
+    match host {
+        "127.0.0.1" | "localhost" => host,
+        "::1" => "[::1]",
+        _ => "127.0.0.1",
+    }
+}
+
+#[cfg(unix)]
+const EMFILE: i32 = 24;
+#[cfg(unix)]
+const ENFILE: i32 = 23;
+
+pub(crate) fn is_recoverable_accept_error(e: &std::io::Error) -> bool {
+    use std::io::ErrorKind;
+    if matches!(
+        e.kind(),
+        ErrorKind::ConnectionAborted | ErrorKind::Interrupted | ErrorKind::WouldBlock
+    ) {
+        return true;
+    }
+    #[cfg(unix)]
+    if let Some(code) = e.raw_os_error() {
+        return code == EMFILE || code == ENFILE;
+    }
+    false
+}
+
+#[cfg(test)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct GatewayChatDispatchCapture {
+    pub(crate) message: String,
+    pub(crate) session_id: Option<String>,
+    pub(crate) agent_override: Option<String>,
+}
+
+#[cfg(test)]
+static GATEWAY_CHAT_DISPATCH_CAPTURES: std::sync::Mutex<Vec<GatewayChatDispatchCapture>> =
+    std::sync::Mutex::new(Vec::new());
+
+#[cfg(test)]
+static GATEWAY_CHAT_DISPATCH_CAPTURE_TEST_LOCK: tokio::sync::Mutex<()> =
+    tokio::sync::Mutex::const_new(());
+
+#[cfg(test)]
+pub(crate) async fn lock_gateway_chat_dispatch_capture_for_test() -> tokio::sync::MutexGuard<'static, ()> {
+    GATEWAY_CHAT_DISPATCH_CAPTURE_TEST_LOCK.lock().await
+}
+
+#[cfg(test)]
+pub(crate) fn clear_gateway_chat_dispatch_captures_for_test() {
+    GATEWAY_CHAT_DISPATCH_CAPTURES
+        .lock()
+        .expect("gateway chat dispatch capture mutex poisoned")
+        .clear();
+}
+
+#[cfg(test)]
+pub(crate) fn gateway_chat_dispatch_captures_for_test() -> Vec<GatewayChatDispatchCapture> {
+    GATEWAY_CHAT_DISPATCH_CAPTURES
+        .lock()
+        .expect("gateway chat dispatch capture mutex poisoned")
+        .clone()
+}
+
+#[cfg(test)]
+pub(crate) fn record_gateway_chat_dispatch_capture_for_test(
+    message: &str,
+    session_id: Option<&str>,
+    agent_override: Option<&str>,
+) {
+    GATEWAY_CHAT_DISPATCH_CAPTURES
+        .lock()
+        .expect("gateway chat dispatch capture mutex poisoned")
+        .push(GatewayChatDispatchCapture {
+            message: message.to_string(),
+            session_id: session_id.map(ToString::to_string),
+            agent_override: agent_override.map(ToString::to_string),
+        });
 }
 pub mod handlers;
 pub mod ws_approval;
@@ -325,7 +484,9 @@ pub(crate) async fn persist_pairing_tokens(
 pub fn needs_quickstart_for(model: &str) -> Option<anyhow::Error> {
     if model.trim().is_empty() {
         Some(anyhow::Error::msg(
-            "needs_quickstart: gateway has no model configured",
+            "needs_quickstart: gateway has no model configured. Complete \
+             browser quickstart at /quickstart, or set [providers.models.<type>.<alias>] \
+             model = \"...\" before sending messages.",
         ))
     } else {
         None
@@ -449,10 +610,16 @@ fn idempotency_storage_key(namespace: Option<&str>, idempotency_key: &str) -> St
         out.push_str(value);
     }
 
-    let mut out = String::new();
-    push_component(&mut out, namespace.unwrap_or(""));
-    push_component(&mut out, idempotency_key);
-    out
+    let mut key = String::new();
+    match namespace {
+        Some(namespace) => {
+            push_component(&mut key, "ns");
+            push_component(&mut key, namespace);
+        }
+        None => push_component(&mut key, "global"),
+    }
+    push_component(&mut key, idempotency_key);
+    key
 }
 
 pub fn check_webhook_idempotency(
@@ -487,9 +654,12 @@ pub fn require_sop_dispatch_credentials(
         return Ok(());
     }
     let err = serde_json::json!({
-        "error": "SOP webhook dispatch requires a configured credential: set `gateway.require_pairing = true` or `gateway.webhook_secret`"
+        "error": "SOP webhook dispatch requires a configured credential: set \
+                  `gateway.require_pairing = true` and authenticate with \
+                  `Authorization: Bearer <paired-token>` (pair first via POST /pair), or set \
+                  `gateway.webhook_secret` and send X-Webhook-Secret."
     });
-    Err((StatusCode::FORBIDDEN, Json(err)))
+    Err((StatusCode::UNAUTHORIZED, Json(err)))
 }
 
 #[derive(Debug, Clone)]
@@ -1150,6 +1320,9 @@ pub async fn run_gateway_chat_with_tools(
             galleon_config::cost::TurnUsage::default(),
         ))
     });
+    #[cfg(test)]
+    record_gateway_chat_dispatch_capture_for_test(message, session_id, agent_override);
+
     let response = Box::pin(galleon_config::cost::TOOL_LOOP_TURN_USAGE.scope(
         turn_usage.clone(),
         galleon_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(

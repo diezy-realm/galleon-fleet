@@ -3,10 +3,10 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::{
-    Json, Router,
     extract::State,
     response::IntoResponse,
     routing::{delete, get, patch, post},
+    Json, Router,
 };
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::timeout::TimeoutLayer;
@@ -91,6 +91,16 @@ pub async fn run_gateway_with_plugin_webhooks(
     );
     let app = build_gateway_router(state.clone());
 
+    let _tls_acceptor = match &state.config.read().gateway.tls {
+        Some(tls_cfg) if tls_cfg.enabled => match crate::tls::build_tls_acceptor(tls_cfg) {
+            Ok(acceptor) => Some(acceptor),
+            Err(e) => {
+                return Err(anyhow::Error::msg(format!("Gateway TLS setup failed: {e}")));
+            }
+        },
+        _ => None,
+    };
+
     let bind_addr = format!("{host}:{port}");
     let listener = tokio::net::TcpListener::bind(&bind_addr).await?;
     let actual_addr = listener.local_addr()?;
@@ -114,13 +124,39 @@ pub async fn run_gateway_with_plugin_webhooks(
     Ok(())
 }
 
+fn public_health_snapshot() -> serde_json::Value {
+    let snapshot = galleon_infra::health::snapshot();
+    let components = snapshot
+        .components
+        .into_iter()
+        .map(|(name, component)| {
+            (
+                name,
+                serde_json::json!({
+                    "status": component.status,
+                    "updated_at": component.updated_at,
+                    "last_ok": component.last_ok,
+                    "restart_count": component.restart_count,
+                }),
+            )
+        })
+        .collect::<serde_json::Map<_, _>>();
+
+    serde_json::json!({
+        "pid": snapshot.pid,
+        "updated_at": snapshot.updated_at,
+        "uptime_seconds": snapshot.uptime_seconds,
+        "components": components,
+    })
+}
+
 /// GET /health — public component health snapshot
 pub async fn handle_health(State(state): State<AppState>) -> impl IntoResponse {
     let body = serde_json::json!({
         "status": "ok",
         "paired": state.pairing.is_paired(),
         "require_pairing": state.pairing.require_pairing(),
-        "runtime": galleon_infra::health::snapshot(),
+        "runtime": public_health_snapshot(),
     });
     (axum::http::StatusCode::OK, Json(body))
 }

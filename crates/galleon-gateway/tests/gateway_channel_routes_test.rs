@@ -19,7 +19,7 @@ use galleon_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
-use galleon_gateway::{AppState, build_gateway_router};
+use galleon_gateway::{build_gateway_router, AppState};
 use serde_json::Value;
 use tower::ServiceExt;
 
@@ -224,8 +224,8 @@ async fn test_sop_webhook_route_mounted_and_authenticated() {
     let resp = app.oneshot(req).await.unwrap();
     assert_eq!(
         resp.status(),
-        StatusCode::FORBIDDEN,
-        "POST /sop/deploy without credentials returns 403, proving route is mounted and authenticated"
+        StatusCode::UNAUTHORIZED,
+        "POST /sop/deploy without credentials returns 401, proving route is mounted and authenticated"
     );
 
     let body_bytes = axum::body::to_bytes(resp.into_body(), 65536).await.unwrap();
