@@ -149,8 +149,6 @@ pub(crate) fn scoped_validate(
 }
 
 /// Save `new_config` to disk, then install it as the live config.
-///
-
 /// bearer auth as every other config write. Because the gateway and the
 /// running channels share one `Arc<RwLock<Config>>`, the swap makes the new
 /// peer live immediately — no daemon restart, and no `/bind` message.

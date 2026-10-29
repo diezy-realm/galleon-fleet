@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::net::SocketAddr;
+use std::time::Duration;
 
 use axum::{
     Json, Router,
@@ -7,6 +8,8 @@ use axum::{
     response::IntoResponse,
     routing::{get, post},
 };
+use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::timeout::TimeoutLayer;
 
 use crate::state::{AppState, GatewaySupervision};
 
@@ -19,7 +22,7 @@ pub async fn start_grpc_server() -> Result<()> {
 
     let addr: SocketAddr = "127.0.0.1:50052"
         .parse()
-        .map_err(|e| anyhow::anyhow!("failed to parse loopback addr: {e}"))?;
+        .map_err(|e| anyhow::Error::msg(format!("failed to parse loopback addr: {e}")))?;
     ::galleon_log::record!(
         INFO,
         ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
@@ -95,15 +98,18 @@ pub async fn run_gateway_with_plugin_webhooks(
     supervision.report_ready(actual_addr);
 
     let mut shutdown_rx = state.shutdown_tx.subscribe();
-    axum::serve(listener, app)
-        .with_graceful_shutdown(async move {
-            while let Ok(should_exit) = shutdown_rx.wait_for(|&x| x).await {
-                if *should_exit {
-                    break;
-                }
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(async move {
+        while let Ok(should_exit) = shutdown_rx.wait_for(|&x| x).await {
+            if *should_exit {
+                break;
             }
-        })
-        .await?;
+        }
+    })
+    .await?;
 
     Ok(())
 }
@@ -132,7 +138,7 @@ pub async fn handle_ready() -> impl IntoResponse {
 /// Construct the Axum Router with all core endpoints: REST, WebSocket,
 /// health, readiness, and config sections.
 pub fn build_gateway_router(state: AppState) -> Router {
-    Router::new()
+    let core_router = Router::new()
         // ── Health and Ready ──
         .route("/health", get(handle_health))
         .route("/ready", get(handle_ready))
@@ -219,5 +225,30 @@ pub fn build_gateway_router(state: AppState) -> Router {
                 }))
             }),
         )
-        .with_state(state)
+        .with_state(state.clone())
+        .layer(RequestBodyLimitLayer::new(crate::MAX_BODY_SIZE));
+
+    // Router inti can be merged with other routers (e.g. TASK-081 fleet router with 1 MiB limit):
+    let app = core_router;
+
+    let app = app.layer(TimeoutLayer::with_status_code(
+        axum::http::StatusCode::REQUEST_TIMEOUT,
+        Duration::from_secs(crate::REQUEST_TIMEOUT_SECS),
+    ));
+
+    let tls_enabled = state
+        .config
+        .read()
+        .gateway
+        .tls
+        .as_ref()
+        .is_some_and(|tls_cfg| tls_cfg.enabled);
+
+    if tls_enabled {
+        app.layer(axum::middleware::from_fn(
+            crate::security_headers::apply_with_hsts,
+        ))
+    } else {
+        app.layer(axum::middleware::from_fn(crate::security_headers::apply))
+    }
 }

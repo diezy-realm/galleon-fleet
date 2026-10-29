@@ -300,7 +300,7 @@ impl AgentSession for StranglerAgentSession {
     ) -> std::result::Result<AgentTurnSuccess, AgentTurnError> {
         if cancel_token.as_ref().is_some_and(|t| t.is_cancelled()) {
             return Err(AgentTurnError {
-                error: anyhow::anyhow!("Turn execution cancelled"),
+                error: anyhow::Error::msg("Turn execution cancelled"),
                 committed_response: String::new(),
                 new_messages: Vec::new(),
             });
@@ -310,10 +310,10 @@ impl AgentSession for StranglerAgentSession {
             Ok(c) => c,
             Err(e) => {
                 return Err(AgentTurnError {
-                    error: anyhow::anyhow!(
+                    error: anyhow::Error::msg(format!(
                         "Failed to connect to AgentEngine at {}: {e}",
                         self.endpoint
-                    ),
+                    )),
                     committed_response: String::new(),
                     new_messages: Vec::new(),
                 });
@@ -341,7 +341,9 @@ impl AgentSession for StranglerAgentSession {
             Ok(resp) => resp.into_inner(),
             Err(status) => {
                 return Err(AgentTurnError {
-                    error: anyhow::anyhow!("AgentEngine start_turn RPC failed: {status}"),
+                    error: anyhow::Error::msg(format!(
+                        "AgentEngine start_turn RPC failed: {status}"
+                    )),
                     committed_response: String::new(),
                     new_messages: Vec::new(),
                 });
@@ -362,7 +364,7 @@ impl AgentSession for StranglerAgentSession {
                     }
                 } => {
                     return Err(AgentTurnError {
-                        error: anyhow::anyhow!("Turn execution cancelled"),
+                        error: anyhow::Error::msg("Turn execution cancelled"),
                         committed_response: accumulated_response,
                         new_messages: Vec::new(),
                     });
@@ -405,7 +407,7 @@ impl AgentSession for StranglerAgentSession {
                                     resp.content
                                 };
                                 return Err(AgentTurnError {
-                                    error: anyhow::anyhow!("AgentEngine error event: {err_msg}"),
+                                    error: anyhow::Error::msg(format!("AgentEngine error event: {err_msg}")),
                                     committed_response: accumulated_response,
                                     new_messages: Vec::new(),
                                 });
@@ -417,7 +419,7 @@ impl AgentSession for StranglerAgentSession {
                         }
                         Err(status) => {
                             return Err(AgentTurnError {
-                                error: anyhow::anyhow!("gRPC streaming error: {status}"),
+                                error: anyhow::Error::msg(format!("gRPC streaming error: {status}")),
                                 committed_response: accumulated_response,
                                 new_messages: Vec::new(),
                             });
@@ -429,7 +431,7 @@ impl AgentSession for StranglerAgentSession {
 
         if !terminal_event_received {
             return Err(AgentTurnError {
-                error: anyhow::anyhow!("AgentEngine stream closed before TurnCompleted"),
+                error: anyhow::Error::msg("AgentEngine stream closed before TurnCompleted"),
                 committed_response: accumulated_response,
                 new_messages: Vec::new(),
             });
@@ -571,7 +573,7 @@ mod tests {
             let (tx, rx) = mpsc::channel(16);
 
             let behavior = self.behavior;
-            tokio::spawn(async move {
+            galleon_spawn::spawn!(async move {
                 match behavior {
                     MockBehavior::ErrorEvent => {
                         let _ = tx
@@ -705,7 +707,7 @@ mod tests {
             request_sink: None,
         };
 
-        tokio::spawn(async move {
+        galleon_spawn::spawn!(async move {
             tonic::transport::Server::builder()
                 .add_service(AgentEngineServer::new(service))
                 .serve_with_incoming_shutdown(
@@ -736,7 +738,7 @@ mod tests {
             request_sink: Some(req_tx),
         };
 
-        tokio::spawn(async move {
+        galleon_spawn::spawn!(async move {
             tonic::transport::Server::builder()
                 .add_service(AgentEngineServer::new(service))
                 .serve_with_incoming_shutdown(

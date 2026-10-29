@@ -4,11 +4,11 @@ use super::*;
 use crate::ws_approval::PendingApprovals;
 use crate::{gateway_cancel_key, register_cancel_token, remove_cancel_token_if_current};
 use axum::extract::ws::{Message, WebSocket};
+use futures_util::SinkExt;
 use galleon_api::channel::ChannelApprovalResponse;
 use galleon_api::sop::{
     ApprovalDecision as SopApprovalDecision, ApprovalPrincipal as SopApprovalPrincipal,
 };
-use futures_util::SinkExt;
 use std::sync::Arc;
 
 pub(crate) async fn handle_ws_sop_frame<S>(
@@ -408,7 +408,6 @@ pub(crate) fn build_done_frame_json(
 /// Process a single chat message through the agent and send the response.
 /// Uses [`Agent::turn_streamed`] so that intermediate text chunks, tool calls,
 /// and tool results are forwarded to the WebSocket client in real time.
-
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn process_chat_message(
     state: &AppState,
@@ -426,8 +425,8 @@ pub(crate) async fn process_chat_message(
     // mid-turn SOP approval frame carries the same identity as the top-level path.
     auth_subject: Option<&str>,
 ) {
-    use galleon_api::agent::TurnEvent;
     use futures_util::StreamExt as _;
+    use galleon_api::agent::TurnEvent;
 
     let (turn_alias, turn_provider, turn_model) = agent.attribution_fields();
     let provider_label = turn_provider.clone();

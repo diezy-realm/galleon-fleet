@@ -13,9 +13,9 @@
 //! the real network+codec round trip without adding a client dependency.
 
 use galleon_gateway::grpc_system_gateway::{
-    system_gateway_server::SystemGatewayServer, GetNativeToolCatalogRequest,
-    GetNativeToolCatalogResponse, SystemGatewayService, SystemMetricsRequest,
-    SystemMetricsResponse, ToolCallRequest, ToolCallResponse,
+    GetNativeToolCatalogRequest, GetNativeToolCatalogResponse, SystemGatewayService,
+    SystemMetricsRequest, SystemMetricsResponse, ToolCallRequest, ToolCallResponse,
+    system_gateway_server::SystemGatewayServer,
 };
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -35,7 +35,7 @@ async fn spawn_server_with_root(
     let addr = probe.local_addr().expect("local addr");
     drop(probe);
 
-    let handle = tokio::spawn(async move {
+    let handle = galleon_spawn::spawn!(async move {
         Server::builder()
             .add_service(SystemGatewayServer::new(SystemGatewayService::new(root)))
             .serve(addr)
@@ -257,11 +257,12 @@ async fn go_callable_grpc_surface_returns_real_system_metrics() {
         .expect("unary call succeeds");
 
     let metrics = response.into_inner();
-    assert!(metrics.system_ram_total_bytes > 0, "expected system_ram_total_bytes > 0");
+    assert!(
+        metrics.system_ram_total_bytes > 0,
+        "expected system_ram_total_bytes > 0"
+    );
     assert!(metrics.memory_total_mb > 0, "expected memory_total_mb > 0");
     assert!(metrics.num_cpus > 0, "expected num_cpus > 0");
 
     server.abort();
 }
-
-
