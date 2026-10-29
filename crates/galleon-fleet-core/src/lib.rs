@@ -10,11 +10,12 @@ pub mod snapshots;
 pub mod store;
 
 pub use collections::{
-    CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS, is_allowed_collection, is_canonical_collection,
-    resolve_allowed_collection, validate_collection_payload,
+    is_allowed_collection, is_canonical_collection, resolve_allowed_collection,
+    validate_collection_payload, CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS,
 };
 pub use error::FleetError;
-pub use store::{FLEET_MAX_BODY, FleetStore, ImportReport};
+pub use snapshots::{CreateSnapshotRequest, SnapshotItem, MAX_SNAPSHOTS};
+pub use store::{FleetStore, ImportReport, FLEET_MAX_BODY};
 
 #[cfg(test)]
 mod tests {

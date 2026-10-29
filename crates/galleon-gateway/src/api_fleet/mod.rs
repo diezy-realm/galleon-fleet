@@ -4,6 +4,7 @@
 //! (collections, snapshots, metrics, policies, terminal, quartermaster).
 
 pub mod collections;
+pub mod snapshots;
 
 use crate::state::AppState;
 use axum::Router;
@@ -13,5 +14,7 @@ use axum::Router;
 /// Mounted into the main gateway router in TASK-081 with its own
 /// RequestBodyLimitLayer (FLEET_MAX_BODY = 1 MiB).
 pub fn routes(state: AppState) -> Router<AppState> {
-    Router::new().merge(collections::routes(state))
+    Router::new()
+        .merge(collections::routes(state.clone()))
+        .merge(snapshots::routes(state))
 }
