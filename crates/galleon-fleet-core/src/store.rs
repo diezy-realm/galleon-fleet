@@ -13,23 +13,7 @@ use crate::error::FleetError;
 pub const FLEET_MAX_BODY: usize = 1_048_576;
 
 /// Canonical collection names (camelCase) supported by web dashboard and fleet core.
-pub const CANONICAL_COLLECTIONS: &[&str] = &[
-    "squads",
-    "ships",
-    "crew",
-    "trainingSkills",
-    "globalSteering",
-    "steeringDirectives",
-    "trainingHooks",
-    "quests",
-    "artifacts",
-    "approvals",
-    "logbook",
-    "treasuryLedger",
-    "notifications",
-    "journalSessions",
-    "chatMessages",
-];
+pub use crate::collections::CANONICAL_COLLECTIONS;
 
 /// Resolves a filename stem (canonical or legacy snake_case) to its canonical camelCase name.
 pub fn resolve_collection_name(file_stem: &str) -> Option<&'static str> {
@@ -277,6 +261,40 @@ impl FleetStore {
             return Ok(None);
         }
         std::fs::read(path).map(Some).map_err(FleetError::Io)
+    }
+
+    /// Read a collection by name with allowlist validation.
+    ///
+    /// Rejects names not in the allowlist with `FleetError::UnknownCollection`.
+    /// Resolves canonical static name to prevent any path traversal.
+    /// Returns `Ok(None)` if the file does not exist yet.
+    pub fn get_collection(&self, name: &str) -> Result<Option<Vec<u8>>, FleetError> {
+        let canonical = crate::collections::resolve_allowed_collection(name)
+            .ok_or_else(|| FleetError::UnknownCollection(name.to_string()))?;
+        self.read_collection(canonical)
+    }
+
+    /// Save a collection with allowlist and body validation.
+    ///
+    /// - Rejects names not in the allowlist with `FleetError::UnknownCollection`.
+    /// - Rejects bodies that exceed `FLEET_MAX_BODY` with `FleetError::PayloadTooLarge`.
+    /// - Rejects bodies that are not valid JSON arrays with `FleetError::NotAJsonArray`.
+    /// - Resolves canonical static name to prevent any path traversal.
+    /// - Atomically writes data to `<root>/<canonical>.json`.
+    pub async fn save_collection(&self, name: &str, data: &[u8]) -> Result<(), FleetError> {
+        let canonical = crate::collections::resolve_allowed_collection(name)
+            .ok_or_else(|| FleetError::UnknownCollection(name.to_string()))?;
+        crate::collections::validate_collection_payload(data)?;
+        self.write_collection(canonical, data).await
+    }
+
+    /// Synchronously save a collection with allowlist and body validation.
+    pub fn save_collection_blocking(&self, name: &str, data: &[u8]) -> Result<(), FleetError> {
+        let canonical = crate::collections::resolve_allowed_collection(name)
+            .ok_or_else(|| FleetError::UnknownCollection(name.to_string()))?;
+        crate::collections::validate_collection_payload(data)?;
+        let filename = format!("{canonical}.json");
+        self.write_atomic_blocking(&filename, data)
     }
 
     /// Check if the store has already been marked as imported.
@@ -606,5 +624,55 @@ mod tests {
         assert_eq!(ts.len(), 20); // "YYYY-MM-DDTHH:MM:SSZ"
         assert!(ts.ends_with('Z'));
         assert_eq!(&ts[10..11], "T");
+    }
+
+    #[tokio::test]
+    async fn test_store_get_and_save_collection() -> Result<(), FleetError> {
+        let tmp = tempfile::tempdir().map_err(FleetError::Io)?;
+        let store = FleetStore::new(tmp.path());
+
+        // Initially, valid collection does not exist
+        assert_eq!(store.get_collection("squads")?, None);
+
+        // Unknown collection rejected with UnknownCollection
+        assert!(matches!(
+            store.get_collection("notes"),
+            Err(FleetError::UnknownCollection(_))
+        ));
+
+        // Save valid collection
+        let sample = br#"[{"id":"squad-1","name":"Core Software Delivery"}]"#;
+        store.save_collection("squads", sample).await?;
+
+        // Read back
+        let data = store.get_collection("squads")?;
+        assert_eq!(data, Some(sample.to_vec()));
+
+        // Save with non-array rejected
+        assert!(matches!(
+            store.save_collection("squads", br#"{"object":"not-array"}"#).await,
+            Err(FleetError::NotAJsonArray)
+        ));
+
+        // Save with path traversal rejected
+        assert!(matches!(
+            store.save_collection("../../evil", sample).await,
+            Err(FleetError::UnknownCollection(_))
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_store_save_collection_blocking() -> Result<(), FleetError> {
+        let tmp = tempfile::tempdir().map_err(FleetError::Io)?;
+        let store = FleetStore::new(tmp.path());
+
+        let sample = br#"[{"id":"ship-1"}]"#;
+        store.save_collection_blocking("ships", sample)?;
+
+        let data = store.get_collection("ships")?;
+        assert_eq!(data, Some(sample.to_vec()));
+        Ok(())
     }
 }
