@@ -408,7 +408,6 @@ pub(crate) fn build_done_frame_json(
 /// Process a single chat message through the agent and send the response.
 /// Uses [`Agent::turn_streamed`] so that intermediate text chunks, tool calls,
 /// and tool results are forwarded to the WebSocket client in real time.
-
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn process_chat_message(
     state: &AppState,

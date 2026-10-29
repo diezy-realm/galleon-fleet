@@ -96,10 +96,8 @@ impl DeviceRegistry {
                     },
                 ))
             })?;
-        for item in rows {
-            if let Ok((hash, info)) = item {
-                cache.insert(hash, info);
-            }
+        for (hash, info) in rows.flatten() {
+            cache.insert(hash, info);
         }
 
         Ok(Self {

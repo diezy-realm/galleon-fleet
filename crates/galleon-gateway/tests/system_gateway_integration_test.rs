@@ -35,7 +35,7 @@ async fn spawn_server_with_root(
     let addr = probe.local_addr().expect("local addr");
     drop(probe);
 
-    let handle = tokio::spawn(async move {
+    let handle = galleon_spawn::spawn!(async move {
         Server::builder()
             .add_service(SystemGatewayServer::new(SystemGatewayService::new(root)))
             .serve(addr)
