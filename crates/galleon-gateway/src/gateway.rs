@@ -6,7 +6,7 @@ use axum::{
     Json, Router,
     extract::State,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{delete, get, patch, post},
 };
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::timeout::TimeoutLayer;
@@ -139,9 +139,11 @@ pub async fn handle_ready() -> impl IntoResponse {
 /// health, readiness, and config sections.
 pub fn build_gateway_router(state: AppState) -> Router {
     let core_router = Router::new()
-        // ── Health and Ready ──
+        // ── Health, Ready, and Legacy Pairing ──
         .route("/health", get(handle_health))
         .route("/ready", get(handle_ready))
+        .route("/pair", post(crate::api_pairing::handle_pair))
+        .route("/pair/code", get(crate::api_pairing::handle_pair_code))
         // ── Section routes (/api/sections/*) ──
         .route("/api/sections", get(crate::api_sections::handle_sections))
         .route(
@@ -214,6 +216,29 @@ pub fn build_gateway_router(state: AppState) -> Router {
             get(crate::api_config::handle_drift),
         )
         .route("/api/logs", get(crate::api_logs::handle_api_logs))
+        // ── Pairing + Device management API ──
+        .route(
+            "/api/pairing/initiate",
+            post(crate::api_pairing::initiate_pairing),
+        )
+        .route(
+            "/api/pair",
+            post(crate::api_pairing::submit_pairing_enhanced),
+        )
+        .route("/api/devices", get(crate::api_pairing::list_devices))
+        .route(
+            "/api/devices/me/capabilities",
+            patch(crate::api_pairing::update_my_capabilities)
+                .post(crate::api_pairing::update_my_capabilities),
+        )
+        .route(
+            "/api/devices/{id}",
+            delete(crate::api_pairing::revoke_device),
+        )
+        .route(
+            "/api/devices/{id}/token/rotate",
+            post(crate::api_pairing::rotate_token),
+        )
         .route(
             "/api/auth/ratelimit",
             get(|| async {
