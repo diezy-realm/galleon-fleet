@@ -14,6 +14,7 @@ pub use collections::{
     resolve_allowed_collection, validate_collection_payload,
 };
 pub use error::FleetError;
+pub use snapshots::{CreateSnapshotRequest, MAX_SNAPSHOTS, SnapshotItem};
 pub use store::{FLEET_MAX_BODY, FleetStore, ImportReport};
 
 #[cfg(test)]

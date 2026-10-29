@@ -53,7 +53,7 @@ pub struct FleetStore {
     /// Root directory for fleet storage (`<Config.data_dir>/fleet`).
     pub root: PathBuf,
     /// Mutex for serializing writes across concurrent callers.
-    write_lock: Arc<Mutex<()>>,
+    pub(crate) write_lock: Arc<Mutex<()>>,
 }
 
 impl FleetStore {
@@ -429,7 +429,7 @@ impl FleetStore {
 }
 
 /// Helper converting current system time to a UTC ISO 8601 formatted string without external crates.
-fn current_timestamp_iso8601() -> String {
+pub(crate) fn current_timestamp_iso8601() -> String {
     let now = std::time::SystemTime::now();
     let duration = now
         .duration_since(std::time::UNIX_EPOCH)
