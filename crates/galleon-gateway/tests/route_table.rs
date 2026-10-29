@@ -19,10 +19,17 @@ use galleon_config::schema::{
 use galleon_gateway::{AppState, build_gateway_router, live_pairing_code_policy};
 use serde::{Deserialize, Serialize};
 
-const CONSUMER_INVENTORY_MD: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../standard-docs/tech-standart/api-contracts/consumer-inventory.md"
-));
+fn load_consumer_inventory() -> String {
+    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let inventory_path =
+        manifest_dir.join("../../standard-docs/tech-standart/api-contracts/consumer-inventory.md");
+    std::fs::read_to_string(&inventory_path).unwrap_or_else(|err| {
+        panic!(
+            "failed to read consumer-inventory.md at {}: {err}",
+            inventory_path.display()
+        )
+    })
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RouteStatus {
@@ -157,7 +164,8 @@ async fn test_gateway_route_table_snapshot_and_401_matrix() {
         .build()
         .expect("reqwest client");
 
-    let inventory_routes = parse_rust_routes_from_inventory(CONSUMER_INVENTORY_MD);
+    let inventory_raw = load_consumer_inventory();
+    let inventory_routes = parse_rust_routes_from_inventory(&inventory_raw);
     assert!(
         !inventory_routes.is_empty(),
         "Harus ada rute berstatus Rust yang diparsing dari consumer-inventory.md"
