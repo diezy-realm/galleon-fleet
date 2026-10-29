@@ -749,6 +749,168 @@ pub async fn rotate_token(
     }
 }
 
+/// POST /pair — exchange one-time code for bearer token (legacy pairing)
+pub async fn handle_pair(
+    State(state): State<AppState>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let rate_key =
+        super::client_key_from_request(Some(peer_addr), &headers, state.trust_forwarded_headers);
+    if !state.rate_limiter.allow_pair(&rate_key) {
+        ::galleon_log::record!(
+            WARN,
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
+            "/pair rate limit exceeded"
+        );
+        let err = serde_json::json!({
+            "error": "Too many pairing requests. Please retry later.",
+            "retry_after": super::RATE_LIMIT_WINDOW_SECS,
+        });
+        return (StatusCode::TOO_MANY_REQUESTS, Json(err)).into_response();
+    }
+
+    // ── Auth rate limiting (brute-force protection) ──
+    if let Err(e) = state.auth_limiter.check_rate_limit(&rate_key) {
+        ::galleon_log::record!(
+            WARN,
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                .with_attrs(::serde_json::json!({"rate_key": rate_key})),
+            "pairing auth rate limit exceeded"
+        );
+        let err = serde_json::json!({
+            "error": format!("Too many auth attempts. Try again in {}s.", e.retry_after_secs),
+            "retry_after": e.retry_after_secs,
+        });
+        return (StatusCode::TOO_MANY_REQUESTS, Json(err)).into_response();
+    }
+
+    let code = headers
+        .get("X-Pairing-Code")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    match state.pairing.try_pair(code, &rate_key).await {
+        Ok(Some(token)) => {
+            ::galleon_log::record!(
+                INFO,
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
+                "new client paired successfully"
+            );
+            let token_hash = galleon_config::pairing::PairingGuard::token_hash(&token);
+            if let Some(ref registry) = state.device_registry {
+                if let Err(e) = registry.register(
+                    token_hash.clone(),
+                    DeviceInfo {
+                        id: uuid::Uuid::new_v4().to_string(),
+                        name: None,
+                        device_type: None,
+                        paired_at: Utc::now(),
+                        last_seen: Utc::now(),
+                        ip_address: Some(rate_key.clone()),
+                        capabilities: None,
+                    },
+                ) {
+                    ::galleon_log::record!(
+                        ERROR,
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
+                            .with_attrs(::serde_json::json!({"error": format!("{e}")})),
+                        "device registry insert failed after successful legacy /pair; rolling back in-process token"
+                    );
+                    state.pairing.revoke_token_hash(&token_hash);
+                    let body = serde_json::json!({
+                        "paired": false,
+                        "persisted": false,
+                        "error": format!("Device registry error: {e}"),
+                        "message": "Pairing failed; the in-process token was not retained.",
+                    });
+                    return (StatusCode::INTERNAL_SERVER_ERROR, Json(body)).into_response();
+                }
+            }
+            if let Err(err) = Box::pin(super::persist_pairing_tokens(
+                state.config.clone(),
+                &state.pairing,
+                state.config_write_lock.clone(),
+            ))
+            .await
+            {
+                ::galleon_log::record!(
+                    ERROR,
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
+                    "pairing token persistence failed; rolling back in-process token"
+                );
+                state.pairing.revoke_token_hash(&token_hash);
+                let body = serde_json::json!({
+                    "paired": false,
+                    "persisted": false,
+                    "error": format!("Token persistence error: {err}"),
+                    "message": "Pairing failed; the in-process token was not retained.",
+                });
+                return (StatusCode::INTERNAL_SERVER_ERROR, Json(body)).into_response();
+            }
+
+            let body = serde_json::json!({
+                "paired": true,
+                "persisted": true,
+                "token": token,
+                "message": "Save this token — use it as Authorization: Bearer <token>"
+            });
+            (StatusCode::OK, Json(body)).into_response()
+        }
+        Ok(None) => {
+            state.auth_limiter.record_attempt(&rate_key);
+            ::galleon_log::record!(
+                WARN,
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
+                "pairing attempt with invalid code"
+            );
+            let err = serde_json::json!({"error": "Invalid pairing code"});
+            (StatusCode::FORBIDDEN, Json(err)).into_response()
+        }
+        Err(lockout_secs) => {
+            ::galleon_log::record!(
+                WARN,
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({"lockout_secs": lockout_secs})),
+                "pairing locked out; too many failed attempts"
+            );
+            let err = serde_json::json!({
+                "error": format!("Too many failed attempts. Try again in {lockout_secs}s."),
+                "retry_after": lockout_secs
+            });
+            (StatusCode::TOO_MANY_REQUESTS, Json(err)).into_response()
+        }
+    }
+}
+
+/// GET /pair/code — public pairing code endpoint (only exposes code before first pairing)
+pub async fn handle_pair_code(State(state): State<AppState>) -> impl IntoResponse {
+    let require = state.pairing.require_pairing();
+    let is_paired = state.pairing.is_paired();
+
+    // Only expose the code during initial setup (before first pairing)
+    let code = if require && !is_paired {
+        state.pairing.pairing_code()
+    } else {
+        None
+    };
+
+    let body = serde_json::json!({
+        "success": true,
+        "pairing_required": require,
+        "pairing_code": code,
+    });
+
+    (StatusCode::OK, Json(body)).into_response()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

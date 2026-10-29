@@ -121,6 +121,7 @@ pub mod ws_sop_runs;
 pub use api_config::{
     ConfigDriftSummary, DriftEntry, compute_drift, persist_and_swap, try_compute_drift,
 };
+pub use api_pairing::{handle_pair, handle_pair_code};
 pub use gateway::{
     build_gateway_router, handle_health, handle_ready, run_gateway,
     run_gateway_with_plugin_webhooks, start_grpc_server,
