@@ -297,6 +297,53 @@ impl FleetStore {
         self.write_atomic_blocking(&filename, data)
     }
 
+    /// Count the number of entries in a stored collection.
+    ///
+    /// If the collection does not exist, cannot be read, or is not a valid JSON array,
+    /// returns 0 without panicking.
+    pub fn count_collection(&self, name: &str) -> usize {
+        match self.get_collection(name) {
+            Ok(Some(bytes)) => {
+                if let Ok(serde_json::Value::Array(arr)) = serde_json::from_slice(&bytes) {
+                    arr.len()
+                } else {
+                    0
+                }
+            }
+            _ => 0,
+        }
+    }
+
+    /// Count entries in a stored collection whose `"status"` property
+    /// matches any of the given `wanted_statuses`.
+    ///
+    /// If the collection does not exist, cannot be read, or is not a valid JSON array,
+    /// returns 0 without panicking.
+    pub fn count_by_status(&self, name: &str, wanted_statuses: &[&str]) -> usize {
+        match self.get_collection(name) {
+            Ok(Some(bytes)) => {
+                if let Ok(serde_json::Value::Array(arr)) = serde_json::from_slice(&bytes) {
+                    arr.iter()
+                        .filter(|item| {
+                            item.get("status")
+                                .and_then(|v| v.as_str())
+                                .map(|s| wanted_statuses.contains(&s))
+                                .unwrap_or(false)
+                        })
+                        .count()
+                } else {
+                    0
+                }
+            }
+            _ => 0,
+        }
+    }
+
+    /// Calculate a fleet metrics snapshot from this store with optional RSS memory usage.
+    pub fn get_metrics(&self, memory_used_mb: Option<f64>) -> crate::metrics::FleetMetrics {
+        crate::metrics::calculate_fleet_metrics(self, memory_used_mb)
+    }
+
     /// Check if the store has already been marked as imported.
     pub fn is_imported(&self) -> bool {
         self.root.join(".imported").exists()

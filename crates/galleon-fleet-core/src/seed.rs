@@ -270,8 +270,10 @@ mod tests {
 
         let mut hydrated_count = 0;
         for col in seed_map {
-            if let Some(arr) = parsed["seed"].get(col).and_then(|d| d.as_array())
-                && !arr.is_empty()
+            if parsed["seed"]
+                .get(col)
+                .and_then(|d| d.as_array())
+                .is_some_and(|arr| !arr.is_empty())
             {
                 hydrated_count += 1;
             }
