@@ -279,6 +279,9 @@ pub fn build_gateway_router(state: AppState) -> Router {
             "/admin/sop/deny",
             post(crate::api_sop::handle_sop_deny),
         )
+        // ── Channel routes and SOP webhook ──
+        .merge(crate::optional_channel_routes())
+        .merge(crate::sop_webhook_routes())
         .with_state(state.clone())
         .layer(RequestBodyLimitLayer::new(crate::MAX_BODY_SIZE));
 

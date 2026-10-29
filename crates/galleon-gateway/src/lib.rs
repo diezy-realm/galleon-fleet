@@ -2,6 +2,7 @@
     clippy::to_string_in_format_args,
     clippy::useless_format,
     clippy::collapsible_if,
+    clippy::result_large_err,
     unused,
     dead_code
 )]
@@ -514,7 +515,7 @@ fn require_gateway_chat_agent_alias(
     })
 }
 
-fn optional_channel_routes() -> Router<AppState> {
+pub fn optional_channel_routes() -> Router<AppState> {
     let router: Router<AppState> = Router::new();
     #[cfg(feature = "channel-whatsapp-cloud")]
     let router = router
@@ -538,7 +539,7 @@ fn optional_channel_routes() -> Router<AppState> {
     router
 }
 
-fn sop_webhook_routes() -> Router<AppState> {
+pub fn sop_webhook_routes() -> Router<AppState> {
     Router::new().route("/sop/{*rest}", post(api_sop_webhook::handle_sop_webhook))
 }
 
