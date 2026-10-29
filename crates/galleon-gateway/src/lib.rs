@@ -21,6 +21,7 @@ pub mod api_audit;
 pub mod api_backup;
 pub mod api_browse;
 pub mod api_config;
+pub mod api_fleet;
 pub mod api_logs;
 pub mod api_pairing;
 pub mod api_personality;

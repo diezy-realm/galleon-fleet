@@ -9,6 +9,10 @@ pub mod seed;
 pub mod snapshots;
 pub mod store;
 
+pub use collections::{
+    CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS, is_allowed_collection, is_canonical_collection,
+    resolve_allowed_collection, validate_collection_payload,
+};
 pub use error::FleetError;
 pub use store::{FLEET_MAX_BODY, FleetStore, ImportReport};
 

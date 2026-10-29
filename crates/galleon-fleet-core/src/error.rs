@@ -14,11 +14,17 @@ pub enum FleetError {
     #[error("collection exceeds 1 MiB limit ({size} bytes, limit: {limit} bytes)")]
     PayloadTooLarge { size: usize, limit: usize },
 
+    #[error("unknown collection: {0}")]
+    UnknownCollection(String),
+
     #[error("unknown or invalid collection: {0}")]
     InvalidCollection(String),
 
     #[error("collection not found: {0}")]
     NotFound(String),
+
+    #[error("collection body must be a JSON array")]
+    NotAJsonArray,
 
     #[error("{0}")]
     Custom(String),
