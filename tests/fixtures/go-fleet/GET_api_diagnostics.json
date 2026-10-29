@@ -1,0 +1,37 @@
+[
+  {
+    "component": "Sovereign Gateway (Warp Engine)",
+    "detail": "Gateway port 50052 not listening (gRPC server not started).",
+    "id": "d-1",
+    "latency": "0ms",
+    "status": "unavailable"
+  },
+  {
+    "component": "Kernel Landlock LSM Sandboxing",
+    "detail": "Landlock check requires system-specific tools.",
+    "id": "d-2",
+    "latency": "unknown",
+    "status": "unknown"
+  },
+  {
+    "component": "System Gateway LLM Provider Core",
+    "detail": "System Gateway (:50052) offline - LLM execution unavailable.",
+    "id": "d-3",
+    "latency": "0ms",
+    "status": "unavailable"
+  },
+  {
+    "component": "SQLite FTS5 Semantic Memory",
+    "detail": "2 indexed artifact(s); engine heap 2.9 MB, 7 goroutine(s) live.",
+    "id": "d-4",
+    "latency": "n/a",
+    "status": "healthy"
+  },
+  {
+    "component": "Disaster Recovery Daemon",
+    "detail": "Snapshot dir exists but no snap-* files found (/tmp/galleon-contract-data-i6sFzA).",
+    "id": "d-5",
+    "latency": "0ms",
+    "status": "degraded"
+  }
+]

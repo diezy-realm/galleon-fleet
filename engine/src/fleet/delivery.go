@@ -263,7 +263,7 @@ func (h *HTTPHandler) handleCollections(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if r.Method == http.MethodPost {
+	if r.Method == http.MethodPost || r.Method == http.MethodPut {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "failed to read body", http.StatusBadRequest)

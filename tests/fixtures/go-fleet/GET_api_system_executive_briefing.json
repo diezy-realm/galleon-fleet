@@ -1,0 +1,16 @@
+{
+  "activeAlerts": [
+    "2 pending Captain's Approval await signature"
+  ],
+  "admiralStatus": "Awaiting Captain — 2 approval(s) pending",
+  "date": "Thursday, 29 October 2026",
+  "generatedAt": "2026-10-29T20:39:48.660334237+07:00",
+  "keyAchievements": [
+    "2 code artifact(s) indexed into the Treasury Gallery",
+    "7 specialist(s) commissioned across the fleet roster",
+    "1 voyage(s) currently underway"
+  ],
+  "recommendedFocus": "Review and sign the pending approval(s), then reassign idle Ships to the quest backlog.",
+  "title": "Sovereign Fleet Watch Report",
+  "treasuryBurnRate": "Engine Room resident memory: 2.9 MB"
+}

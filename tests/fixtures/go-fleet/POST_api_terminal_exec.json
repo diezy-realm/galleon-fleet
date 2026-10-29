@@ -1,0 +1,9 @@
+{
+  "auditId": "audit-c0c0b22f392386a0",
+  "duration": "98.844µs",
+  "error": "[EXTERNAL][SERVICE_UNAVAILABLE] Rust SystemGateway unreachable: native tool execution rejected (fail-closed boundary enforced): [EXTERNAL][SERVICE_UNAVAILABLE] system gateway currently unavailable",
+  "exitCode": 1,
+  "riskTier": "READ",
+  "stderr": "[EXTERNAL][SERVICE_UNAVAILABLE] Rust SystemGateway unreachable: native tool execution rejected (fail-closed boundary enforced): [EXTERNAL][SERVICE_UNAVAILABLE] system gateway currently unavailable",
+  "stdout": ""
+}

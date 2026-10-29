@@ -1,0 +1,32 @@
+[
+  {
+    "createdAt": "2026-03-01T08:00:00Z",
+    "crewIds": [
+      "crew-repo-analyst",
+      "crew-eng-planner"
+    ],
+    "id": "squad-dev",
+    "leaderCrewId": "crew-eng-planner",
+    "name": "Core Software Delivery Squad",
+    "purpose": "Rapid issue resolution, patch synthesis, AST refactoring, and regression test suites.",
+    "shipId": "ship-dev",
+    "status": "active",
+    "updatedAt": "2026-03-28T14:30:00Z"
+  },
+  {
+    "createdAt": "2026-03-05T09:00:00Z",
+    "crewIds": [
+      "crew-market-analyst",
+      "crew-brand-reviewer",
+      "crew-content-copywriter",
+      "crew-marketing-strategist"
+    ],
+    "id": "squad-growth",
+    "leaderCrewId": "crew-brand-reviewer",
+    "name": "Growth & Product Narrative Squad",
+    "purpose": "Synthesize changelogs, architecture documentation, marketing announcements, and developer release briefings.",
+    "shipId": "ship-growth",
+    "status": "active",
+    "updatedAt": "2026-10-07T14:30:00Z"
+  }
+]

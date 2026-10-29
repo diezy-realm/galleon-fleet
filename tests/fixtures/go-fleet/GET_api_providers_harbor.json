@@ -1,0 +1,53 @@
+[
+  {
+    "capabilities": [
+      "Streaming",
+      "Zero Data Egress",
+      "Offline Execution"
+    ],
+    "id": "prov-ollama",
+    "latencyMs": 18,
+    "models": [
+      "deepseek-r1:14b",
+      "llama3.2:3b",
+      "qwen2.5-coder:7b"
+    ],
+    "name": "Ollama Local Gateway",
+    "status": "active",
+    "vendor": "Ollama Local Daemon"
+  },
+  {
+    "capabilities": [
+      "Multimodal",
+      "2M Context Window",
+      "Tool Calling",
+      "Search Grounding"
+    ],
+    "id": "prov-gemini",
+    "latencyMs": 142,
+    "models": [
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash-exp"
+    ],
+    "name": "Google Gemini API",
+    "status": "connected",
+    "vendor": "Google Cloud"
+  },
+  {
+    "capabilities": [
+      "BYOK Routing",
+      "Redundancy Fallback"
+    ],
+    "id": "prov-openrouter",
+    "latencyMs": 210,
+    "models": [
+      "claude-3-5-sonnet",
+      "o3-mini",
+      "mistral-large"
+    ],
+    "name": "OpenRouter Mesh Broker",
+    "status": "available",
+    "vendor": "OpenRouter"
+  }
+]
