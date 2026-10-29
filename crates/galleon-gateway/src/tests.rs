@@ -1,16 +1,24 @@
 use super::*;
+use crate::rate_limit::RATE_LIMITER_SWEEP_INTERVAL_SECS;
 use async_trait::async_trait;
 use axum::body::Body;
+use axum::extract::ConnectInfo;
 use axum::http::{HeaderValue, Request, Uri};
 use axum::response::IntoResponse;
 #[cfg(feature = "channel-whatsapp-cloud")]
 use galleon_api::channel::ChannelMessage;
-use galleon_memory::{Memory, MemoryCategory, MemoryEntry};
+use galleon_api::tool as tools;
+use galleon_config::cost::CostTracker;
+use galleon_config::pairing::PairingGuard;
+use galleon_config::policy::SecurityPolicy;
+use galleon_memory::{DefaultMemoryStrategy, Memory, MemoryCategory, MemoryEntry};
 use galleon_providers::ModelProvider;
 use galleon_tools::tool_search::{mcp_tool_access_policy, register_eager_mcp_tool_if_allowed};
 use http_body_util::BodyExt;
 use parking_lot::{Mutex, RwLock};
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::time::{Duration, Instant};
 use tower::ServiceExt;
 
 #[test]
@@ -377,7 +385,7 @@ fn web_dashboard_availability_reports_embedded_assets() {
 /// Build an AppState wired with a real pairing guard, on-disk config path,
 /// and an optional device registry so the admin paircode handler's
 /// revoke + persist paths can be exercised end to end.
-pub(super) fn admin_paircode_state(
+pub(crate) fn admin_paircode_state(
     tmp: &tempfile::TempDir,
     require_pairing: bool,
     with_registry: bool,
@@ -449,6 +457,13 @@ pub(super) fn admin_paircode_state(
         pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         tui_registry: None,
         sop_runner: None,
+        diagnostics: None,
+        quickstart: None,
+        integration_catalog: None,
+        personality_runner: None,
+        skills_runner: None,
+        acp_runner: None,
+        control_plane: None,
         #[cfg(feature = "webauthn")]
         webauthn: None,
     }
@@ -905,18 +920,6 @@ fn long_running_request_timeout_uses_typed_config_default() {
 }
 
 #[test]
-fn webhook_body_requires_message_field() {
-    let valid = r#"{"message": "hello"}"#;
-    let parsed: Result<WebhookBody, _> = serde_json::from_str(valid);
-    assert!(parsed.is_ok());
-    assert_eq!(parsed.unwrap().message, "hello");
-
-    let missing = r#"{"other": "field"}"#;
-    let parsed: Result<WebhookBody, _> = serde_json::from_str(missing);
-    assert!(parsed.is_err());
-}
-
-#[test]
 fn whatsapp_query_fields_are_optional() {
     let q = WhatsAppVerifyQuery {
         mode: None,
@@ -1101,19 +1104,7 @@ async fn run_gateway_starts_with_zero_agents() {
     );
 
     let handle = galleon_spawn::spawn!(async move {
-        run_gateway(
-            "127.0.0.1",
-            0,
-            config,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
-        .await
+        run_gateway("127.0.0.1", 0, config, None, None, None, None, None, None).await
     });
 
     match tokio::time::timeout(
@@ -1169,19 +1160,7 @@ async fn run_gateway_starts_with_unresolved_agent_risk_profile() {
     config.agents.insert("fake123".to_string(), agent);
 
     let handle = galleon_spawn::spawn!(async move {
-        run_gateway(
-            "127.0.0.1",
-            0,
-            config,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
-        .await
+        run_gateway("127.0.0.1", 0, config, None, None, None, None, None, None).await
     });
 
     match tokio::time::timeout(
@@ -1223,19 +1202,7 @@ async fn run_gateway_starts_with_mismatched_provider_api_key() {
     );
 
     let handle = galleon_spawn::spawn!(async move {
-        run_gateway(
-            "127.0.0.1",
-            0,
-            config,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
-        .await
+        run_gateway("127.0.0.1", 0, config, None, None, None, None, None, None).await
     });
 
     match tokio::time::timeout(
@@ -1294,7 +1261,6 @@ async fn daemon_startup_gateway_reports_ready_and_uses_external_shutdown_sender(
             config,
             None,
             Some(reload_controls),
-            None,
             None,
             None,
             None,
@@ -1366,7 +1332,6 @@ async fn daemon_startup_gateway_does_not_report_ready_when_tls_setup_fails() {
         None,
         None,
         None,
-        None,
         Some(readiness),
     )
     .await;
@@ -1379,160 +1344,6 @@ async fn daemon_startup_gateway_does_not_report_ready_when_tls_setup_fails() {
         ready_rx.borrow().is_none(),
         "failed post-bind setup must not report gateway readiness"
     );
-}
-
-#[tokio::test]
-async fn metrics_endpoint_returns_hint_when_prometheus_is_disabled() {
-    let state = AppState {
-        config: Arc::new(RwLock::new(Config::default())),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider: Arc::new(MockModelProvider::default()),
-        model: "test-model".into(),
-        temperature: None,
-        mem: Arc::new(MockMemory),
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::new(MockMemory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    let response = handle_metrics(State(state)).await.into_response();
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-        response
-            .headers()
-            .get(header::CONTENT_TYPE)
-            .and_then(|value| value.to_str().ok()),
-        Some(PROMETHEUS_CONTENT_TYPE)
-    );
-
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let text = String::from_utf8(body.to_vec()).unwrap();
-    assert!(text.contains("Prometheus backend not enabled"));
-}
-
-#[cfg(feature = "observability-prometheus")]
-#[tokio::test]
-async fn metrics_endpoint_renders_prometheus_output() {
-    let event_tx = tokio::sync::broadcast::channel(16).0;
-    let prom = galleon_api::observability_traits::NoopObserver;
-    galleon_api::observability_traits::Observer::record_event(
-        &prom,
-        &galleon_api::observability_traits::ObserverEvent::HeartbeatTick,
-    );
-
-    let observer: Arc<dyn galleon_api::observability_traits::Observer> = Arc::new(prom);
-    let state = AppState {
-        config: Arc::new(RwLock::new(Config::default())),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider: Arc::new(MockModelProvider::default()),
-        model: "test-model".into(),
-        temperature: None,
-        mem: Arc::new(MockMemory),
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::new(MockMemory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer,
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    let response = handle_metrics(State(state)).await.into_response();
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let text = String::from_utf8(body.to_vec()).unwrap();
-    assert!(text.contains("clawcrew_heartbeat_ticks_total 1"));
 }
 
 #[test]
@@ -1793,75 +1604,6 @@ async fn persist_pairing_tokens_serializes_against_concurrent_config_write() {
     );
 }
 
-#[test]
-fn webhook_memory_key_is_unique() {
-    let key1 = webhook_memory_key();
-    let key2 = webhook_memory_key();
-
-    assert!(key1.starts_with("webhook_msg_"));
-    assert!(key2.starts_with("webhook_msg_"));
-    assert_ne!(key1, key2);
-}
-
-#[test]
-fn webhook_session_id_accepts_valid() {
-    let mut headers = HeaderMap::new();
-    headers.insert("X-Session-Id", HeaderValue::from_static("abc-DEF_123.foo"));
-    assert_eq!(webhook_session_id(&headers), Some("abc-DEF_123.foo".into()));
-}
-
-#[test]
-fn webhook_session_id_trims_whitespace() {
-    let mut headers = HeaderMap::new();
-    headers.insert("X-Session-Id", HeaderValue::from_static("  my-session  "));
-    assert_eq!(webhook_session_id(&headers), Some("my-session".into()));
-}
-
-#[test]
-fn webhook_session_id_rejects_empty() {
-    let mut headers = HeaderMap::new();
-    headers.insert("X-Session-Id", HeaderValue::from_static(""));
-    assert_eq!(webhook_session_id(&headers), None);
-
-    headers.insert("X-Session-Id", HeaderValue::from_static("   "));
-    assert_eq!(webhook_session_id(&headers), None);
-}
-
-#[test]
-fn webhook_session_id_rejects_missing() {
-    let headers = HeaderMap::new();
-    assert_eq!(webhook_session_id(&headers), None);
-}
-
-#[test]
-fn webhook_session_id_rejects_oversized() {
-    let mut headers = HeaderMap::new();
-    let long = "a".repeat(129);
-    headers.insert("X-Session-Id", HeaderValue::from_str(&long).unwrap());
-    assert_eq!(webhook_session_id(&headers), None);
-
-    let at_limit = "b".repeat(128);
-    headers.insert("X-Session-Id", HeaderValue::from_str(&at_limit).unwrap());
-    assert!(webhook_session_id(&headers).is_some());
-}
-
-#[test]
-fn webhook_session_id_rejects_invalid_chars() {
-    let mut headers = HeaderMap::new();
-    for bad in &[
-        "has/slash",
-        "has:colon",
-        "has space",
-        "has@at",
-        "emoji\u{1f600}",
-    ] {
-        if let Ok(val) = HeaderValue::from_str(bad) {
-            headers.insert("X-Session-Id", val);
-            assert_eq!(webhook_session_id(&headers), None, "should reject: {bad}");
-        }
-    }
-}
-
 #[cfg(feature = "channel-whatsapp-cloud")]
 #[test]
 fn whatsapp_memory_key_includes_sender_and_message_id() {
@@ -1997,11 +1739,9 @@ impl ModelProvider for MockModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for MockModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "MockModelProvider"
@@ -2129,69 +1869,6 @@ fn test_connect_info() -> ConnectInfo<SocketAddr> {
     ConnectInfo(SocketAddr::from(([127, 0, 0, 1], 30_300)))
 }
 
-/// Minimal AppState for webhook-SSE regressions.
-fn sse_test_state(model_provider: Arc<dyn ModelProvider>) -> AppState {
-    let memory: Arc<dyn Memory> = Arc::new(MockMemory);
-    AppState {
-        config: Arc::new(RwLock::new(Config::default())),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider,
-        model: "test-model".into(),
-        temperature: None,
-        mem: memory.clone(),
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::clone(&memory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    }
-}
-
 /// A local OpenAI-compatible HTTP fixture used by the production-shaped
 /// gateway tests below. Keeping the listener in the test process proves
 /// that the configured Agent/provider path is exercised without relying on
@@ -2214,10 +1891,6 @@ impl Drop for ChatCompletionFixture {
     fn drop(&mut self) {
         self.server.abort();
     }
-}
-
-async fn spawn_chat_completion_fixture(response_body: impl Into<String>) -> ChatCompletionFixture {
-    spawn_chat_completion_fixture_sequence(vec![response_body.into()]).await
 }
 
 async fn spawn_chat_completion_fixture_sequence(
@@ -2294,72 +1967,6 @@ impl futures_util::Stream for BurstChatStream {
 impl Drop for BurstChatStream {
     fn drop(&mut self) {
         self.closed.store(true, Ordering::SeqCst);
-    }
-}
-
-async fn spawn_burst_hanging_chat_completion_fixture() -> ChatCompletionFixture {
-    let requests = Arc::new(AtomicUsize::new(0));
-    let stream_chunks = Arc::new(AtomicUsize::new(0));
-    let stream_closed = Arc::new(AtomicBool::new(false));
-    let requests_for_handler = Arc::clone(&requests);
-    let bodies: Arc<Vec<String>> = Arc::new(
-        (0..17)
-            .map(|index| {
-                format!(
-                    "data: {{\"choices\":[{{\"delta\":{{\"content\":\"chunk-{index}\"}}}}]}}\n\n"
-                )
-            })
-            .collect(),
-    );
-    let bodies_for_handler = Arc::clone(&bodies);
-    let chunks_for_handler = Arc::clone(&stream_chunks);
-    let closed_for_handler = Arc::clone(&stream_closed);
-    let app = Router::new().route(
-            "/v1/chat/completions",
-            post(
-                move |_: HeaderMap,
-                      axum::extract::Json(_request): axum::extract::Json<serde_json::Value>| {
-                    let requests = Arc::clone(&requests_for_handler);
-                    let bodies = Arc::clone(&bodies_for_handler);
-                    let emitted = Arc::clone(&chunks_for_handler);
-                    let closed = Arc::clone(&closed_for_handler);
-                    async move {
-                        requests.fetch_add(1, Ordering::SeqCst);
-                        let stream = BurstChatStream {
-                            bodies,
-                            next: 0,
-                            emitted,
-                            closed,
-                        };
-                        (
-                            [(
-                                header::CONTENT_TYPE,
-                                HeaderValue::from_static("text/event-stream"),
-                            )],
-                            Body::from_stream(stream),
-                        )
-                            .into_response()
-                    }
-                },
-            ),
-        );
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("bind burst chat-completions fixture");
-    let address = listener
-        .local_addr()
-        .expect("burst chat-completions fixture address");
-    let server = galleon_spawn::spawn!(async move {
-        axum::serve(listener, app)
-            .await
-            .expect("serve burst chat-completions fixture");
-    });
-    ChatCompletionFixture {
-        address,
-        requests,
-        stream_chunks,
-        stream_closed,
-        server,
     }
 }
 
@@ -2442,19 +2049,6 @@ async fn wait_for_fixture_requests(fixture: &ChatCompletionFixture, expected: us
     })
     .await
     .expect("provider fixture request");
-}
-
-async fn wait_for_fixture_chunks(fixture: &ChatCompletionFixture, expected: usize) {
-    tokio::time::timeout(Duration::from_secs(3), async {
-        loop {
-            if fixture.stream_chunks.load(Ordering::SeqCst) >= expected {
-                return;
-            }
-            tokio::time::sleep(Duration::from_millis(5)).await;
-        }
-    })
-    .await
-    .expect("provider fixture stream chunks");
 }
 
 async fn wait_for_registry_token(
@@ -2553,31 +2147,6 @@ async fn collect_cancelled_sse(response: Response) -> String {
     String::from_utf8(payload.to_vec()).expect("cancelled SSE response is UTF-8")
 }
 
-async fn start_test_sse(state: &AppState, session_id: &str) -> Response {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::ACCEPT,
-        HeaderValue::from_static("text/event-stream"),
-    );
-    headers.insert(
-        "X-Session-Id",
-        HeaderValue::from_str(session_id).expect("transport test session id header"),
-    );
-    handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery {
-            agent: Some("web".to_string()),
-        }),
-        headers,
-        Ok(Json(WebhookBody {
-            message: "transport overlap".to_string(),
-            stream: true,
-        })),
-    )
-    .await
-}
-
 /// Build an AppState whose `/webhook?agent=web` path constructs a real
 /// runtime Agent and a configured custom OpenAI-compatible provider. The
 /// synthetic allowlist deliberately leaves the Agent with no executable
@@ -2588,9 +2157,7 @@ fn production_sse_state(
     daily_limit_usd: f64,
     response_cache_enabled: bool,
 ) -> (AppState, Arc<CostTracker>) {
-    use galleon_config::multi_agent::{
-        AgentMemoryConfig, AgentWorkspaceConfig, MemoryBackendKind,
-    };
+    use galleon_config::multi_agent::{AgentMemoryConfig, AgentWorkspaceConfig, MemoryBackendKind};
     use galleon_config::schema::{
         AliasedAgentConfig, CustomModelProviderConfig, ModelProviderConfig, RiskProfileConfig,
         RuntimeProfileConfig,
@@ -2668,40 +2235,6 @@ fn production_sse_state(
     (state, tracker)
 }
 
-async fn collect_production_sse(state: &AppState, message: &str, session_id: &str) -> String {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::ACCEPT,
-        HeaderValue::from_static("text/event-stream"),
-    );
-    headers.insert(
-        "X-Session-Id",
-        HeaderValue::from_str(session_id).expect("fixture session id header"),
-    );
-    let response = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery {
-            agent: Some("web".to_string()),
-        }),
-        headers,
-        Ok(Json(WebhookBody {
-            message: message.to_string(),
-            stream: true,
-        })),
-    )
-    .await
-    .into_response();
-    assert_eq!(response.status(), StatusCode::OK);
-    let payload = response
-        .into_body()
-        .collect()
-        .await
-        .expect("production SSE response body")
-        .to_bytes();
-    String::from_utf8(payload.to_vec()).expect("production SSE response is UTF-8")
-}
-
 const PRODUCTION_FIXTURE_STREAM: &str = "data: {\"choices\":[{\"delta\":{\"content\":\"fixture answer\"}}]}\n\n\
 data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":5}}\n\n\
 data: [DONE]\n\n";
@@ -2732,687 +2265,14 @@ impl ModelProvider for HangingProvider {
 
 impl ::galleon_api::attribution::Attributable for HangingProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
 
     fn alias(&self) -> &str {
         "HangingProvider"
     }
-}
-
-#[tokio::test]
-async fn webhook_sse_production_agent_persists_usage_with_agent_alias() {
-    let fixture = spawn_chat_completion_fixture(PRODUCTION_FIXTURE_STREAM).await;
-    let tmp = tempfile::tempdir().expect("production gateway temp dir");
-    let (state, tracker) = production_sse_state(&tmp, &fixture.base_url(), 1.0, false);
-
-    let text = collect_production_sse(&state, "production stream", "production-cost").await;
-
-    assert!(
-        text.contains("event: token") && text.contains(r#"data: {"text":"fixture answer"}"#),
-        "configured Agent/provider path must forward streamed text: {text}"
-    );
-    assert!(
-        text.contains("event: done") && !text.contains("event: error"),
-        "successful production-shaped turn must finish without an error frame: {text}"
-    );
-    assert_eq!(
-        fixture.requests.load(Ordering::SeqCst),
-        1,
-        "one successful turn should make exactly one provider request"
-    );
-
-    let summary = tracker
-        .get_summary_for_agent("web")
-        .expect("agent-scoped cost summary");
-    assert_eq!(summary.request_count, 1);
-    assert_eq!(summary.total_tokens, 15);
-    assert!(
-        summary.session_cost_usd > 0.0,
-        "configured pricing must persist a non-zero streamed-turn cost"
-    );
-    let by_agent = tracker.get_summary().expect("global cost summary").by_agent;
-    let stats = by_agent.get("web").expect("agent alias attribution");
-    assert_eq!(stats.total_tokens, 15);
-    assert!(stats.cost_usd > 0.0);
-}
-
-#[tokio::test]
-async fn webhook_sse_production_budget_exhaustion_skips_provider_request() {
-    let fixture = spawn_chat_completion_fixture(PRODUCTION_FIXTURE_STREAM).await;
-    let tmp = tempfile::tempdir().expect("production gateway temp dir");
-    let (state, tracker) = production_sse_state(&tmp, &fixture.base_url(), 0.01, false);
-    tracker
-        .record_usage_with_agent(
-            galleon_config::cost::types::TokenUsage::new(
-                "fixture-model",
-                1_000_000,
-                0,
-                0,
-                2.0,
-                4.0,
-                0.0,
-            ),
-            Some("web"),
-        )
-        .expect("seed exhausted budget record");
-
-    let text = collect_production_sse(&state, "blocked stream", "production-budget").await;
-
-    assert_eq!(
-        fixture.requests.load(Ordering::SeqCst),
-        0,
-        "an exhausted budget must reject before the provider request"
-    );
-    assert!(
-        text.contains("event: error"),
-        "budget rejection must be an SSE error: {text}"
-    );
-    assert!(
-        text.contains("Budget exceeded"),
-        "SSE error should preserve the budget explanation: {text}"
-    );
-    assert!(
-        !text.contains("event: done"),
-        "budget rejection must not emit done: {text}"
-    );
-}
-
-#[tokio::test]
-async fn webhook_sse_production_cache_hit_reconciles_no_chunk_final_response() {
-    let fixture = spawn_chat_completion_fixture(PRODUCTION_FIXTURE_STREAM).await;
-    let tmp = tempfile::tempdir().expect("production gateway temp dir");
-    let (state, tracker) = production_sse_state(&tmp, &fixture.base_url(), 1.0, true);
-
-    let first = collect_production_sse(&state, "cache me", "production-cache-first").await;
-    assert!(
-        first.contains("event: token"),
-        "cache seed must stream a token: {first}"
-    );
-    assert!(
-        first.contains("event: done"),
-        "cache seed must complete: {first}"
-    );
-    assert_eq!(fixture.requests.load(Ordering::SeqCst), 1);
-
-    let second = collect_production_sse(&state, "cache me", "production-cache-second").await;
-    assert!(
-        second.contains("event: token") && second.contains(r#"data: {"text":"fixture answer"}"#),
-        "a production cache hit has no runtime chunks, so reconciliation must emit the final response: {second}"
-    );
-    assert!(
-        second.contains("event: done"),
-        "cache hit must still terminate with done: {second}"
-    );
-    assert!(
-        !second.contains("event: error"),
-        "cache hit must not emit an error: {second}"
-    );
-    assert_eq!(
-        fixture.requests.load(Ordering::SeqCst),
-        1,
-        "cache hit must not make another provider request"
-    );
-    assert_eq!(
-        tracker
-            .get_summary_for_agent("web")
-            .expect("cache cost summary")
-            .request_count,
-        1,
-        "cache hit must not record a second usage event"
-    );
-}
-
-#[tokio::test]
-async fn webhook_sse_production_receipt_suffix_reconciles_before_done() {
-    use galleon_config::schema::ToolReceiptsConfig;
-
-    let fixture = spawn_chat_completion_fixture_sequence(vec![
-        PRODUCTION_FIXTURE_TOOL_STREAM.to_string(),
-        PRODUCTION_FIXTURE_FINAL_STREAM.to_string(),
-    ])
-    .await;
-    let tmp = tempfile::tempdir().expect("production receipt fixture temp dir");
-    let (state, _) = production_sse_state(&tmp, &fixture.base_url(), 1.0, false);
-    {
-        let mut config = state.config.write();
-        config
-            .risk_profiles
-            .get_mut("fixture")
-            .expect("production fixture risk profile")
-            .allowed_tools = vec!["calculator".to_string()];
-        config
-            .runtime_profiles
-            .get_mut("fixture")
-            .expect("production fixture runtime profile")
-            .max_tool_iterations = 2;
-        config
-            .runtime_profiles
-            .get_mut("fixture")
-            .expect("production fixture runtime profile")
-            .tool_receipts = ToolReceiptsConfig {
-            enabled: true,
-            show_in_response: true,
-            ..ToolReceiptsConfig::default()
-        };
-    }
-
-    let text = collect_production_sse(&state, "receipt stream", "production-receipt").await;
-
-    assert_eq!(fixture.requests.load(Ordering::SeqCst), 2);
-    let final_text = text
-        .find(r#"data: {"text":"final answer"}"#)
-        .unwrap_or_else(|| panic!("streamed final answer frame: {text}"));
-    let receipt_text = text
-        .find("Tool receipts:")
-        .expect("runtime receipt block in final response");
-    let done = text.find("event: done").expect("terminal done frame");
-    assert!(
-        final_text < receipt_text && receipt_text < done,
-        "receipt suffix must be reconciled before done: {text}"
-    );
-}
-
-#[tokio::test]
-async fn webhook_sse_streams_cumulative_token_then_done() {
-    let _capture_guard = lock_gateway_chat_dispatch_capture_for_test().await;
-    let state = sse_test_state(Arc::new(MockModelProvider::default()));
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::ACCEPT,
-        HeaderValue::from_static("text/event-stream"),
-    );
-    let body = Ok(Json(WebhookBody {
-        message: "sse cumulative hello".into(),
-        stream: true,
-    }));
-
-    let response = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        body,
-    )
-    .await;
-
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-        response
-            .headers()
-            .get(header::CONTENT_TYPE)
-            .and_then(|v| v.to_str().ok()),
-        Some("text/event-stream")
-    );
-
-    let payload = response.into_body().collect().await.unwrap().to_bytes();
-    let text = std::str::from_utf8(&payload).unwrap();
-    assert!(
-        text.contains("event: token") && text.contains(r#"data: {"text":"ok"}"#),
-        "expected a cumulative token frame, got: {text}"
-    );
-    assert!(
-        text.contains("event: done") && text.contains("data: {}"),
-        "expected a terminating done frame, got: {text}"
-    );
-    assert!(
-        !text.contains("event: error"),
-        "unexpected error frame: {text}"
-    );
-    let captures = gateway_chat_dispatch_captures_for_test();
-    assert!(
-        captures
-            .iter()
-            .any(|capture| capture.message == "sse cumulative hello"),
-        "streamed dispatch must record the same capture as the JSON path"
-    );
-}
-
-#[tokio::test]
-async fn webhook_stream_true_without_sse_accept_keeps_json() {
-    let state = sse_test_state(Arc::new(MockModelProvider::default()));
-    let body = Ok(Json(WebhookBody {
-        message: "hello".into(),
-        stream: true,
-    }));
-
-    let response = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        HeaderMap::new(),
-        body,
-    )
-    .await
-    .into_response();
-
-    assert_eq!(response.status(), StatusCode::OK);
-    let payload = response.into_body().collect().await.unwrap().to_bytes();
-    let parsed: serde_json::Value = serde_json::from_slice(&payload).unwrap();
-    assert_eq!(parsed["response"], "ok");
-}
-
-#[tokio::test]
-async fn webhook_sse_abort_cancels_turn_via_shared_registry() {
-    let state = sse_test_state(Arc::new(HangingProvider));
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::ACCEPT,
-        HeaderValue::from_static("text/event-stream"),
-    );
-    headers.insert("X-Session-Id", HeaderValue::from_static("sse-abort"));
-    let body = Ok(Json(WebhookBody {
-        message: "hello".into(),
-        stream: true,
-    }));
-
-    let state_for_task = state.clone();
-    let task = galleon_spawn::spawn!(async move {
-        handle_webhook(
-            State(state_for_task.clone()),
-            test_connect_info(),
-            Query(WebhookQuery::default()),
-            headers,
-            body,
-        )
-        .await
-        .into_response()
-    });
-    let response = task.await.unwrap();
-
-    // The streamed turn registered its cancellation token under the
-    // gateway session key derived from X-Session-Id.
-    let token = state
-        .cancel_tokens
-        .lock()
-        .expect("cancel_tokens lock poisoned")
-        .get("gw_sse-abort")
-        .cloned();
-    assert!(
-        token.is_some(),
-        "streamed webhook turn must register its cancellation token"
-    );
-
-    // Cancel through the same registry the abort endpoint uses; the
-    // stream must then terminate without a done frame.
-    if let Some(token) = token {
-        token.cancel();
-    }
-    let payload = response.into_body().collect().await.unwrap().to_bytes();
-    let text = std::str::from_utf8(&payload).unwrap();
-    assert!(
-        !text.contains("event: done"),
-        "unexpected done frame: {text}"
-    );
-    assert!(
-        text.contains("event: error"),
-        "server-side cancellation must terminate an open SSE stream with an error frame: {text}"
-    );
-}
-
-#[tokio::test]
-async fn webhook_sse_abort_cancels_backpressured_unread_client() {
-    let fixture = spawn_burst_hanging_chat_completion_fixture().await;
-    let tmp = tempfile::tempdir().expect("backpressure temp dir");
-    let (state, _) = production_sse_state(&tmp, &fixture.base_url(), 1.0, false);
-    let session_id = "sse-backpressure";
-    let response = start_test_sse(&state, session_id).await;
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let cancel_key = gateway_cancel_key(session_id);
-    let token = wait_for_registry_token(&state, &cancel_key).await;
-    wait_for_fixture_requests(&fixture, 1).await;
-    wait_for_fixture_chunks(&fixture, 17).await;
-
-    token.cancel();
-    tokio::time::timeout(Duration::from_secs(3), async {
-        loop {
-            let registry_empty = !state
-                .cancel_tokens
-                .lock()
-                .expect("cancel_tokens lock poisoned")
-                .contains_key(&cancel_key);
-            let provider_closed = fixture.stream_closed.load(Ordering::SeqCst);
-            if registry_empty && provider_closed {
-                return;
-            }
-            tokio::time::sleep(Duration::from_millis(5)).await;
-        }
-    })
-    .await
-    .expect("server-side abort must wake a backpressured SSE turn");
-
-    assert!(token.is_cancelled());
-    assert!(fixture.stream_closed.load(Ordering::SeqCst));
-
-    // The response body was intentionally left unread while the bounded
-    // token queue filled. Resuming the read must still deliver the
-    // cancellation terminal frame through its priority channel.
-    let text = collect_cancelled_sse(response).await;
-    assert!(
-        text.contains("event: error"),
-        "backpressured cancellation must retain its terminal error: {text}"
-    );
-    assert!(
-        !text.contains("event: done"),
-        "a cancelled backpressured stream must not complete: {text}"
-    );
-}
-
-#[tokio::test]
-async fn webhook_sse_body_drop_cancels_turn() {
-    let state = sse_test_state(Arc::new(HangingProvider));
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::ACCEPT,
-        HeaderValue::from_static("text/event-stream"),
-    );
-    headers.insert("X-Session-Id", HeaderValue::from_static("sse-drop"));
-
-    let response = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        Ok(Json(WebhookBody {
-            message: "hello".into(),
-            stream: true,
-        })),
-    )
-    .await;
-    let token = state
-        .cancel_tokens
-        .lock()
-        .expect("cancel_tokens lock poisoned")
-        .get("gw_sse-drop")
-        .cloned()
-        .expect("streamed turn must register its cancellation token");
-
-    drop(response);
-
-    tokio::time::timeout(Duration::from_secs(1), token.cancelled())
-        .await
-        .expect("dropping the SSE body must cancel the in-flight turn");
-    assert!(
-        !state
-            .cancel_tokens
-            .lock()
-            .expect("cancel_tokens lock poisoned")
-            .contains_key("gw_sse-drop"),
-        "dropping the SSE body must remove its cancellation token"
-    );
-}
-
-#[tokio::test]
-async fn webhook_sse_replacement_cancels_old_turn_without_removing_new_token() {
-    let state = sse_test_state(Arc::new(HangingProvider));
-    let request = || {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            header::ACCEPT,
-            HeaderValue::from_static("text/event-stream"),
-        );
-        headers.insert("X-Session-Id", HeaderValue::from_static("sse-replace"));
-        (
-            headers,
-            Ok(Json(WebhookBody {
-                message: "hello".into(),
-                stream: true,
-            })),
-        )
-    };
-
-    let (headers, body) = request();
-    let first = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        body,
-    )
-    .await;
-    let first_token = state
-        .cancel_tokens
-        .lock()
-        .expect("cancel_tokens lock poisoned")
-        .get("gw_sse-replace")
-        .cloned()
-        .expect("first streamed turn must register its cancellation token");
-
-    let (headers, body) = request();
-    let second = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        body,
-    )
-    .await;
-    let second_token = state
-        .cancel_tokens
-        .lock()
-        .expect("cancel_tokens lock poisoned")
-        .get("gw_sse-replace")
-        .cloned()
-        .expect("replacement streamed turn must register its cancellation token");
-
-    tokio::time::timeout(Duration::from_secs(1), first_token.cancelled())
-        .await
-        .expect("registering a replacement must cancel the previous turn");
-    tokio::task::yield_now().await;
-    let current = state
-        .cancel_tokens
-        .lock()
-        .expect("cancel_tokens lock poisoned")
-        .get("gw_sse-replace")
-        .cloned()
-        .expect("old-turn cleanup must preserve the replacement token");
-    assert!(Arc::ptr_eq(&current, &second_token));
-
-    drop(first);
-    drop(second);
-}
-
-#[test]
-fn cancellation_transport_ws_to_sse_preserves_new_owner() {
-    // Real WebSocket/Agent setup is stack-heavy on the test platform; keep
-    // this transport-level race isolated without changing the global test
-    // stack or weakening the production boundary.
-    std::thread::Builder::new()
-        .name("gateway-ws-to-sse-cancellation".to_string())
-        .stack_size(8 * 1024 * 1024)
-        .spawn(|| {
-            tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .expect("test runtime")
-                .block_on(cancellation_transport_ws_to_sse_preserves_new_owner_inner());
-        })
-        .expect("spawn WS-to-SSE transport test thread")
-        .join()
-        .expect("WS-to-SSE transport test thread must not panic");
-}
-
-async fn cancellation_transport_ws_to_sse_preserves_new_owner_inner() {
-    use futures_util::{SinkExt, StreamExt};
-    use tokio_tungstenite::{connect_async, tungstenite::Message as ClientMessage};
-
-    let fixture = spawn_hanging_chat_completion_fixture().await;
-    let tmp = tempfile::tempdir().expect("transport test temp dir");
-    let (state, _) = production_sse_state(&tmp, &fixture.base_url(), 1.0, false);
-    let (gateway_addr, gateway_server) = spawn_test_ws_gateway(state.clone()).await;
-    let session_id = "transport.ws-to.sse";
-    let session_key = gateway_cancel_key(session_id);
-
-    // This URL connects only to the test's loopback listener. Keep the
-    // scheme split so the static insecure-transport rule does not flag a
-    // non-production fixture.
-    let websocket_url = format!(
-        "{}//{gateway_addr}/ws/chat?agent=web&session_id={session_id}",
-        "ws:"
-    );
-    let (mut websocket, _) = connect_async(websocket_url)
-        .await
-        .expect("WS transport upgrade");
-    let session_start = websocket
-        .next()
-        .await
-        .expect("WS session_start frame")
-        .expect("WS session_start transport");
-    assert!(session_start.into_text().unwrap().contains("session_start"));
-    websocket
-        .send(ClientMessage::Text(r#"{"type":"connect"}"#.into()))
-        .await
-        .expect("WS connect frame");
-    let connected = websocket
-        .next()
-        .await
-        .expect("WS connected frame")
-        .expect("WS connected transport");
-    assert!(connected.into_text().unwrap().contains("connected"));
-    websocket
-        .send(ClientMessage::Text(
-            r#"{"type":"message","content":"first transport"}"#.into(),
-        ))
-        .await
-        .expect("WS chat frame");
-
-    let ws_token = wait_for_registry_token(&state, &session_key).await;
-    wait_for_fixture_requests(&fixture, 1).await;
-
-    let sse_response = start_test_sse(&state, session_id).await;
-    assert_eq!(sse_response.status(), StatusCode::OK);
-    let sse_token = wait_for_registry_replacement(&state, &session_key, &ws_token).await;
-    wait_for_fixture_requests(&fixture, 2).await;
-    tokio::time::timeout(Duration::from_secs(3), ws_token.cancelled())
-        .await
-        .expect("SSE registration cancels the replaced WS turn");
-    wait_for_registry_owner(&state, &session_key, &sse_token).await;
-
-    // The dotted display id must resolve to the canonical key and cancel
-    // the replacement SSE turn, not the original WebSocket turn.
-    let abort_response = api::handle_api_session_abort(
-        State(state.clone()),
-        HeaderMap::new(),
-        axum::extract::Path(session_id.to_string()),
-    )
-    .await
-    .into_response();
-    assert_eq!(abort_response.status(), StatusCode::OK);
-    tokio::time::timeout(Duration::from_secs(3), sse_token.cancelled())
-        .await
-        .expect("abort endpoint cancels the replacement SSE turn");
-
-    // Consume the body so its terminal error and owner-qualified cleanup run.
-    let sse_text = collect_cancelled_sse(sse_response).await;
-    assert!(
-        sse_text.contains("event: error"),
-        "SSE cancellation frame: {sse_text}"
-    );
-    assert!(
-        !sse_text.contains("event: done"),
-        "cancelled SSE must not complete: {sse_text}"
-    );
-    wait_for_registry_empty(&state, &session_key).await;
-
-    drop(websocket);
-    gateway_server.abort();
-}
-
-#[test]
-fn cancellation_transport_sse_to_ws_preserves_new_owner() {
-    std::thread::Builder::new()
-        .name("gateway-sse-to-ws-cancellation".to_string())
-        .stack_size(8 * 1024 * 1024)
-        .spawn(|| {
-            tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .expect("test runtime")
-                .block_on(cancellation_transport_sse_to_ws_preserves_new_owner_inner());
-        })
-        .expect("spawn SSE-to-WS transport test thread")
-        .join()
-        .expect("SSE-to-WS transport test thread must not panic");
-}
-
-async fn cancellation_transport_sse_to_ws_preserves_new_owner_inner() {
-    use futures_util::{SinkExt, StreamExt};
-    use tokio_tungstenite::{connect_async, tungstenite::Message as ClientMessage};
-
-    let fixture = spawn_hanging_chat_completion_fixture().await;
-    let tmp = tempfile::tempdir().expect("transport test temp dir");
-    let (state, _) = production_sse_state(&tmp, &fixture.base_url(), 1.0, false);
-    let session_id = "transport-sse-to-ws";
-    let session_key = format!("{GW_SESSION_PREFIX}{session_id}");
-
-    let sse_response = start_test_sse(&state, session_id).await;
-    assert_eq!(sse_response.status(), StatusCode::OK);
-    let sse_token = wait_for_registry_token(&state, &session_key).await;
-    wait_for_fixture_requests(&fixture, 1).await;
-
-    let (gateway_addr, gateway_server) = spawn_test_ws_gateway(state.clone()).await;
-    // This URL connects only to the test's loopback listener. Keep the
-    // scheme split so the static insecure-transport rule does not flag a
-    // non-production fixture.
-    let websocket_url = format!(
-        "{}//{gateway_addr}/ws/chat?agent=web&session_id={session_id}",
-        "ws:"
-    );
-    let (mut websocket, _) = connect_async(websocket_url)
-        .await
-        .expect("WS transport upgrade");
-    let session_start = websocket
-        .next()
-        .await
-        .expect("WS session_start frame")
-        .expect("WS session_start transport");
-    assert!(session_start.into_text().unwrap().contains("session_start"));
-    websocket
-        .send(ClientMessage::Text(r#"{"type":"connect"}"#.into()))
-        .await
-        .expect("WS connect frame");
-    let connected = websocket
-        .next()
-        .await
-        .expect("WS connected frame")
-        .expect("WS connected transport");
-    assert!(connected.into_text().unwrap().contains("connected"));
-    websocket
-        .send(ClientMessage::Text(
-            r#"{"type":"message","content":"replacement transport"}"#.into(),
-        ))
-        .await
-        .expect("WS chat frame");
-
-    let ws_token = wait_for_registry_replacement(&state, &session_key, &sse_token).await;
-    wait_for_fixture_requests(&fixture, 2).await;
-    tokio::time::timeout(Duration::from_secs(3), sse_token.cancelled())
-        .await
-        .expect("WS registration cancels the replaced SSE turn");
-    wait_for_registry_owner(&state, &session_key, &ws_token).await;
-
-    let sse_text = collect_cancelled_sse(sse_response).await;
-    assert!(
-        sse_text.contains("event: error"),
-        "SSE cancellation frame: {sse_text}"
-    );
-    assert!(
-        !sse_text.contains("event: done"),
-        "cancelled SSE must not complete: {sse_text}"
-    );
-
-    // Cancel the replacement WS turn and verify that its cleanup removes
-    // only its own registry entry after the old SSE cleanup has completed.
-    ws_token.cancel();
-    wait_for_registry_empty(&state, &session_key).await;
-
-    drop(websocket);
-    gateway_server.abort();
 }
 
 #[test]
@@ -3507,6 +2367,7 @@ fn websocket_delivers_api_injected_message_for_dotted_session() {
 }
 
 async fn websocket_delivers_api_injected_message_inner() {
+    galleon_runtime::install_agent_runner();
     use futures_util::{SinkExt, StreamExt};
     use tokio_tungstenite::{connect_async, tungstenite::Message as ClientMessage};
 
@@ -3597,48 +2458,6 @@ async fn websocket_delivers_api_injected_message_inner() {
 }
 
 #[test]
-fn sse_final_response_reconciliation_handles_empty_and_receipt_suffix() {
-    let mut cumulative = String::new();
-    let frame = reconcile_sse_final_response(&mut cumulative, "cached response")
-        .expect("a no-chunk response must produce one token frame")
-        .unwrap();
-    let _ = frame;
-    assert_eq!(cumulative, "cached response");
-
-    let mut cumulative = "answer".to_string();
-    let frame = reconcile_sse_final_response(&mut cumulative, "answer\n\n[receipt]")
-        .expect("a final receipt suffix must be emitted")
-        .unwrap();
-    let _ = frame;
-    assert_eq!(cumulative, "answer\n\n[receipt]");
-
-    let mut cumulative = "already complete".to_string();
-    assert!(reconcile_sse_final_response(&mut cumulative, "already complete").is_none());
-    assert_eq!(cumulative, "already complete");
-
-    let mut cumulative = "speculative streamed text".to_string();
-    let frame = reconcile_sse_final_response(&mut cumulative, "authoritative final")
-        .expect("a conflicting final response must replace streamed text")
-        .unwrap();
-    let _ = frame;
-    assert_eq!(cumulative, "authoritative final");
-
-    let mut cumulative = "authoritative final with stale suffix".to_string();
-    let frame = reconcile_sse_final_response(&mut cumulative, "authoritative final")
-        .expect("a shorter authoritative final must remove stale streamed text")
-        .unwrap();
-    let _ = frame;
-    assert_eq!(cumulative, "authoritative final");
-
-    let mut cumulative = "stale streamed text".to_string();
-    let frame = reconcile_sse_final_response(&mut cumulative, "")
-        .expect("an empty authoritative final must clear stale streamed text")
-        .unwrap();
-    let _ = frame;
-    assert!(cumulative.is_empty());
-}
-
-#[test]
 fn cancellation_registry_preserves_sse_owner_when_ws_finishes() {
     let registry = Arc::new(std::sync::Mutex::new(HashMap::new()));
     let ws_token = Arc::new(tokio_util::sync::CancellationToken::new());
@@ -3704,111 +2523,6 @@ fn cancellation_registry_keeps_lossy_session_ids_separate() {
         2,
         "distinct session ids must not share a cancellation entry"
     );
-}
-
-#[tokio::test]
-async fn webhook_idempotency_skips_duplicate_provider_calls() {
-    let provider_impl = Arc::new(MockModelProvider::default());
-    let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
-    let memory: Arc<dyn Memory> = Arc::new(MockMemory);
-
-    let state = AppState {
-        config: Arc::new(RwLock::new(Config::default())),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider,
-        model: "test-model".into(),
-        temperature: None,
-        mem: memory.clone(),
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::clone(&memory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    let mut headers = HeaderMap::new();
-    headers.insert("X-Idempotency-Key", HeaderValue::from_static("abc-123"));
-
-    let body = Ok(Json(WebhookBody {
-        message: "hello".into(),
-        stream: false,
-    }));
-    let first = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers.clone(),
-        body,
-    )
-    .await
-    .into_response();
-    assert_eq!(first.status(), StatusCode::OK);
-
-    let body = Ok(Json(WebhookBody {
-        message: "hello".into(),
-        stream: false,
-    }));
-    let second = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        body,
-    )
-    .await
-    .into_response();
-    assert_eq!(second.status(), StatusCode::OK);
-
-    let payload = second.into_body().collect().await.unwrap().to_bytes();
-    let parsed: serde_json::Value = serde_json::from_slice(&payload).unwrap();
-    assert_eq!(parsed["status"], "duplicate");
-    assert_eq!(parsed["idempotent"], true);
-    assert_eq!(provider_impl.calls.load(Ordering::SeqCst), 1);
 }
 
 #[tokio::test]
@@ -3971,81 +2685,6 @@ async fn sop_webhook_requires_shared_engine_and_webhook_auth() {
     .await;
     assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);
     assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
-}
-
-#[tokio::test]
-async fn webhook_dispatches_sop_first_then_falls_back_to_chat_on_no_match() {
-    let tmp = tempfile::tempdir().unwrap();
-    let (state, provider) = webhook_sop_state(&tmp, "/webhook");
-    let (state, secret) = with_webhook_secret(state);
-    let sop_response = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        webhook_secret_header(&secret),
-        Ok(Json(WebhookBody {
-            message: "deploy".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-    assert_eq!(sop_response.status(), StatusCode::OK);
-    let payload = sop_response.into_body().collect().await.unwrap().to_bytes();
-    let parsed: serde_json::Value = serde_json::from_slice(&payload).unwrap();
-    assert_eq!(parsed["status"], "accepted");
-    assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
-
-    let no_match_tmp = tempfile::tempdir().unwrap();
-    let (no_match_state, fallback_provider) = webhook_sop_state(&no_match_tmp, "/sop/only");
-    let fallback_response = handle_webhook(
-        State(no_match_state),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        HeaderMap::new(),
-        Ok(Json(WebhookBody {
-            message: "chat instead".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-    assert_eq!(fallback_response.status(), StatusCode::OK);
-    assert_eq!(fallback_provider.calls.load(Ordering::SeqCst), 1);
-}
-
-#[tokio::test]
-async fn sop_and_chat_webhook_idempotency_namespaces_do_not_collide() {
-    let tmp = tempfile::tempdir().unwrap();
-    let (state, provider) = webhook_sop_state(&tmp, "/sop/deploy");
-    let (state, secret) = with_webhook_secret(state);
-    let mut headers = webhook_secret_header(&secret);
-    headers.insert("X-Idempotency-Key", HeaderValue::from_static("same-key"));
-
-    let sop_response = api_sop_webhook::handle_sop_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        axum::extract::Path("deploy".to_string()),
-        headers.clone(),
-        axum::body::Bytes::from_static(br#"{}"#),
-    )
-    .await;
-    assert_eq!(sop_response.status(), StatusCode::OK);
-
-    let chat_response = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        Ok(Json(WebhookBody {
-            message: "chat".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-    assert_eq!(chat_response.status(), StatusCode::OK);
-    assert_eq!(provider.calls.load(Ordering::SeqCst), 1);
 }
 
 #[tokio::test]
@@ -4221,55 +2860,6 @@ async fn sop_dispatch_uses_authorization_snapshot_during_secret_rotation() {
     assert!(require_sop_dispatch_credentials(rotated).is_ok());
 }
 
-/// B1 on `/webhook`, where body parsing and trigger matching sit between
-/// authorization and the dispatch credential check — the widest window.
-/// A headerless request must not become dispatchable because a secret was
-/// inserted while the body was being parsed.
-#[tokio::test]
-async fn webhook_path_snapshot_survives_body_parse_and_trigger_match() {
-    let tmp = tempfile::tempdir().unwrap();
-    let (state, provider) = webhook_sop_state(&tmp, "/webhook");
-
-    let verdict = authorize_webhook_request(&state, test_connect_info().0, &HeaderMap::new())
-        .expect("no configured control -> authorization itself passes");
-
-    // Simulate the parse/match window: config mutates before dispatch.
-    assert!(
-        api_sop_webhook::has_matching_webhook_sop(&state, "/webhook").unwrap(),
-        "fixture must load a matching /webhook trigger"
-    );
-    state.config.write().gateway.webhook_secret = Some(generate_test_secret());
-
-    assert!(
-        require_sop_dispatch_credentials(verdict).is_err(),
-        "the /webhook SOP branch must judge the snapshot, not the mutated config"
-    );
-
-    let response = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        HeaderMap::new(),
-        Ok(Json(WebhookBody {
-            message: "deploy".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    assert_eq!(
-        started_run_count(&state),
-        0,
-        "no SOP run may start on the /webhook path either"
-    );
-    assert_eq!(
-        provider.calls.load(Ordering::SeqCst),
-        0,
-        "and it must not silently fall back to the chat/model path"
-    );
-}
-
 /// B1 purity: the dispatch gate decides only from the request-scoped
 /// verdict. Two verdict values with identical contents must produce
 /// identical decisions regardless of what the live config says, which is
@@ -4369,55 +2959,6 @@ async fn sop_idempotency_resists_adversarial_cross_path_collision() {
     assert_eq!(
         second_parsed["status"], "accepted",
         "a colliding-by-concatenation key must not suppress a different SOP path"
-    );
-}
-
-/// B2 end-to-end across endpoints: a `/webhook` caller who forges the SOP
-/// namespace prefix into their own key must not reserve the `/sop/deploy`
-/// replay slot and suppress the real SOP request.
-#[tokio::test]
-async fn webhook_forged_namespace_key_cannot_suppress_sop_dispatch() {
-    let tmp = tempfile::tempdir().unwrap();
-    let (state, _provider) = webhook_two_sop_state(&tmp, "/webhook", "/sop/deploy");
-    let (state, secret) = with_webhook_secret(state);
-
-    // `/webhook` caller forges the `/sop/deploy` storage key.
-    let mut forged = webhook_secret_header(&secret);
-    forged.insert(
-        "X-Idempotency-Key",
-        HeaderValue::from_static("sop:/sop/deploy:k"),
-    );
-    let chat = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        forged,
-        Ok(Json(WebhookBody {
-            message: "hello".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-    assert_eq!(chat.status(), StatusCode::OK);
-
-    // The genuine `/sop/deploy` request with key `k` must still dispatch.
-    let mut sop_headers = webhook_secret_header(&secret);
-    sop_headers.insert("X-Idempotency-Key", HeaderValue::from_static("k"));
-    let sop = api_sop_webhook::handle_sop_webhook(
-        State(state),
-        test_connect_info(),
-        axum::extract::Path("deploy".to_string()),
-        sop_headers,
-        axum::body::Bytes::from_static(br#"{}"#),
-    )
-    .await;
-    assert_eq!(sop.status(), StatusCode::OK);
-    let parsed: serde_json::Value =
-        serde_json::from_slice(&sop.into_body().collect().await.unwrap().to_bytes()).unwrap();
-    assert_eq!(
-        parsed["status"], "accepted",
-        "a forged /webhook key must not reserve a /sop/* replay slot"
     );
 }
 
@@ -4528,35 +3069,6 @@ async fn sop_dispatch_rejected_when_no_credentials_configured() {
 }
 
 #[tokio::test]
-async fn webhook_sop_dispatch_rejected_when_no_credentials_configured() {
-    let tmp = tempfile::tempdir().unwrap();
-    let (state, provider) = webhook_sop_state(&tmp, "/webhook");
-
-    let response = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        HeaderMap::new(),
-        Ok(Json(WebhookBody {
-            message: "deploy".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    let payload = response.into_body().collect().await.unwrap().to_bytes();
-    let parsed: serde_json::Value = serde_json::from_slice(&payload).unwrap();
-    let error = parsed["error"].as_str().unwrap_or_default();
-    assert!(error.contains("require_pairing"), "error was: {error}");
-    assert!(error.contains("X-Webhook-Secret"), "error was: {error}");
-    // Rejected outright — a matching SOP with no configured credential
-    // must never silently fall back to the chat/model path.
-    assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
-}
-
-#[tokio::test]
 async fn sop_dispatch_succeeds_with_paired_bearer_token() {
     let tmp = tempfile::tempdir().unwrap();
     let (mut state, provider) = webhook_sop_state(&tmp, "/sop/deploy");
@@ -4584,725 +3096,6 @@ async fn sop_dispatch_succeeds_with_paired_bearer_token() {
     let parsed: serde_json::Value = serde_json::from_slice(&payload).unwrap();
     assert_eq!(parsed["status"], "accepted");
     assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
-}
-
-#[tokio::test]
-async fn webhook_sop_first_ignores_bogus_chat_agent_query_param() {
-    let tmp = tempfile::tempdir().unwrap();
-    let (state, provider) = webhook_sop_state(&tmp, "/webhook");
-    let (state, secret) = with_webhook_secret(state);
-
-    let response = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery {
-            agent: Some("missing".into()),
-        }),
-        webhook_secret_header(&secret),
-        Ok(Json(WebhookBody {
-            message: "deploy".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-
-    // A matching SOP dispatches even though `?agent=missing` has no
-    // `[agents.missing]` entry — the chat-only param is never inspected.
-    assert_eq!(response.status(), StatusCode::OK);
-    let payload = response.into_body().collect().await.unwrap().to_bytes();
-    let parsed: serde_json::Value = serde_json::from_slice(&payload).unwrap();
-    assert_eq!(parsed["status"], "accepted");
-    assert_eq!(parsed["source"], "webhook");
-    // The model provider is never touched.
-    assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
-}
-
-#[tokio::test]
-async fn webhook_unknown_agent_rejected_before_dispatch() {
-    let provider_impl = Arc::new(MockModelProvider::default());
-    let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
-    let memory: Arc<dyn Memory> = Arc::new(MockMemory);
-
-    let state = AppState {
-        config: Arc::new(RwLock::new(Config::default())),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider,
-        model: "test-model".into(),
-        temperature: None,
-        mem: memory.clone(),
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::clone(&memory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    // An idempotency key on a rejected request must NOT be consumed.
-    let mut headers = HeaderMap::new();
-    headers.insert("X-Idempotency-Key", HeaderValue::from_static("ghost-key"));
-
-    let response = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery {
-            agent: Some("ghost".into()),
-        }),
-        headers,
-        Ok(Json(WebhookBody {
-            message: "hello".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-    let payload = response.into_body().collect().await.unwrap().to_bytes();
-    let parsed: serde_json::Value = serde_json::from_slice(&payload).unwrap();
-    assert!(
-        parsed["error"]
-            .as_str()
-            .unwrap_or_default()
-            .contains("Unknown agent `ghost`")
-    );
-    assert_eq!(provider_impl.calls.load(Ordering::SeqCst), 0);
-    // Key still fresh — a corrected retry with the same key proceeds.
-    assert!(state.idempotency_store.record_if_new("ghost-key"));
-}
-
-#[tokio::test]
-async fn webhook_explicit_agent_reports_model_without_owning_lifecycle() {
-    let provider_impl = Arc::new(MockModelProvider::default());
-    let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
-    let memory: Arc<dyn Memory> = Arc::new(MockMemory);
-    let observer_impl = Arc::new(CapturingObserver::default());
-    let observer: Arc<dyn galleon_api::observability_traits::Observer> = observer_impl.clone();
-
-    let mut config = Config::default();
-    config.providers.models.anthropic.insert(
-        "default".into(),
-        galleon_config::schema::AnthropicModelProviderConfig {
-            base: galleon_config::schema::ModelProviderConfig {
-                model: Some("agent-model".into()),
-                ..Default::default()
-            },
-            ..Default::default()
-        },
-    );
-    let expected_provider = "anthropic.default".to_string();
-    config.agents.insert(
-        "nova".to_string(),
-        galleon_config::schema::AliasedAgentConfig {
-            enabled: true,
-            model_provider: expected_provider.clone().into(),
-            ..Default::default()
-        },
-    );
-
-    let state = AppState {
-        config: Arc::new(RwLock::new(config)),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider,
-        model: "startup-model".into(),
-        temperature: None,
-        mem: memory,
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::new(MockMemory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer,
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    let response = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery {
-            agent: Some("nova".into()),
-        }),
-        HeaderMap::new(),
-        Ok(Json(WebhookBody {
-            message: "hello".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(provider_impl.calls.load(Ordering::SeqCst), 1);
-    let payload = response.into_body().collect().await.unwrap().to_bytes();
-    let parsed: serde_json::Value = serde_json::from_slice(&payload).unwrap();
-    assert_eq!(parsed["model"], "agent-model");
-    let events = observer_impl.events.lock();
-    assert!(
-        !events.iter().any(|event| matches!(
-            event,
-            galleon_api::observability_traits::ObserverEvent::AgentStart { .. }
-                | galleon_api::observability_traits::ObserverEvent::AgentEnd { .. }
-                | galleon_api::observability_traits::ObserverEvent::LlmRequest { .. }
-                | galleon_api::observability_traits::ObserverEvent::LlmResponse { .. }
-        )),
-        "the HTTP handler must not create a second agent lifecycle; events were: {events:?}"
-    );
-}
-
-#[tokio::test]
-async fn webhook_autosave_stores_distinct_keys_per_request() {
-    let provider_impl = Arc::new(MockModelProvider::default());
-    let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
-
-    let tracking_impl = Arc::new(TrackingMemory::default());
-    let memory: Arc<dyn Memory> = tracking_impl.clone();
-
-    let state = AppState {
-        config: Arc::new(RwLock::new(Config::default())),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider,
-        model: "test-model".into(),
-        temperature: None,
-        mem: memory,
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::new(MockMemory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: true,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    let headers = HeaderMap::new();
-
-    let body1 = Ok(Json(WebhookBody {
-        message: "hello one".into(),
-        stream: false,
-    }));
-    let first = handle_webhook(
-        State(state.clone()),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers.clone(),
-        body1,
-    )
-    .await
-    .into_response();
-    assert_eq!(first.status(), StatusCode::OK);
-
-    let body2 = Ok(Json(WebhookBody {
-        message: "hello two".into(),
-        stream: false,
-    }));
-    let second = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        body2,
-    )
-    .await
-    .into_response();
-    assert_eq!(second.status(), StatusCode::OK);
-
-    let keys = tracking_impl.keys.lock().clone();
-    assert_eq!(keys.len(), 2);
-    assert_ne!(keys[0], keys[1]);
-    assert!(keys[0].starts_with("webhook_msg_"));
-    assert!(keys[1].starts_with("webhook_msg_"));
-    assert_eq!(provider_impl.calls.load(Ordering::SeqCst), 2);
-}
-
-#[test]
-fn webhook_secret_hash_is_deterministic_and_nonempty() {
-    let secret_a = generate_test_secret();
-    let secret_b = generate_test_secret();
-    let one = hash_webhook_secret(&secret_a);
-    let two = hash_webhook_secret(&secret_a);
-    let other = hash_webhook_secret(&secret_b);
-
-    assert_eq!(one, two);
-    assert_ne!(one, other);
-    assert_eq!(one.len(), 64);
-}
-
-#[test]
-fn gateway_webhook_secret_uses_one_live_config_owner() {
-    let tmp = tempfile::tempdir().unwrap();
-    let state = admin_paircode_state(&tmp, false, false);
-    {
-        let mut config = state.config.write();
-        config.channels.webhook.insert(
-            "enabled-a".into(),
-            galleon_config::schema::WebhookConfig {
-                enabled: true,
-                secret: Some("channel-secret-a".into()),
-                ..Default::default()
-            },
-        );
-        config.channels.webhook.insert(
-            "enabled-b".into(),
-            galleon_config::schema::WebhookConfig {
-                enabled: true,
-                secret: Some("channel-secret-b".into()),
-                ..Default::default()
-            },
-        );
-        config.channels.webhook.insert(
-            "disabled".into(),
-            galleon_config::schema::WebhookConfig {
-                enabled: false,
-                secret: Some("disabled-channel-secret".into()),
-                ..Default::default()
-            },
-        );
-    }
-    assert_eq!(
-        configured_gateway_webhook_secret_hash(&state),
-        None,
-        "channel listener aliases must never become gateway credentials"
-    );
-    assert!(
-        authorize_webhook_request(&state, test_connect_info().0, &HeaderMap::new())
-            .map(require_sop_dispatch_credentials)
-            .is_ok_and(|dispatch| dispatch.is_err()),
-        "multiple channel aliases without a gateway credential must fail closed"
-    );
-
-    let startup_secret = "synthetic-startup-gateway-secret".to_string();
-    state.config.write().gateway.webhook_secret = Some(startup_secret.clone());
-    assert!(
-        authorize_webhook_request(
-            &state,
-            test_connect_info().0,
-            &webhook_secret_header("channel-secret-a"),
-        )
-        .is_err(),
-        "an enabled channel alias secret must not authorize the gateway"
-    );
-    assert!(
-        authorize_webhook_request(
-            &state,
-            test_connect_info().0,
-            &webhook_secret_header(&startup_secret),
-        )
-        .is_ok()
-    );
-
-    let rotated_secret = "synthetic-rotated-gateway-secret".to_string();
-    state.config.write().gateway.webhook_secret = Some(rotated_secret.clone());
-    assert!(
-        authorize_webhook_request(
-            &state,
-            test_connect_info().0,
-            &webhook_secret_header(&startup_secret),
-        )
-        .is_err(),
-        "authorization must not retain a startup snapshot after config replacement"
-    );
-    assert!(
-        authorize_webhook_request(
-            &state,
-            test_connect_info().0,
-            &webhook_secret_header(&rotated_secret),
-        )
-        .is_ok(),
-        "the live canonical gateway credential must take effect"
-    );
-}
-
-#[tokio::test]
-async fn webhook_secret_hash_rejects_missing_header() {
-    let provider_impl = Arc::new(MockModelProvider::default());
-    let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
-    let memory: Arc<dyn Memory> = Arc::new(MockMemory);
-    let secret = generate_test_secret();
-    let mut config = Config::default();
-    config.gateway.webhook_secret = Some(secret.clone());
-
-    let state = AppState {
-        config: Arc::new(RwLock::new(config)),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider,
-        model: "test-model".into(),
-        temperature: None,
-        mem: memory.clone(),
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::clone(&memory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    let response = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        HeaderMap::new(),
-        Ok(Json(WebhookBody {
-            message: "hello".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    assert_eq!(provider_impl.calls.load(Ordering::SeqCst), 0);
-}
-
-#[tokio::test]
-async fn webhook_secret_hash_rejects_invalid_header() {
-    let provider_impl = Arc::new(MockModelProvider::default());
-    let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
-    let memory: Arc<dyn Memory> = Arc::new(MockMemory);
-    let valid_secret = generate_test_secret();
-    let wrong_secret = generate_test_secret();
-    let mut config = Config::default();
-    config.gateway.webhook_secret = Some(valid_secret.clone());
-
-    let state = AppState {
-        config: Arc::new(RwLock::new(config)),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider,
-        model: "test-model".into(),
-        temperature: None,
-        mem: memory.clone(),
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::clone(&memory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "X-Webhook-Secret",
-        HeaderValue::from_str(&wrong_secret).unwrap(),
-    );
-
-    let response = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        Ok(Json(WebhookBody {
-            message: "hello".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    assert_eq!(provider_impl.calls.load(Ordering::SeqCst), 0);
-}
-
-#[tokio::test]
-async fn webhook_secret_hash_accepts_valid_header() {
-    let provider_impl = Arc::new(MockModelProvider::default());
-    let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
-    let memory: Arc<dyn Memory> = Arc::new(MockMemory);
-    let secret = generate_test_secret();
-    let mut config = Config::default();
-    config.gateway.webhook_secret = Some(secret.clone());
-
-    let state = AppState {
-        config: Arc::new(RwLock::new(config)),
-        config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
-        model_provider,
-        model: "test-model".into(),
-        temperature: None,
-        mem: memory.clone(),
-        memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
-            Arc::clone(&memory),
-            galleon_config::schema::MemoryConfig::default(),
-            std::path::PathBuf::new(),
-        )),
-        auto_save: false,
-        pairing: Arc::new(PairingGuard::new(false, &[], PairingCodePolicy::default())),
-        trust_forwarded_headers: false,
-        rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
-        auth_limiter: Arc::new(auth_rate_limit::AuthRateLimiter::new()),
-        idempotency_store: Arc::new(IdempotencyStore::new(Duration::from_secs(300), 1000)),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp: HashMap::new(),
-        #[cfg(feature = "channel-whatsapp-cloud")]
-        whatsapp_app_secret: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq: HashMap::new(),
-        #[cfg(feature = "channel-linq")]
-        linq_signing_secrets: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk: HashMap::new(),
-        #[cfg(feature = "channel-nextcloud")]
-        nextcloud_talk_webhook_secret: HashMap::new(),
-        #[cfg(feature = "channel-email")]
-        gmail_push: None,
-        observer: Arc::new(galleon_api::observability_traits::NoopObserver),
-        tools_registry: Arc::new(Vec::new()),
-        tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
-        cost_tracker: None,
-        event_tx: tokio::sync::broadcast::channel(16).0,
-        event_buffer: Arc::new(sse::EventBuffer::new(16)),
-        shutdown_tx: tokio::sync::watch::channel(false).0,
-        reload_tx: None,
-        node_registry: Arc::new(nodes::NodeRegistry::new(16)),
-        mdns_peer_registry: nodes::mdns::MdnsPeerRegistry::default(),
-        path_prefix: String::new(),
-        web_dist_dir: None,
-        session_backend: None,
-        session_queue: std::sync::Arc::new(crate::session_queue::SessionActorQueue::new(
-            8, 30, 600,
-        )),
-        device_registry: None,
-        pending_pairings: None,
-        canvas_store: CanvasStore::new(),
-        cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        tui_registry: None,
-        sop_runner: None,
-        #[cfg(feature = "webauthn")]
-        webauthn: None,
-    };
-
-    let mut headers = HeaderMap::new();
-    headers.insert("X-Webhook-Secret", HeaderValue::from_str(&secret).unwrap());
-
-    let response = handle_webhook(
-        State(state),
-        test_connect_info(),
-        Query(WebhookQuery::default()),
-        headers,
-        Ok(Json(WebhookBody {
-            message: "hello".into(),
-            stream: false,
-        })),
-    )
-    .await
-    .into_response();
-
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(provider_impl.calls.load(Ordering::SeqCst), 1);
 }
 
 #[cfg(feature = "channel-nextcloud")]
@@ -5377,6 +3170,13 @@ async fn nextcloud_talk_webhook_returns_not_found_when_not_configured() {
         pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         tui_registry: None,
         sop_runner: None,
+        diagnostics: None,
+        quickstart: None,
+        integration_catalog: None,
+        personality_runner: None,
+        skills_runner: None,
+        acp_runner: None,
+        control_plane: None,
         #[cfg(feature = "webauthn")]
         webauthn: None,
     };
@@ -5468,6 +3268,13 @@ async fn nextcloud_talk_webhook_rejects_invalid_signature() {
         pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         tui_registry: None,
         sop_runner: None,
+        diagnostics: None,
+        quickstart: None,
+        integration_catalog: None,
+        personality_runner: None,
+        skills_runner: None,
+        acp_runner: None,
+        control_plane: None,
         #[cfg(feature = "webauthn")]
         webauthn: None,
     };
@@ -5567,6 +3374,13 @@ async fn nextcloud_talk_webhook_rejects_when_no_secret_is_configured() {
         pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         tui_registry: None,
         sop_runner: None,
+        diagnostics: None,
+        quickstart: None,
+        integration_catalog: None,
+        personality_runner: None,
+        skills_runner: None,
+        acp_runner: None,
+        control_plane: None,
         #[cfg(feature = "webauthn")]
         webauthn: None,
     };
@@ -5613,11 +3427,9 @@ impl ModelProvider for SlowProvider {
 #[cfg(feature = "channel-nextcloud")]
 impl ::galleon_api::attribution::Attributable for SlowProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "SlowProvider"
@@ -5991,41 +3803,6 @@ fn idempotency_store_rapid_duplicate_rejected() {
     let store = IdempotencyStore::new(Duration::from_secs(300), 100);
     assert!(store.record_if_new("rapid"));
     assert!(!store.record_if_new("rapid"));
-}
-
-#[test]
-fn duplicate_idempotency_log_omits_caller_key() {
-    let _hook_guard = galleon_log::__private_test_hook_lock();
-    galleon_log::try_install_capture_subscriber();
-    let mut receiver = galleon_log::subscribe_or_install();
-    while receiver.try_recv().is_ok() {}
-
-    let raw_key = "caller-sensitive-id";
-    record_duplicate_idempotency_log();
-
-    let event = loop {
-        match receiver.try_recv() {
-            Ok(value)
-                if value.get("message").and_then(|message| message.as_str())
-                    == Some("webhook duplicate ignored") =>
-            {
-                break value;
-            }
-            Ok(_) => continue,
-            Err(error) => panic!("duplicate log event was not broadcast: {error}"),
-        }
-    };
-    galleon_log::clear_broadcast_hook();
-
-    assert_eq!(
-        event["attributes"]["idempotency_key_present"],
-        serde_json::Value::Bool(true)
-    );
-    assert!(event["attributes"].get("idempotency_key").is_none());
-    assert!(
-        !event.to_string().contains(raw_key),
-        "caller-controlled idempotency key must not enter structured logs"
-    );
 }
 
 #[test]
@@ -6595,6 +4372,13 @@ fn linq_test_state_with_config(
         pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         tui_registry: None,
         sop_runner: None,
+        diagnostics: None,
+        quickstart: None,
+        integration_catalog: None,
+        personality_runner: None,
+        skills_runner: None,
+        acp_runner: None,
+        control_plane: None,
         #[cfg(feature = "webauthn")]
         webauthn: None,
     }
@@ -6679,6 +4463,13 @@ async fn linq_webhook_returns_not_found_when_no_channels_configured() {
         pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         tui_registry: None,
         sop_runner: None,
+        diagnostics: None,
+        quickstart: None,
+        integration_catalog: None,
+        personality_runner: None,
+        skills_runner: None,
+        acp_runner: None,
+        control_plane: None,
         #[cfg(feature = "webauthn")]
         webauthn: None,
     };
@@ -6951,9 +4742,7 @@ impl Channel for CapturingChannel {
 #[cfg(feature = "channel-linq")]
 impl ::galleon_api::attribution::Attributable for CapturingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "CapturingChannel"
@@ -7288,6 +5077,13 @@ fn webhook_baseline_state() -> AppState {
         pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         tui_registry: None,
         sop_runner: None,
+        diagnostics: None,
+        quickstart: None,
+        integration_catalog: None,
+        personality_runner: None,
+        skills_runner: None,
+        acp_runner: None,
+        control_plane: None,
         #[cfg(feature = "webauthn")]
         webauthn: None,
     }

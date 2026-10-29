@@ -224,8 +224,8 @@ async fn test_sop_webhook_route_mounted_and_authenticated() {
     let resp = app.oneshot(req).await.unwrap();
     assert_eq!(
         resp.status(),
-        StatusCode::FORBIDDEN,
-        "POST /sop/deploy without credentials returns 403, proving route is mounted and authenticated"
+        StatusCode::UNAUTHORIZED,
+        "POST /sop/deploy without credentials returns 401, proving route is mounted and authenticated"
     );
 
     let body_bytes = axum::body::to_bytes(resp.into_body(), 65536).await.unwrap();
