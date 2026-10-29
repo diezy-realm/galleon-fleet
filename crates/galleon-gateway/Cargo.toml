@@ -28,6 +28,7 @@ galleon-plugins = { workspace = true, optional = true }
 galleon-routing.workspace = true
 galleon-security-scrub.workspace = true
 galleon-i18n.workspace = true
+galleon-fleet-core.workspace = true
 
 # gRPC server for SystemGateway (D1): Go engine -> Rust native-tool execution.
 # `prost` must stay a direct dep: tonic-build's generated code references
