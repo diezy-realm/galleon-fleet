@@ -14,6 +14,10 @@ pub use collections::{
     resolve_allowed_collection, validate_collection_payload,
 };
 pub use error::FleetError;
+pub use seed::{
+    FleetSeedData, SeedResponse, get_canonical_seed_map, get_policy_seed_map, get_seed_raw,
+    get_seed_response_json, load_fleet_seed_data, load_seed_response,
+};
 pub use snapshots::{CreateSnapshotRequest, MAX_SNAPSHOTS, SnapshotItem};
 pub use store::{FLEET_MAX_BODY, FleetStore, ImportReport};
 
