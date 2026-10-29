@@ -4566,6 +4566,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "include_dir",
+ "insta",
  "libc",
  "mime_guess",
  "parking_lot",
