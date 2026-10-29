@@ -433,15 +433,8 @@ pub async fn handle_api_tuis(
     Json(serde_json::json!({ "tuis": tuis })).into_response()
 }
 
-/// GET /api/health — component health snapshot
-pub async fn handle_api_health(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> impl IntoResponse {
-    if let Err(e) = require_auth(&state, &headers) {
-        return e.into_response();
-    }
-
+/// GET /api/health — component health snapshot (public probe)
+pub async fn handle_api_health() -> impl IntoResponse {
     let snapshot = galleon_infra::health::snapshot();
     Json(serde_json::json!({"health": snapshot})).into_response()
 }
