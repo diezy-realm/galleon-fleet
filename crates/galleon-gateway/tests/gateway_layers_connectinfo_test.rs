@@ -6,13 +6,13 @@
 //! - ConnectInfo tersedia untuk handler
 //! - TimeoutLayer dan SecurityHeaders diaplikasikan
 
-use std::net::SocketAddr;
-use std::time::Duration;
 use galleon_config::schema::{
     AliasedAgentConfig, Config, GatewayTlsConfig, ModelProviderConfig, OllamaModelProviderConfig,
     RiskProfileConfig, RuntimeProfileConfig,
 };
 use galleon_gateway::{AppState, build_gateway_router};
+use std::net::SocketAddr;
+use std::time::Duration;
 
 fn create_test_config(tmp: &tempfile::TempDir) -> Config {
     let data_dir = tmp.path().join("data");
@@ -103,15 +103,11 @@ async fn test_security_headers_present_on_health() {
         Some("nosniff")
     );
     assert_eq!(
-        headers
-            .get("x-frame-options")
-            .and_then(|v| v.to_str().ok()),
+        headers.get("x-frame-options").and_then(|v| v.to_str().ok()),
         Some("DENY")
     );
     assert_eq!(
-        headers
-            .get("referrer-policy")
-            .and_then(|v| v.to_str().ok()),
+        headers.get("referrer-policy").and_then(|v| v.to_str().ok()),
         Some("no-referrer")
     );
     assert!(headers.contains_key("content-security-policy"));

@@ -64,38 +64,37 @@ impl DeviceRegistry {
         let mut cache = HashMap::new();
         let mut stmt = conn
             .prepare("SELECT token_hash, id, name, device_type, paired_at, last_seen, ip_address, capabilities FROM devices")?;
-        let rows = stmt
-            .query_map([], |row| {
-                let token_hash: String = row.get(0)?;
-                let id: String = row.get(1)?;
-                let name: Option<String> = row.get(2)?;
-                let device_type: Option<String> = row.get(3)?;
-                let paired_at_str: String = row.get(4)?;
-                let last_seen_str: String = row.get(5)?;
-                let ip_address: Option<String> = row.get(6)?;
-                let capabilities_json: Option<String> = row.get(7)?;
-                let paired_at = DateTime::parse_from_rfc3339(&paired_at_str)
-                    .map(|dt| dt.with_timezone(&Utc))
-                    .unwrap_or_else(|_| Utc::now());
-                let last_seen = DateTime::parse_from_rfc3339(&last_seen_str)
-                    .map(|dt| dt.with_timezone(&Utc))
-                    .unwrap_or_else(|_| Utc::now());
-                let capabilities = capabilities_json
-                    .as_deref()
-                    .and_then(|s| serde_json::from_str::<Vec<String>>(s).ok());
-                Ok((
-                    token_hash,
-                    DeviceInfo {
-                        id,
-                        name,
-                        device_type,
-                        paired_at,
-                        last_seen,
-                        ip_address,
-                        capabilities,
-                    },
-                ))
-            })?;
+        let rows = stmt.query_map([], |row| {
+            let token_hash: String = row.get(0)?;
+            let id: String = row.get(1)?;
+            let name: Option<String> = row.get(2)?;
+            let device_type: Option<String> = row.get(3)?;
+            let paired_at_str: String = row.get(4)?;
+            let last_seen_str: String = row.get(5)?;
+            let ip_address: Option<String> = row.get(6)?;
+            let capabilities_json: Option<String> = row.get(7)?;
+            let paired_at = DateTime::parse_from_rfc3339(&paired_at_str)
+                .map(|dt| dt.with_timezone(&Utc))
+                .unwrap_or_else(|_| Utc::now());
+            let last_seen = DateTime::parse_from_rfc3339(&last_seen_str)
+                .map(|dt| dt.with_timezone(&Utc))
+                .unwrap_or_else(|_| Utc::now());
+            let capabilities = capabilities_json
+                .as_deref()
+                .and_then(|s| serde_json::from_str::<Vec<String>>(s).ok());
+            Ok((
+                token_hash,
+                DeviceInfo {
+                    id,
+                    name,
+                    device_type,
+                    paired_at,
+                    last_seen,
+                    ip_address,
+                    capabilities,
+                },
+            ))
+        })?;
         for (hash, info) in rows.flatten() {
             cache.insert(hash, info);
         }
@@ -111,7 +110,10 @@ impl DeviceRegistry {
             ::galleon_log::record!(
                 WARN,
                 ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
-                &format!("Failed to initialize SQLite device registry at {}: {e}", workspace_dir.display())
+                &format!(
+                    "Failed to initialize SQLite device registry at {}: {e}",
+                    workspace_dir.display()
+                )
             );
             Self {
                 cache: Mutex::new(HashMap::new()),
@@ -754,10 +756,10 @@ mod tests {
     use crate::api::test_state;
     use crate::auth_rate_limit::{AuthRateLimiter, MAX_ATTEMPTS};
     use axum::Json;
-    use http_body_util::BodyExt;
-    use std::sync::Arc;
     use galleon_config::pairing::PairingGuard;
     use galleon_config::schema::Config;
+    use http_body_util::BodyExt;
+    use std::sync::Arc;
 
     /// Build an `AppState` whose device-registry points at a non-existent
     /// path so every SQLite write fails. Pairing enabled so a freshly

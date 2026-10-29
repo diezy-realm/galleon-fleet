@@ -341,7 +341,9 @@ impl AgentSession for StranglerAgentSession {
             Ok(resp) => resp.into_inner(),
             Err(status) => {
                 return Err(AgentTurnError {
-                    error: anyhow::Error::msg(format!("AgentEngine start_turn RPC failed: {status}")),
+                    error: anyhow::Error::msg(format!(
+                        "AgentEngine start_turn RPC failed: {status}"
+                    )),
                     committed_response: String::new(),
                     new_messages: Vec::new(),
                 });

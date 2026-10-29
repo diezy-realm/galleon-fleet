@@ -171,7 +171,9 @@ pub fn update_shell_job_with_approval(
         let dialect = galleon_api::runtime_traits::ShellDialect::Posix;
         security
             .validate_command_execution_for_shell(command, approved, dialect)
-            .map_err(|reason| anyhow::Error::msg(format!("blocked by security policy: {reason}")))?;
+            .map_err(|reason| {
+                anyhow::Error::msg(format!("blocked by security policy: {reason}"))
+            })?;
     }
     store.update_job(job_id, patch)
 }
@@ -348,7 +350,9 @@ pub fn sync_declarative_jobs(
                 let dt = chrono::DateTime::parse_from_rfc3339(at)
                     .map(|dt| dt.with_timezone(&chrono::Utc))
                     .map_err(|e| {
-                        anyhow::Error::msg(format!("Invalid RFC 3339 timestamp in declarative job '{id}': {e}"))
+                        anyhow::Error::msg(format!(
+                            "Invalid RFC 3339 timestamp in declarative job '{id}': {e}"
+                        ))
                     })?;
                 Schedule::At { at: dt }
             }
