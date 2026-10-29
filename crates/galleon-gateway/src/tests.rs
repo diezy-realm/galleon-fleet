@@ -1,10 +1,10 @@
 use super::*;
+use crate::rate_limit::RATE_LIMITER_SWEEP_INTERVAL_SECS;
 use async_trait::async_trait;
 use axum::body::Body;
 use axum::extract::ConnectInfo;
 use axum::http::{HeaderValue, Request, Uri};
 use axum::response::IntoResponse;
-use crate::rate_limit::RATE_LIMITER_SWEEP_INTERVAL_SECS;
 #[cfg(feature = "channel-whatsapp-cloud")]
 use galleon_api::channel::ChannelMessage;
 use galleon_api::tool as tools;
@@ -919,7 +919,6 @@ fn long_running_request_timeout_uses_typed_config_default() {
     assert_eq!(gateway_long_running_request_timeout_secs(&cfg), 600);
 }
 
-
 #[test]
 fn whatsapp_query_fields_are_optional() {
     let q = WhatsAppVerifyQuery {
@@ -1105,18 +1104,7 @@ async fn run_gateway_starts_with_zero_agents() {
     );
 
     let handle = galleon_spawn::spawn!(async move {
-        run_gateway(
-            "127.0.0.1",
-            0,
-            config,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
-        .await
+        run_gateway("127.0.0.1", 0, config, None, None, None, None, None, None).await
     });
 
     match tokio::time::timeout(
@@ -1172,18 +1160,7 @@ async fn run_gateway_starts_with_unresolved_agent_risk_profile() {
     config.agents.insert("fake123".to_string(), agent);
 
     let handle = galleon_spawn::spawn!(async move {
-        run_gateway(
-            "127.0.0.1",
-            0,
-            config,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
-        .await
+        run_gateway("127.0.0.1", 0, config, None, None, None, None, None, None).await
     });
 
     match tokio::time::timeout(
@@ -1225,18 +1202,7 @@ async fn run_gateway_starts_with_mismatched_provider_api_key() {
     );
 
     let handle = galleon_spawn::spawn!(async move {
-        run_gateway(
-            "127.0.0.1",
-            0,
-            config,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
-        .await
+        run_gateway("127.0.0.1", 0, config, None, None, None, None, None, None).await
     });
 
     match tokio::time::timeout(
@@ -1379,8 +1345,6 @@ async fn daemon_startup_gateway_does_not_report_ready_when_tls_setup_fails() {
         "failed post-bind setup must not report gateway readiness"
     );
 }
-
-
 
 #[test]
 fn gateway_rate_limiter_blocks_after_limit() {
@@ -1640,13 +1604,6 @@ async fn persist_pairing_tokens_serializes_against_concurrent_config_write() {
     );
 }
 
-
-
-
-
-
-
-
 #[cfg(feature = "channel-whatsapp-cloud")]
 #[test]
 fn whatsapp_memory_key_includes_sender_and_message_id() {
@@ -1782,11 +1739,9 @@ impl ModelProvider for MockModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for MockModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "MockModelProvider"
@@ -1938,7 +1893,6 @@ impl Drop for ChatCompletionFixture {
     }
 }
 
-
 async fn spawn_chat_completion_fixture_sequence(
     response_bodies: Vec<String>,
 ) -> ChatCompletionFixture {
@@ -2015,7 +1969,6 @@ impl Drop for BurstChatStream {
         self.closed.store(true, Ordering::SeqCst);
     }
 }
-
 
 /// A provider fixture that sends response headers and then keeps the
 /// streaming body open. This gives two real gateway transports time to
@@ -2097,7 +2050,6 @@ async fn wait_for_fixture_requests(fixture: &ChatCompletionFixture, expected: us
     .await
     .expect("provider fixture request");
 }
-
 
 async fn wait_for_registry_token(
     state: &AppState,
@@ -2195,7 +2147,6 @@ async fn collect_cancelled_sse(response: Response) -> String {
     String::from_utf8(payload.to_vec()).expect("cancelled SSE response is UTF-8")
 }
 
-
 /// Build an AppState whose `/webhook?agent=web` path constructs a real
 /// runtime Agent and a configured custom OpenAI-compatible provider. The
 /// synthetic allowlist deliberately leaves the Agent with no executable
@@ -2206,9 +2157,7 @@ fn production_sse_state(
     daily_limit_usd: f64,
     response_cache_enabled: bool,
 ) -> (AppState, Arc<CostTracker>) {
-    use galleon_config::multi_agent::{
-        AgentMemoryConfig, AgentWorkspaceConfig, MemoryBackendKind,
-    };
+    use galleon_config::multi_agent::{AgentMemoryConfig, AgentWorkspaceConfig, MemoryBackendKind};
     use galleon_config::schema::{
         AliasedAgentConfig, CustomModelProviderConfig, ModelProviderConfig, RiskProfileConfig,
         RuntimeProfileConfig,
@@ -2286,7 +2235,6 @@ fn production_sse_state(
     (state, tracker)
 }
 
-
 const PRODUCTION_FIXTURE_STREAM: &str = "data: {\"choices\":[{\"delta\":{\"content\":\"fixture answer\"}}]}\n\n\
 data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":5}}\n\n\
 data: [DONE]\n\n";
@@ -2317,31 +2265,15 @@ impl ModelProvider for HangingProvider {
 
 impl ::galleon_api::attribution::Attributable for HangingProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
 
     fn alias(&self) -> &str {
         "HangingProvider"
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 fn websocket_resumes_seeded_legacy_dotted_session_transcript() {
@@ -2525,7 +2457,6 @@ async fn websocket_delivers_api_injected_message_inner() {
     gateway_server.abort();
 }
 
-
 #[test]
 fn cancellation_registry_preserves_sse_owner_when_ws_finishes() {
     let registry = Arc::new(std::sync::Mutex::new(HashMap::new()));
@@ -2593,7 +2524,6 @@ fn cancellation_registry_keeps_lossy_session_ids_separate() {
         "distinct session ids must not share a cancellation entry"
     );
 }
-
 
 #[tokio::test]
 async fn sop_webhook_dispatches_matching_path_without_provider_call() {
@@ -2756,8 +2686,6 @@ async fn sop_webhook_requires_shared_engine_and_webhook_auth() {
     assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);
     assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
 }
-
-
 
 #[tokio::test]
 async fn sop_idempotency_namespaced_per_path() {
@@ -3140,7 +3068,6 @@ async fn sop_dispatch_rejected_when_no_credentials_configured() {
     assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
 }
 
-
 #[tokio::test]
 async fn sop_dispatch_succeeds_with_paired_bearer_token() {
     let tmp = tempfile::tempdir().unwrap();
@@ -3170,15 +3097,6 @@ async fn sop_dispatch_succeeds_with_paired_bearer_token() {
     assert_eq!(parsed["status"], "accepted");
     assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
 }
-
-
-
-
-
-
-
-
-
 
 #[cfg(feature = "channel-nextcloud")]
 fn compute_nextcloud_signature_hex(secret: &str, random: &str, body: &str) -> String {
@@ -3509,11 +3427,9 @@ impl ModelProvider for SlowProvider {
 #[cfg(feature = "channel-nextcloud")]
 impl ::galleon_api::attribution::Attributable for SlowProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "SlowProvider"
@@ -3888,7 +3804,6 @@ fn idempotency_store_rapid_duplicate_rejected() {
     assert!(store.record_if_new("rapid"));
     assert!(!store.record_if_new("rapid"));
 }
-
 
 #[test]
 fn idempotency_store_accepts_after_ttl_expires() {
@@ -4827,9 +4742,7 @@ impl Channel for CapturingChannel {
 #[cfg(feature = "channel-linq")]
 impl ::galleon_api::attribution::Attributable for CapturingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "CapturingChannel"

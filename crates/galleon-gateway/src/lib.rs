@@ -124,9 +124,7 @@ pub(crate) fn has_servable_dashboard_index(dir: &std::path::Path) -> bool {
     canonical_index.starts_with(&canonical_root) && canonical_index.is_file()
 }
 
-pub fn resolve_web_dist_dir(
-    config: &galleon_config::schema::Config,
-) -> Option<std::path::PathBuf> {
+pub fn resolve_web_dist_dir(config: &galleon_config::schema::Config) -> Option<std::path::PathBuf> {
     match config
         .gateway
         .web_dist_dir
@@ -141,7 +139,10 @@ pub fn resolve_web_dist_dir(
 pub fn static_file_routes() -> axum::Router<AppState> {
     axum::Router::new()
         .route("/_app/", axum::routing::get(static_files::handle_static))
-        .route("/_app/{*path}", axum::routing::get(static_files::handle_static))
+        .route(
+            "/_app/{*path}",
+            axum::routing::get(static_files::handle_static),
+        )
 }
 
 pub(crate) fn normalize_max_keys(configured: usize, fallback: usize) -> usize {
@@ -185,11 +186,7 @@ pub(crate) fn already_paired_pairing_notice(
     ]
 }
 
-pub(crate) fn format_paircode_recovery_curl(
-    host: &str,
-    port: u16,
-    path_prefix: &str,
-) -> String {
+pub(crate) fn format_paircode_recovery_curl(host: &str, port: u16, path_prefix: &str) -> String {
     let recovery_host = paircode_recovery_curl_host(host);
     format!("curl -s -X POST http://{recovery_host}:{port}{path_prefix}/admin/paircode/new")
 }
@@ -239,7 +236,8 @@ static GATEWAY_CHAT_DISPATCH_CAPTURE_TEST_LOCK: tokio::sync::Mutex<()> =
     tokio::sync::Mutex::const_new(());
 
 #[cfg(test)]
-pub(crate) async fn lock_gateway_chat_dispatch_capture_for_test() -> tokio::sync::MutexGuard<'static, ()> {
+pub(crate) async fn lock_gateway_chat_dispatch_capture_for_test()
+-> tokio::sync::MutexGuard<'static, ()> {
     GATEWAY_CHAT_DISPATCH_CAPTURE_TEST_LOCK.lock().await
 }
 

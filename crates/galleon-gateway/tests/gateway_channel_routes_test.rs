@@ -19,7 +19,7 @@ use galleon_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
-use galleon_gateway::{build_gateway_router, AppState};
+use galleon_gateway::{AppState, build_gateway_router};
 use serde_json::Value;
 use tower::ServiceExt;
 
