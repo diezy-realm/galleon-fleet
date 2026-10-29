@@ -1,0 +1,32 @@
+[
+  {
+    "checksum": "sha256:4f8a29b01c",
+    "createdAt": "2026-10-29T16:39:47+07:00",
+    "entityCount": 38,
+    "id": "snap-1727768000",
+    "includes": [
+      "ships",
+      "crew",
+      "squads",
+      "quests",
+      "artifacts",
+      "approvals"
+    ],
+    "label": "Pre-Voyage Automated Backup (System State)",
+    "sizeMB": 24.6
+  },
+  {
+    "checksum": "sha256:9c1e78a42b",
+    "createdAt": "2026-10-28T20:39:47+07:00",
+    "entityCount": 22,
+    "id": "snap-1727724800",
+    "includes": [
+      "charters",
+      "policies",
+      "ledger",
+      "settings"
+    ],
+    "label": "Genesis Commissioning State",
+    "sizeMB": 18.2
+  }
+]

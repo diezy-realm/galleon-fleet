@@ -1,0 +1,13 @@
+{
+  "activeVessels": 3,
+  "activeWorkers": 7,
+  "gatewayLatencyMs": 14,
+  "memoryUsedMB": 1.1920394897460938,
+  "pendingApprovals": 2,
+  "systemUptime": "99.98%",
+  "totalArtifacts": 2,
+  "totalSpecialists": 7,
+  "totalSquads": 2,
+  "totalTreasuryLedgers": 0,
+  "underwayQuests": 1
+}

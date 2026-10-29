@@ -1,0 +1,24 @@
+[
+  {
+    "approved": false,
+    "command": "git status",
+    "duration": "98.844µs",
+    "error": "[EXTERNAL][SERVICE_UNAVAILABLE] Rust SystemGateway unreachable: native tool execution rejected (fail-closed boundary enforced): [EXTERNAL][SERVICE_UNAVAILABLE] system gateway currently unavailable",
+    "exitCode": 1,
+    "id": "audit-c0c0b22f392386a0",
+    "riskTier": "READ",
+    "success": false,
+    "timestamp": "2026-10-29T20:39:48.744144154+07:00"
+  },
+  {
+    "approved": false,
+    "command": "git status --porcelain -b",
+    "duration": "128.921µs",
+    "error": "[EXTERNAL][SERVICE_UNAVAILABLE] Rust SystemGateway unreachable: native tool execution rejected (fail-closed boundary enforced): [EXTERNAL][SERVICE_UNAVAILABLE] system gateway currently unavailable",
+    "exitCode": 1,
+    "id": "audit-d5f1af2cbb424355",
+    "riskTier": "READ",
+    "success": false,
+    "timestamp": "2026-10-29T20:39:48.795847984+07:00"
+  }
+]

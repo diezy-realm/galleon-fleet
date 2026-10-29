@@ -1,0 +1,12 @@
+{
+  "reply": "Fleet Report: 3 active vessels, 1 underway quests, 2 pending approvals, 2 artifacts in Treasury. Uptime 99.98%.",
+  "suggestedActions": [
+    {
+      "actionType": "navigate",
+      "label": "Open Mission Board",
+      "payload": {
+        "tab": "mission-board"
+      }
+    }
+  ]
+}

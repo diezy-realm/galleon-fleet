@@ -1,0 +1,712 @@
+{
+  "seed": {
+    "approvals": [
+      {
+        "actionType": "github_issue_create",
+        "costUSD": 0.05,
+        "createdAt": "15m ago",
+        "crewId": "crew-repo-analyst",
+        "draftSummary": "Developer Delivery Ship completed the fix for WebSocket teardown. Requires Captain's signature to create PR against master.",
+        "effect": "Merges cleanly without breaking existing transport ABI.",
+        "id": "appr-1",
+        "justification": "Fixes 100% reproducible socket teardown hang in CI runner.",
+        "questId": "quest-ci-ws",
+        "shipId": "ship-dev",
+        "status": "pending",
+        "targetResource": "diezy-realm/galleon-fleet#pulls",
+        "title": "Authorize GitHub Pull Request Submission: WebSocket CI Fix"
+      },
+      {
+        "actionType": "modify_policy",
+        "costUSD": 0,
+        "createdAt": "1h ago",
+        "crewId": "crew-tech-evaluator",
+        "draftSummary": "Research Ship requests increasing the local model execution budget to load deepseek-r1:14b into VRAM/system RAM.",
+        "effect": "Allocates up to 16GB host memory during local scans.",
+        "id": "appr-2",
+        "justification": "Required for high-accuracy local AST parsing without token charges.",
+        "questId": "quest-audit-gw",
+        "shipId": "ship-research",
+        "status": "pending",
+        "targetResource": "host.system.vram",
+        "title": "Expand Local Ollama Memory Cap to 16GB RAM"
+      }
+    ],
+    "artifacts": [
+      {
+        "content": "// Remediation in pkg/transport/ws_listener.go\nfunc (l *WebSocketListener) Close() error {\n    l.mu.Lock()\n    defer l.mu.Unlock()\n    if l.conn != nil {\n        _ = l.conn.SetReadDeadline(time.Now())\n        return l.conn.Close()\n    }\n    return nil\n}",
+        "createdAt": "30m ago",
+        "discoveries": [
+          {
+            "detail": "Socket read calls without deadlines block indefinitely on Windows and Linux runners.",
+            "evidenceSource": "pkg/transport/ws_listener.go:42",
+            "id": "disc-1",
+            "title": "Goroutine leak under quick client disconnects",
+            "type": "risk"
+          }
+        ],
+        "evidenceCount": 3,
+        "id": "art-1",
+        "producerCrewId": "crew-repo-analyst",
+        "questId": "quest-ci-ws",
+        "shipId": "ship-dev",
+        "status": "approved",
+        "summary": "Modifies pkg/transport/ws_listener.go to inject SetReadDeadline before terminating reader loop, preventing CI runner thread lock.",
+        "title": "WebSocket Read Deadline Remediation Patch",
+        "type": "ci-triage",
+        "voyageCostUSD": 0.12
+      },
+      {
+        "content": "| Provider | Model | TTFT (ms) | Throughput (t/s) | Cost / 1k tokens |\n|---|---|---|---|---|\n| Anthropic | Claude 3.7 Sonnet | 420ms | 68 t/s | $0.003 |\n| Google | Gemini 2.5 Pro | 380ms | 94 t/s | $0.00125 |\n| Google | Gemini 2.5 Flash | 185ms | 135 t/s | $0.00015 |\n| Ollama (Local) | deepseek-r1:14b | 210ms | 45 t/s | $0.00000 |",
+        "createdAt": "2h ago",
+        "discoveries": [
+          {
+            "detail": "Reduces monthly token consumption by 72% while preserving AST correctness.",
+            "evidenceSource": "test/benchmark_eval.json",
+            "id": "disc-2",
+            "title": "Use Gemini 2.5 Flash for triage and Claude 3.7 for patch writes",
+            "type": "recommendation"
+          }
+        ],
+        "evidenceCount": 5,
+        "id": "art-2",
+        "producerCrewId": "crew-tech-evaluator",
+        "questId": "quest-audit-gw",
+        "shipId": "ship-research",
+        "status": "treasure",
+        "summary": "Quantified comparison between Anthropic Claude 3.7 Sonnet, Google Gemini 2.5 Pro/Flash, and local Ollama deepseek-r1.",
+        "title": "Model Provider Latency & Cost Matrix (March 2026)",
+        "type": "decision-brief",
+        "voyageCostUSD": 0.04
+      }
+    ],
+    "chat_messages": [
+      {
+        "content": "Greetings, Sovereign Captain! Quartermaster aboard and reporting for duty. Your Fleet has 3 active Ships anchored in the harbor. How may I assist your strategy today?",
+        "id": "chat-init-1",
+        "sender": "quartermaster",
+        "suggestedActions": [
+          {
+            "actionType": "open_tab",
+            "label": "Review CI Fix Progress",
+            "payload": "quests"
+          },
+          {
+            "actionType": "open_tab",
+            "label": "Inspect Pending Approvals",
+            "payload": "approvals"
+          }
+        ],
+        "timestamp": "08:00 AM"
+      }
+    ],
+    "crew": [
+      {
+        "authority": "read_only",
+        "costLast30Days": 1.84,
+        "id": "crew-repo-analyst",
+        "lastVoyage": "12m ago",
+        "memoryScope": "ship",
+        "modelProfile": "Claude 3.7 Sonnet (Hybrid Reasoning)",
+        "name": "Repository Analyst",
+        "purpose": "Maps repository architecture, dependencies, git history, and technical debt risks.",
+        "role": "Static Analysis & Codebase Cartographer",
+        "shipId": "ship-dev",
+        "skills": [
+          "AST Parsing",
+          "Dependency Graphing",
+          "Commit Chronology",
+          "Risk Scoring"
+        ],
+        "squadId": "squad-dev",
+        "status": "active",
+        "steering": "Cite approved sources and separate evidence from inference.",
+        "tools": [
+          "local_filesystem",
+          "git_log_parser",
+          "repo_scanner"
+        ]
+      },
+      {
+        "authority": "draft_only",
+        "costLast30Days": 0.61,
+        "id": "crew-eng-planner",
+        "lastVoyage": "5m ago",
+        "memoryScope": "ship",
+        "modelProfile": "Gemini 2.5 Pro (Deep Context)",
+        "name": "Engineering Planner",
+        "purpose": "Converts high-level Captain objectives into bounded, executable steps.",
+        "role": "Work Breakdown & Dependency Strategist",
+        "shipId": "ship-dev",
+        "skills": [
+          "Task Decomposition",
+          "Risk Assessment",
+          "Milestone Mapping"
+        ],
+        "squadId": "squad-dev",
+        "status": "active",
+        "steering": "Always verify prerequisite tasks before proposing autonomous execution.",
+        "tools": [
+          "task_planner",
+          "quest_mapper",
+          "spec_generator"
+        ]
+      },
+      {
+        "authority": "read_only",
+        "costLast30Days": 0.45,
+        "id": "crew-market-analyst",
+        "lastVoyage": "1h ago",
+        "memoryScope": "workspace",
+        "modelProfile": "Gemini 2.5 Flash (Fast)",
+        "name": "Market Intelligence Scout",
+        "purpose": "Monitors competitor updates, developer tool releases, and public community sentiment.",
+        "role": "Competitive Signals & Audience Researcher",
+        "shipId": "ship-growth",
+        "skills": [
+          "Web Scraping",
+          "Sentiment Extraction",
+          "Competitive Matrix"
+        ],
+        "squadId": "squad-growth",
+        "status": "active",
+        "steering": "Filter out marketing hype; extract concrete developer pain points.",
+        "tools": [
+          "web_search",
+          "feed_monitor",
+          "diff_analyzer"
+        ]
+      },
+      {
+        "authority": "draft_only",
+        "costLast30Days": 0.43,
+        "id": "crew-brand-reviewer",
+        "lastVoyage": "2h ago",
+        "memoryScope": "ship",
+        "modelProfile": "Claude 3.7 Sonnet",
+        "name": "Voice & Integrity Reviewer",
+        "purpose": "Audits outward copy for narrative alignment and clarity.",
+        "role": "Copy Integrity & Policy Validator",
+        "shipId": "ship-growth",
+        "skills": [
+          "Brand Voice Consistency",
+          "Clarity Editing",
+          "Tone Calibration"
+        ],
+        "squadId": "squad-growth",
+        "status": "active",
+        "steering": "Enforce concise nautical sovereign metaphors without becoming confusing.",
+        "tools": [
+          "copy_lint",
+          "style_guide_validator"
+        ]
+      },
+      {
+        "authority": "read_only",
+        "costLast30Days": 1.25,
+        "id": "crew-tech-evaluator",
+        "lastVoyage": "30m ago",
+        "memoryScope": "crew",
+        "modelProfile": "DeepSeek-R1 (Local Ollama)",
+        "name": "Architecture & Security Benchmarker",
+        "purpose": "Evaluates libraries, models, security boundaries, and runtime performance tradeoffs.",
+        "role": "Decision Brief Synthesizer",
+        "shipId": "ship-research",
+        "skills": [
+          "Benchmark Synthesis",
+          "Security Boundary Audit",
+          "Cost Modeling"
+        ],
+        "status": "active",
+        "steering": "Provide concrete trade-off matrices with quantifiable latency and memory numbers.",
+        "tools": [
+          "benchmark_harness",
+          "security_audit",
+          "cost_calculator"
+        ]
+      },
+      {
+        "authority": "draft_only",
+        "costLast30Days": 0.52,
+        "id": "crew-content-copywriter",
+        "lastVoyage": "15m ago",
+        "memoryScope": "ship",
+        "modelProfile": "Claude 3.7 Sonnet (Creative Flow)",
+        "name": "Content Copywriter",
+        "purpose": "Authors engaging marketing copy, social media announcements, product release blogs, and campaign content adhering to brand voice.",
+        "role": "Marketing Copywriter & Creative Author",
+        "shipId": "ship-growth",
+        "skills": [
+          "Copywriting",
+          "Audience Engagement",
+          "SEO Content",
+          "Social Media Narrative",
+          "Brand Tone Calibration"
+        ],
+        "squadId": "squad-growth",
+        "status": "active",
+        "steering": "Write concise, value-focused prose emphasizing benefits and developer delight over generic buzzwords.",
+        "tools": [
+          "content_editor",
+          "seo_analyzer",
+          "copy_lint"
+        ]
+      },
+      {
+        "authority": "draft_only",
+        "costLast30Days": 0.38,
+        "id": "crew-marketing-strategist",
+        "lastVoyage": "45m ago",
+        "memoryScope": "ship",
+        "modelProfile": "Gemini 2.5 Pro",
+        "name": "Campaign & Distribution Strategist",
+        "purpose": "Formulates multi-channel release campaigns, content calendars, and community communication matrices.",
+        "role": "Marketing Strategist & Distribution Lead",
+        "shipId": "ship-growth",
+        "skills": [
+          "Campaign Planning",
+          "Channel Distribution",
+          "Audience Segmentation",
+          "Engagement Analytics"
+        ],
+        "squadId": "squad-growth",
+        "status": "active",
+        "steering": "Align messaging frequency with developer release milestones; coordinate embargo schedules with product leads.",
+        "tools": [
+          "campaign_planner",
+          "channel_scheduler",
+          "metrics_monitor"
+        ]
+      }
+    ],
+    "global_steering": [
+      {
+        "appliesTo": [
+          "all-ships"
+        ],
+        "createdAt": "2026-03-01T00:00:00Z",
+        "createdBy": "Captain",
+        "directive": "Never perform destructive file deletions or unauthenticated remote calls without explicit Owner sign-off.",
+        "enforcement": "required",
+        "id": "steering-1",
+        "name": "Zero Compromise on Production Safety",
+        "priority": "critical",
+        "status": "active",
+        "updatedAt": "2026-03-20T00:00:00Z",
+        "updatedBy": "Captain",
+        "version": 1
+      }
+    ],
+    "journal_sessions": [
+      {
+        "id": "journal-1",
+        "isArchived": false,
+        "isPinned": true,
+        "isTemporary": false,
+        "lastNote": "Aligned on single source of truth across Tauri v2 IPC and Web REST APIs.",
+        "messages": [
+          {
+            "content": "Review the architecture and ensure all UI elements call real backend endpoints.",
+            "id": "msg-j1",
+            "sender": "owner",
+            "timestamp": "08:00 AM"
+          },
+          {
+            "content": "Aye Captain! All mock arrays have been unified into persistent backend collections across Tauri and Web.",
+            "id": "msg-j2",
+            "sender": "quartermaster",
+            "timestamp": "08:01 AM"
+          }
+        ],
+        "questDraftCount": 1,
+        "savedArtifactCount": 1,
+        "title": "Fleet AI Architecture Strategy Review",
+        "updatedAt": "Just now",
+        "workspaceId": "galleon-core"
+      }
+    ],
+    "logbook": [
+      {
+        "action": "Booted Sovereign Multi-Agent Fleet Environment v2.4.0",
+        "actorName": "Galleon Sovereign Kernel",
+        "actorType": "system",
+        "correlationId": "boot-240",
+        "entityId": "fleet-all",
+        "entityType": "ship",
+        "id": "log-1",
+        "severity": "info",
+        "timestamp": "08:00:15"
+      },
+      {
+        "action": "Embarked on Quest: Resolve WebSocket Goroutine Timeout in CI",
+        "actorName": "Developer Delivery Ship Navigator",
+        "actorType": "quartermaster",
+        "correlationId": "voyage-ws",
+        "entityId": "quest-ci-ws",
+        "entityType": "quest",
+        "id": "log-2",
+        "severity": "info",
+        "timestamp": "08:02:10"
+      },
+      {
+        "action": "Generated Artifact: WebSocket Read Deadline Remediation Patch",
+        "actorName": "Repository Analyst",
+        "actorType": "crew",
+        "correlationId": "art-gen-1",
+        "entityId": "art-1",
+        "entityType": "artifact",
+        "id": "log-3",
+        "severity": "info",
+        "timestamp": "08:15:40"
+      }
+    ],
+    "notifications": [
+      {
+        "actionLinkTab": "approvals",
+        "createdAt": "15m ago",
+        "description": "Developer Delivery Ship needs authorization to create a Pull Request on GitHub.",
+        "id": "notif-1",
+        "read": false,
+        "title": "Captain Approval Requested",
+        "type": "approval"
+      },
+      {
+        "actionLinkTab": "quests",
+        "createdAt": "30m ago",
+        "description": "Voyage in progress: Resolving WebSocket Goroutine Timeout (65% completed).",
+        "id": "notif-2",
+        "read": false,
+        "title": "Quest Underway",
+        "type": "quest"
+      }
+    ],
+    "quests": [
+      {
+        "activeVoyageProgress": 65,
+        "assignedShipId": "ship-dev",
+        "budgetLimitUSD": 2.5,
+        "createdAt": "2026-03-30T10:15:00Z",
+        "discoveriesCount": 3,
+        "estimatedCostUSD": 0.85,
+        "id": "quest-ci-ws",
+        "mapSteps": [
+          {
+            "status": "completed",
+            "stepNumber": 1,
+            "title": "Locate listener termination loop in pkg/transport"
+          },
+          {
+            "status": "in_progress",
+            "stepNumber": 2,
+            "title": "Inject context cancellation and test abort hook"
+          },
+          {
+            "status": "pending",
+            "stepNumber": 3,
+            "title": "Verify test passes 5 consecutive runs without leaks"
+          }
+        ],
+        "objective": "Implement explicit SetReadDeadline and graceful connection termination during test suite cleanup.",
+        "priority": "urgent",
+        "projectId": "transport-layer",
+        "requiredArtifacts": [
+          "WebSocket Timeout Patch Briefing",
+          "CI Test Run Verification Log"
+        ],
+        "status": "underway",
+        "suggestedShipId": "ship-dev",
+        "title": "Resolve WebSocket Goroutine Timeout in CI",
+        "updatedAt": "2026-03-31T04:20:00Z",
+        "workspaceId": "galleon-core"
+      },
+      {
+        "activeVoyageProgress": 0,
+        "assignedShipId": "ship-growth",
+        "budgetLimitUSD": 1.5,
+        "createdAt": "2026-03-30T14:00:00Z",
+        "discoveriesCount": 0,
+        "estimatedCostUSD": 0.4,
+        "id": "quest-rel-notes",
+        "mapSteps": [
+          {
+            "status": "pending",
+            "stepNumber": 1,
+            "title": "Extract commit changelog from v2.3.0..HEAD"
+          },
+          {
+            "status": "pending",
+            "stepNumber": 2,
+            "title": "Categorize changes by Engine, UI, and Security"
+          },
+          {
+            "status": "pending",
+            "stepNumber": 3,
+            "title": "Format into verified Markdown artifact for Captain sign-off"
+          }
+        ],
+        "objective": "Aggregate recent pull requests, security policy upgrades, and multi-agent coordination capabilities into release documentation.",
+        "priority": "high",
+        "projectId": "docs-release",
+        "requiredArtifacts": [
+          "v2.4 Release Notes Document",
+          "Breaking Changes Checklist"
+        ],
+        "status": "ready",
+        "suggestedShipId": "ship-growth",
+        "title": "Synthesize Fleet AI v2.4 Release Notes",
+        "updatedAt": "2026-03-31T01:10:00Z",
+        "workspaceId": "galleon-core"
+      },
+      {
+        "activeVoyageProgress": 0,
+        "assignedShipId": "ship-research",
+        "budgetLimitUSD": 1,
+        "createdAt": "2026-03-29T18:00:00Z",
+        "discoveriesCount": 1,
+        "estimatedCostUSD": 0.2,
+        "id": "quest-audit-gw",
+        "mapSteps": [
+          {
+            "status": "pending",
+            "stepNumber": 1,
+            "title": "Sample 50 queries across all three providers"
+          },
+          {
+            "status": "pending",
+            "stepNumber": 2,
+            "title": "Measure TTFT (Time To First Token) and overall throughput"
+          },
+          {
+            "status": "pending",
+            "stepNumber": 3,
+            "title": "Output latency comparison to Treasury and Crows Nest"
+          }
+        ],
+        "objective": "Benchmark token latency between Anthropic, Gemini, and local Ollama instances across varying context lengths.",
+        "priority": "medium",
+        "projectId": "telemetry",
+        "requiredArtifacts": [
+          "Gateway Benchmark Analysis Table"
+        ],
+        "status": "ready",
+        "suggestedShipId": "ship-research",
+        "title": "Audit Model Gateway Latency and Token Budgets",
+        "updatedAt": "2026-03-30T12:00:00Z",
+        "workspaceId": "galleon-core"
+      }
+    ],
+    "ships": [
+      {
+        "activeVoyagesCount": 1,
+        "charter": {
+          "acceptedQuestTypes": [
+            "bug_fix",
+            "feature_development",
+            "test_generation",
+            "code_refactor"
+          ],
+          "budgetPerVoyageUSD": 2.5,
+          "crewAuthority": "Create and run branch-scoped tests, edit local files. Direct git push requires Captain's Approval.",
+          "memorySharing": "ship_scoped",
+          "monthlyBudgetUSD": 30,
+          "prohibitedActions": [
+            "Direct master branch push",
+            "Production DB migration",
+            "Deleting secret keys"
+          ],
+          "purpose": "Execute precise software changes, maintain architecture patterns, and repair test regressions."
+        },
+        "crewIds": [
+          "crew-repo-analyst",
+          "crew-eng-planner"
+        ],
+        "fleetId": "fleet-diezy",
+        "homeScope": "repository",
+        "id": "ship-dev",
+        "monthlySpentUSD": 2.45,
+        "name": "Developer Delivery Ship",
+        "navigatorName": "Horizon (Lead)",
+        "squadIds": [
+          "squad-dev"
+        ],
+        "status": "active",
+        "tagline": "Autonomous coding, refactoring, test repair, and CI verification."
+      },
+      {
+        "activeVoyagesCount": 1,
+        "charter": {
+          "acceptedQuestTypes": [
+            "competitor_research",
+            "audience_research",
+            "positioning_strategy",
+            "content_draft"
+          ],
+          "budgetPerVoyageUSD": 2,
+          "crewAuthority": "Draft copy, extract audience signals. External publication requires Captain's Approval.",
+          "memorySharing": "project_scoped",
+          "monthlyBudgetUSD": 20,
+          "prohibitedActions": [
+            "Direct social publishing",
+            "Outbound email blast",
+            "External media buy"
+          ],
+          "purpose": "Develop market intelligence and high-converting launch copy with strict human verification."
+        },
+        "crewIds": [
+          "crew-market-analyst",
+          "crew-brand-reviewer"
+        ],
+        "fleetId": "fleet-diezy",
+        "homeScope": "content",
+        "id": "ship-growth",
+        "monthlySpentUSD": 0.88,
+        "name": "Growth & Brand Ship",
+        "navigatorName": "Beacon (Lead)",
+        "squadIds": [
+          "squad-growth"
+        ],
+        "status": "active",
+        "tagline": "Market analysis, documentation, release notes, and community signals."
+      },
+      {
+        "activeVoyagesCount": 0,
+        "charter": {
+          "acceptedQuestTypes": [
+            "vendor_analysis",
+            "architecture_decision",
+            "security_audit"
+          ],
+          "budgetPerVoyageUSD": 1.5,
+          "crewAuthority": "Read-only search, documentation parsing, synthetic benchmarking.",
+          "memorySharing": "isolated",
+          "monthlyBudgetUSD": 15,
+          "prohibitedActions": [
+            "Credential generation",
+            "External payment commits"
+          ],
+          "purpose": "Provide rigorous evidence-backed decision briefs and comparative trade-off analyses."
+        },
+        "crewIds": [
+          "crew-tech-evaluator"
+        ],
+        "fleetId": "fleet-diezy",
+        "homeScope": "research",
+        "id": "ship-research",
+        "monthlySpentUSD": 1.25,
+        "name": "Research & Decision Ship",
+        "navigatorName": "Sextant (Lead)",
+        "squadIds": [],
+        "status": "active",
+        "tagline": "Synthesizing technical architectural decisions, vendor benchmarks, and risk evaluations."
+      }
+    ],
+    "squads": [
+      {
+        "id": "squad-dev",
+        "name": "Core Software Delivery Squad"
+      }
+    ],
+    "steering_directives": [
+      {
+        "createdAt": "2026-03-05T00:00:00Z",
+        "createdBy": "Captain",
+        "guidance": "Always distinguish facts in the code from assumptions. Cite exact line numbers.",
+        "id": "dir-1",
+        "name": "Evidence Distinction Policy",
+        "overridePolicy": "override",
+        "priority": 1,
+        "status": "active",
+        "targetId": "crew-repo-analyst",
+        "targetType": "role",
+        "updatedAt": "2026-03-22T00:00:00Z",
+        "updatedBy": "Captain",
+        "version": 1
+      }
+    ],
+    "training_hooks": [
+      {
+        "actionConfig": {
+          "maxBudgetUSD": 2.5
+        },
+        "actionType": "verify_budget",
+        "createdAt": "2026-03-01T00:00:00Z",
+        "createdBy": "Captain",
+        "executionMode": "automatic",
+        "failureHandling": "notify",
+        "id": "hook-1",
+        "name": "Pre-Voyage Policy Verification",
+        "status": "active",
+        "triggerEvent": "voyage_start",
+        "updatedAt": "2026-03-20T00:00:00Z",
+        "updatedBy": "Captain",
+        "version": 1
+      }
+    ],
+    "training_skills": [
+      {
+        "accessScope": [
+          "ship-dev",
+          "ship-research"
+        ],
+        "createdAt": "2026-03-01T00:00:00Z",
+        "createdBy": "Captain",
+        "id": "skill-ast-parser",
+        "instructions": "Traverse syntax tree nodes, identify export signatures, and graph dependencies.",
+        "name": "AST Codebase Navigation",
+        "purpose": "Analyzes Abstract Syntax Trees across Rust, TypeScript, and Go codebases.",
+        "status": "active",
+        "updatedAt": "2026-03-25T00:00:00Z",
+        "updatedBy": "Captain",
+        "version": 1
+      },
+      {
+        "accessScope": [
+          "ship-research"
+        ],
+        "createdAt": "2026-03-10T00:00:00Z",
+        "createdBy": "Captain",
+        "id": "skill-benchmarking",
+        "instructions": "Send bounded probe payloads, measure time to first token, and report p99 latency.",
+        "name": "Synthetic Gateway Benchmarking",
+        "purpose": "Runs high-throughput TTFT and streaming latency measurements against LLM endpoints.",
+        "status": "active",
+        "updatedAt": "2026-03-28T00:00:00Z",
+        "updatedBy": "Captain",
+        "version": 1
+      }
+    ],
+    "treasury_ledger": [
+      {
+        "costUSD": 0.12,
+        "date": "2026-03-31T04:00:00Z",
+        "id": "tr-1",
+        "model": "claude-3-7-sonnet",
+        "provider": "Anthropic",
+        "questTitle": "Resolve WebSocket Goroutine Timeout in CI",
+        "shipId": "ship-dev",
+        "tokensUsed": 18000
+      },
+      {
+        "costUSD": 0.04,
+        "date": "2026-03-31T03:30:00Z",
+        "id": "tr-2",
+        "model": "gemini-2-5-pro",
+        "provider": "Google",
+        "questTitle": "Synthesize Fleet AI v2.4 Release Notes",
+        "shipId": "ship-growth",
+        "tokensUsed": 29700
+      },
+      {
+        "costUSD": 0,
+        "date": "2026-03-31T02:15:00Z",
+        "id": "tr-3",
+        "model": "deepseek-r1:14b",
+        "provider": "Ollama",
+        "questTitle": "Audit Model Gateway Latency and Token Budgets",
+        "shipId": "ship-research",
+        "tokensUsed": 53500
+      }
+    ]
+  },
+  "status": "ok"
+}

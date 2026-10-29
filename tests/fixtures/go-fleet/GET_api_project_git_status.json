@@ -1,0 +1,9 @@
+{
+  "branch": "main",
+  "clean": true,
+  "policy_check": "evaluated-pass",
+  "risk_tier": "READ",
+  "staged": [],
+  "unstaged": [],
+  "untracked": []
+}

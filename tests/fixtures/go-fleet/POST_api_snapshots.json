@@ -1,0 +1,17 @@
+{
+  "checksum": "sha256:e01a3df705",
+  "createdAt": "2026-10-29T20:39:48+07:00",
+  "entityCount": 42,
+  "id": "snap-1793281188",
+  "includes": [
+    "ships",
+    "crew",
+    "squads",
+    "quests",
+    "artifacts",
+    "approvals",
+    "logbook"
+  ],
+  "label": "Genesis Commissioning State",
+  "sizeMB": 26.4
+}

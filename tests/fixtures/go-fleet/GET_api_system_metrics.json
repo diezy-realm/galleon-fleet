@@ -1,0 +1,17 @@
+{
+  "activeProcesses": 7,
+  "active_threads": 4,
+  "arch": "amd64",
+  "cpuUsage": 0,
+  "gateway_latency_ms": 5,
+  "goVersion": "go1.27.1",
+  "isolation_mode": "Landlock & Tauri Sandboxed",
+  "memoryUsage": {
+    "percent": 8,
+    "totalMB": 12,
+    "usedMB": 1
+  },
+  "memory_db_mb": 1,
+  "platform": "linux",
+  "uptime": "0h 0m"
+}
