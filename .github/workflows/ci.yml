@@ -108,6 +108,12 @@ jobs:
       - name: Test release announcement composer
         run: bash scripts/ci/release_post_text.test.sh
 
+      - name: Guard no new Go files
+        run: bash scripts/ci/check_no_go.sh diff
+
+      - name: Test no-go guard
+        run: bash scripts/ci/check_no_go.test.sh
+
   zerocode-rpc-boundary:
     name: Zerocode RPC Boundary
     runs-on: [self-hosted, linux, galleon-light]
