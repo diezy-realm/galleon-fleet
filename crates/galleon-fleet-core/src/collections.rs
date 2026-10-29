@@ -1,0 +1,1 @@
+//! Collection schemas and allowlists.

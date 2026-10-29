@@ -4532,6 +4532,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-fleet-core"
+version = "0.8.5"
+dependencies = [
+ "insta",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.20",
+ "tokio",
+]
+
+[[package]]
 name = "galleon-gateway"
 version = "0.8.5"
 dependencies = [
@@ -4545,6 +4559,7 @@ dependencies = [
  "galleon-api",
  "galleon-channels",
  "galleon-config",
+ "galleon-fleet-core",
  "galleon-hardware",
  "galleon-i18n",
  "galleon-infra",
