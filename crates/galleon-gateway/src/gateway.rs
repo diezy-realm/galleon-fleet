@@ -250,6 +250,35 @@ pub fn build_gateway_router(state: AppState) -> Router {
                 }))
             }),
         )
+        // ── Admin routes (localhost-restricted) ──
+        .route(
+            "/admin/shutdown",
+            post(crate::api_admin::handle_admin_shutdown),
+        )
+        .route(
+            "/admin/reload",
+            post(crate::api_admin::handle_admin_reload),
+        )
+        .route(
+            "/admin/paircode",
+            get(crate::api_admin::handle_admin_paircode),
+        )
+        .route(
+            "/admin/paircode/new",
+            post(crate::api_admin::handle_admin_paircode_new),
+        )
+        .route(
+            "/admin/sop/pending",
+            get(crate::api_sop::handle_sop_pending),
+        )
+        .route(
+            "/admin/sop/approve",
+            post(crate::api_sop::handle_sop_approve),
+        )
+        .route(
+            "/admin/sop/deny",
+            post(crate::api_sop::handle_sop_deny),
+        )
         .with_state(state.clone())
         .layer(RequestBodyLimitLayer::new(crate::MAX_BODY_SIZE));
 

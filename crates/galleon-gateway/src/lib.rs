@@ -15,6 +15,7 @@ pub mod a2a;
 pub mod acp;
 pub mod agent_owned_state;
 pub mod api;
+pub mod api_admin;
 pub mod api_audit;
 pub mod api_backup;
 pub mod api_browse;
@@ -118,6 +119,7 @@ pub mod ws_approval;
 pub mod ws_sop_runs;
 
 // Re-export key types from extracted modules
+pub use api_admin::*;
 pub use api_config::{
     ConfigDriftSummary, DriftEntry, compute_drift, persist_and_swap, try_compute_drift,
 };
