@@ -4,6 +4,7 @@
 //! (collections, snapshots, metrics, policies, terminal, quartermaster).
 
 pub mod collections;
+pub mod diagnostics;
 pub mod fleet;
 pub mod harbor;
 pub mod project;
@@ -24,5 +25,6 @@ pub fn routes(state: AppState) -> Router<AppState> {
         .merge(fleet::routes(state.clone()))
         .merge(system::routes(state.clone()))
         .merge(project::routes(state.clone()))
-        .merge(harbor::routes(state))
+        .merge(harbor::routes(state.clone()))
+        .merge(diagnostics::routes(state))
 }

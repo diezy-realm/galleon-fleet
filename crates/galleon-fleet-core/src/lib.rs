@@ -2,6 +2,7 @@
 
 pub mod briefing;
 pub mod collections;
+pub mod diagnostics;
 pub mod error;
 pub mod harbor;
 pub mod intent;
@@ -19,6 +20,10 @@ pub use briefing::{
 pub use collections::{
     CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS, is_allowed_collection, is_canonical_collection,
     resolve_allowed_collection, validate_collection_payload,
+};
+pub use diagnostics::{
+    DiagnosticItem, LATENCY_UNMEASURED, STATUS_ERROR, STATUS_HEALTHY, STATUS_WARNING,
+    severity_str_to_status,
 };
 pub use error::FleetError;
 pub use harbor::{

@@ -71,7 +71,7 @@ pub fn handle_get_harbor_providers_impl(config: &Config) -> Response {
             .is_some_and(|k| !k.is_empty())
             || base_cfg.requires_openai_auth;
 
-        let is_local_endpoint = base_cfg.uri.as_deref().map(str::trim).map_or(true, |u| {
+        let is_local_endpoint = base_cfg.uri.as_deref().map(str::trim).is_none_or(|u| {
             u.contains("localhost") || u.contains("127.0.0.1") || !u.starts_with("https://")
         });
 
@@ -138,7 +138,6 @@ mod tests {
                     model: Some("gpt-4o".to_string()),
                     ..Default::default()
                 },
-                ..Default::default()
             },
         );
 
