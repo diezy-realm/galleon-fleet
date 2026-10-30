@@ -9,9 +9,12 @@ Standar arsitektur 3-tier (sumber tunggal, dipakai KiroCrew & agy):
 @[Arsitektur & layering galleon](../../.kiro/steering/galleon-architecture.md)
 
 Aturan WAJIB tier ini:
-- **Shell tipis.** Tauri = klien/proxy ke Rust Gateway HTTP/WS (`http://127.0.0.1:42617`), bukan tempat
-  memutuskan fakta fleet. Jangan definisikan ulang risk-tier/policy/reply di
-  sini dengan nilai berbeda — gateway/runtime Rust adalah SSOT. Penulisan kode Go dilarang sesuai ADR-0018 dan 01-boundary-policy v2.
+- **Shell tipis.** Tauri = klien/proxy ke Rust Gateway HTTP/WS (`http://127.0.0.1:42617`, `GALLEON_GATEWAY_URL`), bukan tempat
+  memutuskan fakta fleet. Seluruh panggilan API fleet didelegasikan melalui satu command generik `api_request(method, path, body, token)`
+  dengan validasi path ketat (wajib diawali `/api/` atau sama dengan `/pair` / `/pair/code`, cegah traversal `..` dan URL `://`),
+  mengembalikan `{status, body}` (timeout 30s). CSP diatur ke `connect-src 'self' ipc: http://ipc.localhost;`.
+  Jangan definisikan ulang risk-tier/policy/reply di sini dengan nilai berbeda — gateway/runtime Rust adalah SSOT.
+  Penulisan kode Go dilarang sesuai ADR-0018 dan 01-boundary-policy v2.
 - **Terminal/eksekusi shell:** Gunakan Tauri IPC + portable-pty atau sandboxed tools di System Core.
   Larangan penulisan/pemanggilan Go engine sesuai ADR-0018.
 - **Rust idiom (sama seperti `crates/`):** zero `.unwrap()`/`.expect()` di jalur
