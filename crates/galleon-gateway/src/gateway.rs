@@ -321,8 +321,18 @@ pub fn build_gateway_router(state: AppState) -> Router {
         .with_state(state.clone())
         .layer(RequestBodyLimitLayer::new(crate::MAX_BODY_SIZE));
 
-    // Router inti can be merged with other routers (e.g. TASK-081 fleet router with 1 MiB limit):
-    let app = core_router;
+    // Router fleet (TASK-081) with its own FLEET_MAX_BODY (1 MiB) limit under require_auth
+    let fleet_router = crate::api_fleet::routes(state.clone())
+        .layer(RequestBodyLimitLayer::new(
+            galleon_fleet_core::FLEET_MAX_BODY,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_fleet_auth,
+        ))
+        .with_state(state.clone());
+
+    let app = core_router.merge(fleet_router);
 
     let app = app.layer(TimeoutLayer::with_status_code(
         axum::http::StatusCode::REQUEST_TIMEOUT,
@@ -344,4 +354,16 @@ pub fn build_gateway_router(state: AppState) -> Router {
     } else {
         app.layer(axum::middleware::from_fn(crate::security_headers::apply))
     }
+}
+
+/// Enforces `require_auth` Bearer token authentication across all fleet endpoints.
+async fn require_fleet_auth(
+    State(state): State<AppState>,
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    if let Err((status, body)) = crate::api::require_auth(&state, req.headers()) {
+        return (status, body).into_response();
+    }
+    next.run(req).await
 }
