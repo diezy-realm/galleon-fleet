@@ -17,6 +17,9 @@ tauri = { version = "2.0", features = ["tray-icon", "image-ico", "image-png"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.36", features = ["full"] }
-# Proxy fleet-domain Tauri commands to the Go engine (SSOT: engine is the single source).
+# Proxy fleet-domain Tauri commands to the Rust gateway (SSOT: gateway is the single source).
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+[dev-dependencies]
+tauri-utils = { version = "2.0", features = ["build"] }
 
