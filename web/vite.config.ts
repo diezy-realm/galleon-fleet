@@ -4,6 +4,8 @@ import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
+  const gatewayUrl = process.env.GALLEON_GATEWAY_URL || 'http://127.0.0.1:42617';
+
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -21,7 +23,11 @@ export default defineConfig(() => {
       allowedHosts: true as const,
       proxy: {
         '/api': {
-          target: process.env.ENGINE_URL || 'http://127.0.0.1:9090',
+          target: gatewayUrl,
+          changeOrigin: true,
+        },
+        '/pair': {
+          target: gatewayUrl,
           changeOrigin: true,
         },
       },
