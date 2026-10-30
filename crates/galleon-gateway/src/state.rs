@@ -139,6 +139,15 @@ impl AppState {
             (tokio::sync::watch::channel(false).0, None)
         };
 
+        let pairing = Arc::new(PairingGuard::new(
+            config.gateway.require_pairing,
+            &config.gateway.paired_tokens,
+            config.gateway.pairing_code,
+        ));
+        let device_registry = Some(Arc::new(crate::api_pairing::DeviceRegistry::new(
+            &config.data_dir,
+        )));
+
         Self {
             config: Arc::new(RwLock::new(config)),
             config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
@@ -152,11 +161,7 @@ impl AppState {
                 std::path::PathBuf::new(),
             )),
             auto_save: false,
-            pairing: Arc::new(PairingGuard::new(
-                false,
-                &[],
-                galleon_config::pairing::PairingCodePolicy::default(),
-            )),
+            pairing,
             trust_forwarded_headers: false,
             rate_limiter: Arc::new(crate::GatewayRateLimiter::new(100, 100, 100)),
             auth_limiter: Arc::new(crate::auth_rate_limit::AuthRateLimiter::new()),
@@ -192,7 +197,7 @@ impl AppState {
             web_dist_dir: None,
             session_backend: None,
             session_queue: Arc::new(crate::session_queue::SessionActorQueue::new(8, 30, 600)),
-            device_registry: None,
+            device_registry,
             pending_pairings: None,
             canvas_store: canvas_store.unwrap_or_default(),
             #[cfg(feature = "webauthn")]
