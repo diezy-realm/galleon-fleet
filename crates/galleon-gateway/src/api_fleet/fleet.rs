@@ -8,15 +8,17 @@
 //!   - `GET /api/fleet/metrics` serves collection entity counters and honest telemetry
 //!     where unmeasured metrics (`systemUptime`, `gatewayLatencyMs`, `activeWorkers`) return `null`.
 //!   - `POST /api/fleet/deck-bell` broadcasts the sovereign ceremonial ship bell alert.
+//! - §Policies (TASK-072):
+//!   - `GET /api/fleet/policies` serves operational policies and risk tier definitions.
 
 use std::sync::Arc;
 
-use axum::Router;
 use axum::extract::State;
-use axum::http::{StatusCode, header};
+use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
-use galleon_fleet_core::{DeckBellResponse, FLEET_MAX_BODY, FleetStore, get_seed_response_json};
+use axum::Router;
+use galleon_fleet_core::{get_seed_response_json, DeckBellResponse, FleetStore, FLEET_MAX_BODY};
 use serde_json::json;
 use tower_http::limit::RequestBodyLimitLayer;
 
@@ -28,6 +30,7 @@ pub fn routes(state: AppState) -> Router<AppState> {
         .route("/api/fleet/seed", get(handle_get_fleet_seed))
         .route("/api/fleet/metrics", get(handle_get_fleet_metrics_state))
         .route("/api/fleet/deck-bell", post(handle_post_deck_bell))
+        .route("/api/fleet/policies", get(handle_get_fleet_policies_state))
         .layer(RequestBodyLimitLayer::new(FLEET_MAX_BODY))
         .with_state(state)
 }
@@ -38,6 +41,7 @@ pub fn router_for_store(store: Arc<FleetStore>) -> Router {
         .route("/api/fleet/seed", get(handle_get_fleet_seed))
         .route("/api/fleet/metrics", get(handle_get_fleet_metrics_store))
         .route("/api/fleet/deck-bell", post(handle_post_deck_bell))
+        .route("/api/fleet/policies", get(handle_get_fleet_policies_store))
         .layer(RequestBodyLimitLayer::new(FLEET_MAX_BODY))
         .with_state(store)
 }
@@ -105,6 +109,43 @@ async fn handle_post_deck_bell() -> Response {
             json_str,
         )
             .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "application/json")],
+            json!({ "error": e.to_string() }).to_string(),
+        )
+            .into_response(),
+    }
+}
+
+async fn handle_get_fleet_policies_state(State(state): State<AppState>) -> Response {
+    let store = {
+        let config = state.config.read();
+        FleetStore::from_data_dir(&config.data_dir)
+    };
+    handle_get_fleet_policies_impl(&store)
+}
+
+async fn handle_get_fleet_policies_store(State(store): State<Arc<FleetStore>>) -> Response {
+    handle_get_fleet_policies_impl(&store)
+}
+
+fn handle_get_fleet_policies_impl(store: &FleetStore) -> Response {
+    match store.get_policies() {
+        Ok(policies) => match serde_json::to_string(&policies) {
+            Ok(json_str) => (
+                StatusCode::OK,
+                [(header::CONTENT_TYPE, "application/json")],
+                json_str,
+            )
+                .into_response(),
+            Err(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [(header::CONTENT_TYPE, "application/json")],
+                json!({ "error": e.to_string() }).to_string(),
+            )
+                .into_response(),
+        },
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             [(header::CONTENT_TYPE, "application/json")],
@@ -285,9 +326,10 @@ mod tests {
         let parsed_obj = parsed.as_object().expect("response must be JSON object");
 
         // Load Go fixture contract
-        let fixture_str =
-            include_str!("../../../../tests/fixtures/go-fleet/GET_api_fleet_metrics.json");
-        let fixture_val: Value = serde_json::from_str(fixture_str).expect("parse Go fixture");
+        let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/go-fleet/GET_api_fleet_metrics.json");
+        let fixture_str = std::fs::read_to_string(&fixture_path).expect("read Go fixture");
+        let fixture_val: Value = serde_json::from_str(&fixture_str).expect("parse Go fixture");
         let fixture_obj = fixture_val.as_object().expect("fixture must be object");
 
         // Verify shape parity: all Go fixture keys exist in Rust response
@@ -365,9 +407,10 @@ mod tests {
         let parsed: Value = serde_json::from_slice(&body_bytes).expect("parse JSON response");
 
         // Load Go fixture contract
-        let fixture_str =
-            include_str!("../../../../tests/fixtures/go-fleet/POST_api_fleet_deck_bell.json");
-        let fixture_val: Value = serde_json::from_str(fixture_str).expect("parse Go fixture");
+        let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/go-fleet/POST_api_fleet_deck_bell.json");
+        let fixture_str = std::fs::read_to_string(&fixture_path).expect("read Go fixture");
+        let fixture_val: Value = serde_json::from_str(&fixture_str).expect("parse Go fixture");
 
         assert_eq!(parsed["success"], fixture_val["success"]);
         assert_eq!(parsed["message"], fixture_val["message"]);
@@ -376,6 +419,79 @@ mod tests {
             parsed["message"],
             "Sovereign Ship Bell sounded across the fleet deck. All hands on alert."
         );
+    }
+
+    #[tokio::test]
+    async fn test_get_fleet_policies_endpoint_and_shape_contract() {
+        let app = router();
+
+        let req = Request::builder()
+            .method("GET")
+            .uri("/api/fleet/policies")
+            .body(Body::empty())
+            .expect("request builder");
+
+        let resp = app.oneshot(req).await.expect("oneshot call");
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(
+            resp.headers()
+                .get(header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok()),
+            Some("application/json")
+        );
+
+        let body_bytes = resp
+            .into_body()
+            .collect()
+            .await
+            .expect("read body")
+            .to_bytes();
+        let parsed: Value = serde_json::from_slice(&body_bytes).expect("parse JSON response");
+        let parsed_obj = parsed.as_object().expect("response must be JSON object");
+
+        // Load Go fixture contract
+        let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/go-fleet/GET_api_fleet_policies.json");
+        let fixture_str = std::fs::read_to_string(&fixture_path).expect("read Go fixture");
+        let fixture_val: Value = serde_json::from_str(&fixture_str).expect("parse Go fixture");
+        let fixture_obj = fixture_val.as_object().expect("fixture must be object");
+
+        // Verify shape parity: all Go fixture keys exist in Rust response
+        for key in fixture_obj.keys() {
+            assert!(
+                parsed_obj.contains_key(key),
+                "Missing expected key from Go fixture: {key}"
+            );
+        }
+
+        // Verify no foreign unexpected keys
+        for key in parsed_obj.keys() {
+            assert!(
+                fixture_obj.contains_key(key),
+                "Unexpected extra key not in Go fixture: {key}"
+            );
+        }
+
+        let policies = parsed["policies"].as_array().expect("policies array");
+        assert_eq!(policies.len(), 3);
+        assert_eq!(policies[0]["id"], "pol-1");
+        assert_eq!(policies[0]["enforcement"], "strict");
+        assert_eq!(policies[1]["id"], "pol-2");
+        assert_eq!(policies[2]["id"], "pol-3");
+
+        let risk_tiers = parsed["riskTiers"].as_array().expect("riskTiers array");
+        assert_eq!(risk_tiers.len(), 4);
+        assert_eq!(risk_tiers[0]["tier"], 1);
+        assert_eq!(risk_tiers[0]["name"], "Read & Inspection");
+        assert_eq!(risk_tiers[0]["approvalRequired"], false);
+        assert_eq!(risk_tiers[0]["autoRetry"], true);
+        assert_eq!(risk_tiers[0]["maxBudgetUSD"], 0.5);
+
+        assert_eq!(risk_tiers[3]["tier"], 4);
+        assert_eq!(risk_tiers[3]["name"], "Production Deploy & Secret Rotation");
+        assert_eq!(risk_tiers[3]["approvalRequired"], true);
+        assert_eq!(risk_tiers[3]["autoRetry"], false);
+        assert_eq!(risk_tiers[3]["maxBudgetUSD"], 10.0);
     }
 
     #[tokio::test]
@@ -397,7 +513,16 @@ mod tests {
             .uri("/api/fleet/deck-bell")
             .body(Body::empty())
             .expect("request builder");
-        let resp2 = app.oneshot(req2).await.expect("call");
+        let resp2 = app.clone().oneshot(req2).await.expect("call");
         assert_eq!(resp2.status(), StatusCode::METHOD_NOT_ALLOWED);
+
+        // POST /api/fleet/policies is not allowed (only GET)
+        let req3 = Request::builder()
+            .method("POST")
+            .uri("/api/fleet/policies")
+            .body(Body::empty())
+            .expect("request builder");
+        let resp3 = app.oneshot(req3).await.expect("call");
+        assert_eq!(resp3.status(), StatusCode::METHOD_NOT_ALLOWED);
     }
 }

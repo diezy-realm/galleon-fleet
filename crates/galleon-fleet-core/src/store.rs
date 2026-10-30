@@ -344,6 +344,25 @@ impl FleetStore {
         crate::metrics::calculate_fleet_metrics(self, memory_used_mb)
     }
 
+    /// Retrieve fleet policies and risk tiers from this store.
+    ///
+    /// Reads `<root>/policies.json` and `<root>/riskTiers.json` if they exist in the
+    /// store, falling back to the canonical embedded seed definitions if absent.
+    pub fn get_policies(&self) -> Result<crate::policies::FleetPoliciesResponse, FleetError> {
+        let policies = match self.read_collection("policies")? {
+            Some(bytes) => serde_json::from_slice(&bytes)?,
+            None => crate::policies::load_seed_policies()?,
+        };
+        let risk_tiers = match self.read_collection("riskTiers")? {
+            Some(bytes) => serde_json::from_slice(&bytes)?,
+            None => crate::policies::load_seed_risk_tiers()?,
+        };
+        Ok(crate::policies::FleetPoliciesResponse {
+            policies,
+            risk_tiers,
+        })
+    }
+
     /// Check if the store has already been marked as imported.
     pub fn is_imported(&self) -> bool {
         self.root.join(".imported").exists()
@@ -584,16 +603,12 @@ mod tests {
         let report = store.import_from_dir(src_tmp.path())?;
         assert_eq!(report.source, src_tmp.path());
         assert!(report.files_copied.contains(&"crew.json".to_string()));
-        assert!(
-            report
-                .files_copied
-                .contains(&"chatMessages.json".to_string())
-        );
-        assert!(
-            report
-                .files_copied
-                .contains(&"trainingSkills.json".to_string())
-        );
+        assert!(report
+            .files_copied
+            .contains(&"chatMessages.json".to_string()));
+        assert!(report
+            .files_copied
+            .contains(&"trainingSkills.json".to_string()));
 
         // Check destination files exist
         assert_eq!(store.read_file("crew.json")?, br#"[{"id":"c1"}]"#);
@@ -617,8 +632,8 @@ mod tests {
     }
 
     #[test]
-    fn test_legacy_import_does_not_repeat_and_preserves_existing()
-    -> Result<(), Box<dyn std::error::Error>> {
+    fn test_legacy_import_does_not_repeat_and_preserves_existing(
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let src_tmp = tempfile::tempdir()?;
         let dst_tmp = tempfile::tempdir()?;
         let store = FleetStore::new(dst_tmp.path().join("fleet"));
@@ -633,11 +648,9 @@ mod tests {
 
         let report = store.import_from_dir(src_tmp.path())?;
         // Since chatMessages.json already existed, it should not have been overwritten
-        assert!(
-            !report
-                .files_copied
-                .contains(&"chatMessages.json".to_string())
-        );
+        assert!(!report
+            .files_copied
+            .contains(&"chatMessages.json".to_string()));
         assert_eq!(
             store.read_file("chatMessages.json")?,
             br#"[{"id":"existing"}]"#
