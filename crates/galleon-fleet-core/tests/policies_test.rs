@@ -3,7 +3,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use galleon_fleet_core::{
-    load_seed_policies, load_seed_policies_response, load_seed_risk_tiers, FleetStore,
+    FleetStore, load_seed_policies, load_seed_policies_response, load_seed_risk_tiers,
 };
 use serde_json::Value;
 

@@ -3,8 +3,8 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use galleon_fleet_core::{
-    calculate_fleet_metrics, DeckBellResponse, FleetError, FleetMetrics, FleetStore,
-    DECK_BELL_MESSAGE,
+    DECK_BELL_MESSAGE, DeckBellResponse, FleetError, FleetMetrics, FleetStore,
+    calculate_fleet_metrics,
 };
 use serde_json::Value;
 
@@ -144,8 +144,8 @@ async fn test_calculate_fleet_metrics_counts_and_status_filters() -> Result<(), 
 }
 
 #[tokio::test]
-async fn test_calculate_fleet_metrics_resilient_to_malformed_and_non_array_files(
-) -> Result<(), FleetError> {
+async fn test_calculate_fleet_metrics_resilient_to_malformed_and_non_array_files()
+-> Result<(), FleetError> {
     let tmp = tempfile::tempdir().map_err(FleetError::Io)?;
     let store = FleetStore::new(tmp.path());
 
