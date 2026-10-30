@@ -12,6 +12,7 @@ pub mod project;
 pub mod seed;
 pub mod snapshots;
 pub mod store;
+pub mod terminal;
 
 pub use briefing::{
     DEFAULT_BRIEFING_TITLE, ExecutiveBriefing, calculate_executive_briefing,
@@ -42,6 +43,11 @@ pub use seed::{
 };
 pub use snapshots::{CreateSnapshotRequest, MAX_SNAPSHOTS, SnapshotItem};
 pub use store::{FLEET_MAX_BODY, FleetStore, ImportReport};
+pub use terminal::{
+    DEFAULT_TERMINAL_TIMEOUT_SECS, MAX_AUDIT_ENTRIES, MAX_TERMINAL_OUTPUT_BYTES,
+    TerminalAuditRecord, TerminalAuditRingBuffer, TerminalExecRequest, TerminalExecResponse,
+    compute_audit_id, truncate_output,
+};
 
 #[cfg(test)]
 mod tests {

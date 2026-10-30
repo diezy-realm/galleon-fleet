@@ -1,9 +1,9 @@
 use anyhow::Context as _;
+use galleon_api::runtime_traits::ShellDialect;
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
-use galleon_api::runtime_traits::ShellDialect;
 
 // Re-export from galleon-config.
 pub use crate::autonomy::AutonomyLevel;
@@ -1460,6 +1460,16 @@ fn normalized_shell_command(segment: &str, dialect: ShellDialect) -> NormalizedS
         has_leading_env_assignment,
         words,
         has_ambiguous_redirection,
+    }
+}
+
+/// Parse a command string into argv arguments using the POSIX shell dialect parser.
+pub fn parse_command_argv_for_posix(command: &str) -> Vec<String> {
+    let segments = split_unquoted_segments(command, ShellDialect::Posix);
+    if let Some(first_seg) = segments.first() {
+        normalized_shell_command(first_seg, ShellDialect::Posix).words
+    } else {
+        Vec::new()
     }
 }
 
@@ -3253,6 +3263,11 @@ impl SecurityPolicy {
         approved: bool,
     ) -> Result<CommandRiskLevel, String> {
         self.validate_command_execution_for_shell(command, approved, ShellDialect::Posix)
+    }
+
+    /// Extracts parsed argv arguments for the command using the policy's POSIX shell dialect parser.
+    pub fn parse_command_argv(&self, command: &str) -> Vec<String> {
+        parse_command_argv_for_posix(command)
     }
 
     /// Validate a command against the policy and the runtime's shell language.
