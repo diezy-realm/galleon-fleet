@@ -9,12 +9,12 @@
 
 use std::path::PathBuf;
 
+use axum::Router;
 use axum::extract::{Query, State};
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
-use galleon_fleet_core::{parse_git_status, FLEET_MAX_BODY};
+use galleon_fleet_core::{FLEET_MAX_BODY, parse_git_status};
 use serde::Deserialize;
 use serde_json::json;
 use tower_http::limit::RequestBodyLimitLayer;
@@ -320,10 +320,12 @@ mod tests {
 
         let body_bytes = resp.into_body().collect().await.unwrap().to_bytes();
         let val: Value = serde_json::from_slice(&body_bytes).unwrap();
-        assert!(val["error"]
-            .as_str()
-            .unwrap()
-            .contains("outside configured workspace"));
+        assert!(
+            val["error"]
+                .as_str()
+                .unwrap()
+                .contains("outside configured workspace")
+        );
     }
 
     #[tokio::test]
@@ -350,10 +352,12 @@ mod tests {
 
         let body_bytes = resp.into_body().collect().await.unwrap().to_bytes();
         let val: Value = serde_json::from_slice(&body_bytes).unwrap();
-        assert!(val["error"]
-            .as_str()
-            .unwrap()
-            .contains("outside configured workspace"));
+        assert!(
+            val["error"]
+                .as_str()
+                .unwrap()
+                .contains("outside configured workspace")
+        );
     }
 
     #[tokio::test]
@@ -383,10 +387,12 @@ mod tests {
 
         let body_bytes = resp.into_body().collect().await.unwrap().to_bytes();
         let val: Value = serde_json::from_slice(&body_bytes).unwrap();
-        assert!(val["error"]
-            .as_str()
-            .unwrap()
-            .contains("outside configured workspace"));
+        assert!(
+            val["error"]
+                .as_str()
+                .unwrap()
+                .contains("outside configured workspace")
+        );
     }
 
     #[tokio::test]
@@ -414,10 +420,12 @@ mod tests {
 
         let body_bytes = resp.into_body().collect().await.unwrap().to_bytes();
         let val: Value = serde_json::from_slice(&body_bytes).unwrap();
-        assert!(val["error"]
-            .as_str()
-            .unwrap()
-            .contains("git status failed with exit code"));
+        assert!(
+            val["error"]
+                .as_str()
+                .unwrap()
+                .contains("git status failed with exit code")
+        );
     }
 
     #[tokio::test]
@@ -443,10 +451,12 @@ mod tests {
 
         let body_bytes = resp.into_body().collect().await.unwrap().to_bytes();
         let val: Value = serde_json::from_slice(&body_bytes).unwrap();
-        assert!(val["error"]
-            .as_str()
-            .unwrap()
-            .contains("path does not exist or cannot be resolved"));
+        assert!(
+            val["error"]
+                .as_str()
+                .unwrap()
+                .contains("path does not exist or cannot be resolved")
+        );
     }
 
     #[tokio::test]
@@ -473,9 +483,11 @@ mod tests {
 
         let body_bytes = resp.into_body().collect().await.unwrap().to_bytes();
         let val: Value = serde_json::from_slice(&body_bytes).unwrap();
-        assert!(val["error"]
-            .as_str()
-            .unwrap()
-            .contains("is not a directory"));
+        assert!(
+            val["error"]
+                .as_str()
+                .unwrap()
+                .contains("is not a directory")
+        );
     }
 }
