@@ -20,7 +20,7 @@ use galleon_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
-use galleon_gateway::{build_gateway_router, live_pairing_code_policy, AppState};
+use galleon_gateway::{AppState, build_gateway_router, live_pairing_code_policy};
 use serde_json::Value;
 
 const AUTH_TOKEN: &str = "test-fleet-contract-token";
