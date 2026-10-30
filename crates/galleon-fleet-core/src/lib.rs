@@ -3,6 +3,7 @@
 pub mod briefing;
 pub mod collections;
 pub mod error;
+pub mod harbor;
 pub mod intent;
 pub mod metrics;
 pub mod policies;
@@ -20,6 +21,10 @@ pub use collections::{
     resolve_allowed_collection, validate_collection_payload,
 };
 pub use error::FleetError;
+pub use harbor::{
+    HarborProvider, STATUS_CONFIGURED, STATUS_MISSING_CREDENTIALS, build_harbor_provider,
+    resolve_capabilities, resolve_vendor_and_name,
+};
 pub use metrics::{DECK_BELL_MESSAGE, DeckBellResponse, FleetMetrics, calculate_fleet_metrics};
 pub use policies::{
     FleetPoliciesResponse, FleetPolicy, RiskTier, load_seed_policies, load_seed_policies_response,

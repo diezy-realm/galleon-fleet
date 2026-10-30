@@ -5,6 +5,7 @@
 
 pub mod collections;
 pub mod fleet;
+pub mod harbor;
 pub mod project;
 pub mod snapshots;
 pub mod system;
@@ -22,5 +23,6 @@ pub fn routes(state: AppState) -> Router<AppState> {
         .merge(snapshots::routes(state.clone()))
         .merge(fleet::routes(state.clone()))
         .merge(system::routes(state.clone()))
-        .merge(project::routes(state))
+        .merge(project::routes(state.clone()))
+        .merge(harbor::routes(state))
 }
