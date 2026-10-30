@@ -1,7 +1,7 @@
 //! Standard Operating Procedure (SOP) wire types, enumerations, and traits.
 //!
 //! Provides the canonical contract for trigger sources, run status, step status,
-//! and filesystem change events shared across channels, runtime, and the Go engine.
+//! and filesystem change events shared across channels and runtime.
 
 use serde::{Deserialize, Serialize};
 use std::fmt;

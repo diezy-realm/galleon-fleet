@@ -13,31 +13,6 @@ use tower_http::timeout::TimeoutLayer;
 
 use crate::state::{AppState, GatewaySupervision};
 
-/// Binds the `SystemGateway` gRPC server on `127.0.0.1:50052` and serves it
-/// until the process exits. D1: lets the Go engine call back into Rust for
-/// native-tool execution (bash/git/file I/O). Loopback-only — this is an
-/// internal engine<->gateway channel, never exposed on a public interface.
-pub async fn start_grpc_server() -> Result<()> {
-    use crate::grpc_system_gateway::system_gateway_server::SystemGatewayServer;
-
-    let addr: SocketAddr = "127.0.0.1:50052"
-        .parse()
-        .map_err(|e| anyhow::Error::msg(format!("failed to parse loopback addr: {e}")))?;
-    ::galleon_log::record!(
-        INFO,
-        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
-        "ClawCrew SystemGateway gRPC server listening on {addr}"
-    );
-
-    tonic::transport::Server::builder()
-        .add_service(SystemGatewayServer::new(
-            crate::grpc_system_gateway::SystemGatewayService::new(None),
-        ))
-        .serve(addr)
-        .await?;
-    Ok(())
-}
-
 /// Run the HTTP gateway using axum with proper HTTP/1.1 compliance.
 pub async fn run_gateway(
     host: &str,

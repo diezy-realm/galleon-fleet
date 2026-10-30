@@ -28,6 +28,7 @@ fn create_test_config(tmp: &tempfile::TempDir) -> Config {
         ..Config::default()
     };
     config.gateway.websocket_ping_interval_secs = 2;
+    config.gateway.require_pairing = false;
 
     config.providers.models.ollama.insert(
         "default".to_string(),
