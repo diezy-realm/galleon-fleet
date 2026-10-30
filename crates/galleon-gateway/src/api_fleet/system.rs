@@ -29,13 +29,13 @@
 
 use std::sync::Arc;
 
+use axum::Router;
 use axum::extract::{Query, State};
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
 use base64::Engine;
-use galleon_fleet_core::{FleetStore, FLEET_MAX_BODY};
+use galleon_fleet_core::{FLEET_MAX_BODY, FleetStore};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sysinfo::{
@@ -776,8 +776,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_executive_briefing_contract_and_burn_rate(
-    ) -> Result<(), galleon_fleet_core::FleetError> {
+    async fn test_get_executive_briefing_contract_and_burn_rate()
+    -> Result<(), galleon_fleet_core::FleetError> {
         let tmp = tempfile::tempdir().map_err(galleon_fleet_core::FleetError::Io)?;
         let store = Arc::new(FleetStore::new(tmp.path()));
 

@@ -3,8 +3,8 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use galleon_fleet_core::{
-    calculate_executive_briefing, calculate_treasury_burn_rate, ExecutiveBriefing, FleetError,
-    FleetStore, DEFAULT_BRIEFING_TITLE,
+    DEFAULT_BRIEFING_TITLE, ExecutiveBriefing, FleetError, FleetStore,
+    calculate_executive_briefing, calculate_treasury_burn_rate,
 };
 use serde_json::Value;
 

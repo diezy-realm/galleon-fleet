@@ -612,12 +612,16 @@ mod tests {
         let report = store.import_from_dir(src_tmp.path())?;
         assert_eq!(report.source, src_tmp.path());
         assert!(report.files_copied.contains(&"crew.json".to_string()));
-        assert!(report
-            .files_copied
-            .contains(&"chatMessages.json".to_string()));
-        assert!(report
-            .files_copied
-            .contains(&"trainingSkills.json".to_string()));
+        assert!(
+            report
+                .files_copied
+                .contains(&"chatMessages.json".to_string())
+        );
+        assert!(
+            report
+                .files_copied
+                .contains(&"trainingSkills.json".to_string())
+        );
 
         // Check destination files exist
         assert_eq!(store.read_file("crew.json")?, br#"[{"id":"c1"}]"#);
@@ -641,8 +645,8 @@ mod tests {
     }
 
     #[test]
-    fn test_legacy_import_does_not_repeat_and_preserves_existing(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn test_legacy_import_does_not_repeat_and_preserves_existing()
+    -> Result<(), Box<dyn std::error::Error>> {
         let src_tmp = tempfile::tempdir()?;
         let dst_tmp = tempfile::tempdir()?;
         let store = FleetStore::new(dst_tmp.path().join("fleet"));
@@ -657,9 +661,11 @@ mod tests {
 
         let report = store.import_from_dir(src_tmp.path())?;
         // Since chatMessages.json already existed, it should not have been overwritten
-        assert!(!report
-            .files_copied
-            .contains(&"chatMessages.json".to_string()));
+        assert!(
+            !report
+                .files_copied
+                .contains(&"chatMessages.json".to_string())
+        );
         assert_eq!(
             store.read_file("chatMessages.json")?,
             br#"[{"id":"existing"}]"#
