@@ -11,7 +11,6 @@ import {
   Terminal,
   ShieldCheck,
   Stethoscope,
-  Wrench,
   Archive,
   RotateCcw,
   Sparkles,
@@ -28,8 +27,6 @@ import { apiClient } from '../../utils/apiClient';
 export const CrowsNestView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'doctor' | 'recovery'>('overview');
   const [isRunningDoctor, setIsRunningDoctor] = useState(false);
-  const [isApplyingRemedy, setIsApplyingRemedy] = useState(false);
-  const [remedyApplied, setRemedyApplied] = useState(false);
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   const [snapshotCreated, setSnapshotCreated] = useState(false);
 
@@ -72,29 +69,6 @@ export const CrowsNestView: React.FC = () => {
     }
   };
 
-  const handleApplyRemedy = async () => {
-    setIsApplyingRemedy(true);
-    try {
-      const res = await apiClient.applyRemedy();
-      setRemedyApplied(true);
-      if (res.diagnostics && Array.isArray(res.diagnostics)) {
-        setDiagnostics(res.diagnostics);
-      } else {
-        setDiagnostics((prev) =>
-          prev.map((d) =>
-            d.id === 'd-5'
-              ? { ...d, status: 'healthy', latency: '18ms', detail: 'Socket timeout deadline enforced; leak cleared.' }
-              : d
-          )
-        );
-      }
-    } catch (e) {
-      console.error('Failed to apply remedy:', e);
-    } finally {
-      setIsApplyingRemedy(false);
-    }
-  };
-
   const handleCreateSnapshot = async () => {
     setIsCreatingSnapshot(true);
     try {
@@ -121,30 +95,17 @@ export const CrowsNestView: React.FC = () => {
         badge={
           <span
             className={`text-xs font-mono px-2 py-0.5 rounded font-semibold ${
-              hasWarnings && !remedyApplied
+              hasWarnings
                 ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
                 : 'bg-emerald-500/10 text-emerald-500'
             }`}
           >
-            {hasWarnings && !remedyApplied ? '1 WARNING DETECTED' : 'ALL SYSTEMS NOMINAL'}
+            {hasWarnings ? '1 WARNING DETECTED' : 'ALL SYSTEMS NOMINAL'}
           </span>
         }
         description="Fleet Health, Technical Observability, Automated Doctor Diagnostics, and Disaster Recovery."
         actions={
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {activeTab === 'doctor' && hasWarnings && !remedyApplied && (
-              <Button
-                variant="amber"
-                size="sm"
-                icon={<Wrench className={`w-3.5 h-3.5 ${isApplyingRemedy ? 'animate-spin' : ''}`} />}
-                shortLabel="Remedy"
-                disabled={isApplyingRemedy}
-                onClick={handleApplyRemedy}
-              >
-                {isApplyingRemedy ? 'Applying Remedy...' : 'Apply Remedy'}
-              </Button>
-            )}
-
             {activeTab === 'recovery' && (
               <Button
                 variant="primary"
@@ -173,7 +134,7 @@ export const CrowsNestView: React.FC = () => {
         chips={{
           items: [
             { id: 'overview', label: 'System Observability' },
-            { id: 'doctor', label: 'Crow’s Nest Doctor', badge: hasWarnings && !remedyApplied },
+            { id: 'doctor', label: 'Crow’s Nest Doctor', badge: hasWarnings },
             { id: 'recovery', label: 'Disaster Recovery', count: snapshots.length }
           ],
           selectedId: activeTab,
@@ -189,25 +150,35 @@ export const CrowsNestView: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Gateway Latency</span>
-              <div className="text-xl font-bold font-mono text-emerald-500">{fleetMetrics?.gatewayLatencyMs ?? 14} ms</div>
+              <div className="text-xl font-bold font-mono text-emerald-500">
+                {fleetMetrics?.gatewayLatencyMs != null ? `${fleetMetrics.gatewayLatencyMs} ms` : '—'}
+              </div>
               <div className="text-[10px] text-neutral-400">Zero packet drops</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
-              <span className="text-[10px] font-mono text-neutral-400 uppercase">Active Goroutines</span>
-              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">{fleetMetrics?.activeWorkers ?? 42}</div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">Active Workers</span>
+              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">
+                {fleetMetrics?.activeWorkers != null ? fleetMetrics.activeWorkers : '—'}
+              </div>
               <div className="text-[10px] text-neutral-400">Background daemons</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Host Runtime</span>
-              <div className="text-xl font-bold font-mono text-teal-500 truncate">{systemMetrics?.platform ? `${systemMetrics.platform.toUpperCase()} (${systemMetrics.arch})` : 'Landlock OS'}</div>
-              <div className="text-[10px] text-neutral-400">{systemMetrics?.nodeVersion || 'Tauri Security Shield'}</div>
+              <div className="text-xl font-bold font-mono text-teal-500 truncate">
+                {systemMetrics?.platform ? `${systemMetrics.platform.toUpperCase()} (${systemMetrics.arch})` : '—'}
+              </div>
+              <div className="text-[10px] text-neutral-400">{systemMetrics?.nodeVersion || systemMetrics?.version || '—'}</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Memory Footprint</span>
-              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">{fleetMetrics?.memoryUsedMB ?? (systemMetrics?.memoryUsage?.usedMB ?? 14.2)} MB</div>
+              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">
+                {fleetMetrics?.memoryUsedMB != null
+                  ? `${fleetMetrics.memoryUsedMB} MB`
+                  : (systemMetrics?.memoryUsage?.usedMB != null ? `${systemMetrics.memoryUsage.usedMB} MB` : '—')}
+              </div>
               <div className="text-[10px] text-neutral-400">Host memory allocated</div>
             </div>
           </div>
@@ -230,7 +201,7 @@ export const CrowsNestView: React.FC = () => {
               {diagnostics.slice(0, 4).map((d) => (
                 <div key={d.id} className="p-2.5 rounded-lg border border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
                   <span className="font-medium text-neutral-800 dark:text-neutral-200">{d.component}</span>
-                  <span className="font-mono text-emerald-500">{d.latency}</span>
+                  <span className="font-mono text-emerald-500">{d.latency || '—'}</span>
                 </div>
               ))}
             </div>
@@ -241,35 +212,6 @@ export const CrowsNestView: React.FC = () => {
       {/* Tab 2: Crow's Nest Doctor (Self-Healing) */}
       {activeTab === 'doctor' && (
         <div className="space-y-4 text-xs">
-          {hasWarnings && !remedyApplied && (
-            <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="space-y-1">
-                <div className="font-bold text-amber-500 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Automated Remedy Available for Test Runner Teardown</span>
-                </div>
-                <p className="text-[11px] text-neutral-600 dark:text-neutral-300">
-                  Doctor isolated a lingering socket deadline in <code className="font-mono">ws.rs</code>.
-                  Clicking &ldquo;Apply Automated Remedy&rdquo; injects an explicit socket timeout and clears connection leaks.
-                </p>
-              </div>
-              <button
-                onClick={handleApplyRemedy}
-                disabled={isApplyingRemedy}
-                className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-neutral-950 font-bold text-xs transition-colors shrink-0 shadow-xs cursor-pointer disabled:opacity-50"
-              >
-                {isApplyingRemedy ? 'Remediating...' : 'Apply Remedy Now'}
-              </button>
-            </div>
-          )}
-
-          {remedyApplied && (
-            <div className="p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Remedy applied successfully. All sockets cycled and tests are nominal.</span>
-            </div>
-          )}
-
           <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] overflow-hidden">
             <div className="p-3 border-b border-neutral-100 dark:border-neutral-800 font-semibold text-neutral-700 dark:text-neutral-300">
               System Component Diagnostic Suite ({diagnostics.length} checks)

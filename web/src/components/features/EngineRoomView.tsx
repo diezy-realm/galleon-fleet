@@ -454,7 +454,7 @@ export const EngineRoomView: React.FC = () => {
           command: textToRun,
           actor: 'Captain',
           exitCode: res.exitCode,
-          duration: res.duration || '14ms',
+          duration: res.duration || '—',
           timestamp: time
         },
         ...prev
@@ -501,7 +501,7 @@ export const EngineRoomView: React.FC = () => {
           command: commandToApprove,
           actor: verifiedPrincipal,
           exitCode: res.exitCode,
-          duration: res.duration || '20ms',
+          duration: res.duration || '—',
           timestamp: time
         },
         ...prev
@@ -957,15 +957,15 @@ export const EngineRoomView: React.FC = () => {
             <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Host Environment</span>
               <div className="text-sm font-bold font-mono text-neutral-800 dark:text-neutral-200 truncate">
-                {systemMetrics?.platform ? `${systemMetrics.platform.toUpperCase()} (${systemMetrics.arch})` : 'PTY Linux / Win32'}
+                {systemMetrics?.platform ? `${systemMetrics.platform.toUpperCase()} (${systemMetrics.arch})` : '—'}
               </div>
-              <div className="text-[10px] text-neutral-400 truncate">{systemMetrics?.nodeVersion || 'Tauri Core Host'}</div>
+              <div className="text-[10px] text-neutral-400 truncate">{systemMetrics?.nodeVersion || systemMetrics?.version || '—'}</div>
             </div>
 
             <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">CPU Utilization</span>
               <div className="text-sm font-bold font-mono text-emerald-500">
-                {systemMetrics?.cpuUsage ? `${systemMetrics.cpuUsage}%` : '1.8%'}
+                {systemMetrics?.cpuUsage != null ? `${systemMetrics.cpuUsage}%` : '—'}
               </div>
               <div className="text-[10px] text-neutral-400">Load across active cores</div>
             </div>
@@ -975,17 +975,17 @@ export const EngineRoomView: React.FC = () => {
               <div className="text-sm font-bold font-mono text-neutral-800 dark:text-neutral-200">
                 {systemMetrics?.memoryUsage
                   ? `${systemMetrics.memoryUsage.usedMB} / ${systemMetrics.memoryUsage.totalMB} MB`
-                  : '54.2 MB'}
+                  : '—'}
               </div>
               <div className="text-[10px] text-neutral-400">
-                {systemMetrics?.memoryUsage ? `${systemMetrics.memoryUsage.percent}% allocated` : 'Nominal'}
+                {systemMetrics?.memoryUsage ? `${systemMetrics.memoryUsage.percent}% allocated` : '—'}
               </div>
             </div>
 
             <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Daemon Uptime</span>
               <div className="text-sm font-bold font-mono text-teal-500">
-                {systemMetrics?.uptime || '4h 12m'}
+                {systemMetrics?.uptime || '—'}
               </div>
               <div className="text-[10px] text-neutral-400">{processes.length} daemons running</div>
             </div>

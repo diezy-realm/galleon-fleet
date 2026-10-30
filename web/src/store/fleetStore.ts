@@ -26,7 +26,7 @@ import {
 } from '../types';
 
 interface FleetState {
-  systemMetrics?: { gateway_latency_ms: number; active_threads: number; isolation_mode: string; memory_db_mb: number; };
+  systemMetrics?: { gateway_latency_ms: number | null; active_threads: number; isolation_mode: string | null; memory_db_mb: number | null; };
   executiveBriefing?: any[];
   harborProviders?: any[];
   fleetMetrics?: { active_ships: number; assigned_crew: number; running_voyages: number; status: string; };
@@ -386,7 +386,7 @@ export const useFleetStore = create<FleetState>((set, get) => ({
 
         // E3: Policies now consumed from engine via GET /api/fleet/policies
         set({
-          systemMetrics: sysMetrics as { gateway_latency_ms: number; active_threads: number; isolation_mode: string; memory_db_mb: number; } | undefined,
+          systemMetrics: sysMetrics as { gateway_latency_ms: number | null; active_threads: number; isolation_mode: string | null; memory_db_mb: number | null; } | undefined,
           executiveBriefing: briefing as any[],
           harborProviders: providers as any[],
           fleetMetrics: fleetMet as { active_ships: number; assigned_crew: number; running_voyages: number; status: string; } | undefined,
@@ -727,12 +727,6 @@ export const useFleetStore = create<FleetState>((set, get) => ({
   handleApproval: async (id, decision, reason) => {
     const appr = get().approvals.find((a) => a.id === id);
     if (!appr) return;
-
-    try {
-      await apiClient.approveToolExecution(id, decision, reason);
-    } catch (err) {
-      console.warn(`[Approval] Backend tool execution call failed for ${id}:`, err);
-    }
 
     set((state) => {
       const nextApprovals = state.approvals.map((a) => (a.id === id ? { ...a, status: decision } : a));
