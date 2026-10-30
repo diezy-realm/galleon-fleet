@@ -31,6 +31,10 @@ pub use harbor::{
     HarborProvider, STATUS_CONFIGURED, STATUS_MISSING_CREDENTIALS, build_harbor_provider,
     resolve_capabilities, resolve_vendor_and_name,
 };
+pub use intent::{
+    Intent, IntentClassification, QuartermasterChatResponse, SuggestedAction, answer_engine_room,
+    answer_report, classify, classify_intent,
+};
 pub use metrics::{DECK_BELL_MESSAGE, DeckBellResponse, FleetMetrics, calculate_fleet_metrics};
 pub use policies::{
     FleetPoliciesResponse, FleetPolicy, RiskTier, load_seed_policies, load_seed_policies_response,

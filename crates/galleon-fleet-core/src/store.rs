@@ -344,6 +344,26 @@ impl FleetStore {
         crate::metrics::calculate_fleet_metrics(self, memory_used_mb)
     }
 
+    /// Builds a deterministic Quartermaster report response from store metrics.
+    pub fn answer_report(
+        &self,
+        memory_used_mb: Option<f64>,
+        uptime_override: Option<&str>,
+    ) -> crate::intent::QuartermasterChatResponse {
+        let metrics = self.get_metrics(memory_used_mb);
+        crate::intent::answer_report(&metrics, uptime_override)
+    }
+
+    /// Builds a deterministic Quartermaster engine room response from store metrics and diagnostics.
+    pub fn answer_engine_room(
+        &self,
+        memory_used_mb: Option<f64>,
+        diagnostics: &[crate::diagnostics::DiagnosticItem],
+    ) -> crate::intent::QuartermasterChatResponse {
+        let metrics = self.get_metrics(memory_used_mb);
+        crate::intent::answer_engine_room(&metrics, diagnostics)
+    }
+
     /// Calculate an executive briefing report snapshot from this store with given date and timestamp.
     pub fn get_executive_briefing(
         &self,

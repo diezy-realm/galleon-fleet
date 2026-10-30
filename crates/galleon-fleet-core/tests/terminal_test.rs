@@ -1,5 +1,7 @@
 //! Tests for terminal execution domain models and audit ring buffer.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 use galleon_fleet_core::{
     MAX_AUDIT_ENTRIES, MAX_TERMINAL_OUTPUT_BYTES, TerminalAuditRecord, TerminalAuditRingBuffer,
     TerminalExecRequest, TerminalExecResponse, compute_audit_id, truncate_output,
