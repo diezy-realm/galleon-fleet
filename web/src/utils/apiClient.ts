@@ -135,198 +135,188 @@ export interface ProjectGitStatus {
   policy_check: string;
 }
 
+export const TOKEN_KEY = 'galleon_auth_token';
+
+export function getToken(): string | null {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return null;
+  }
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+}
+
+export function clearToken(): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
+export async function request<T>(
+  method: string,
+  path: string,
+  body?: unknown
+): Promise<T> {
+  const normMethod = method.toUpperCase();
+
+  if (isTauriEnvironment()) {
+    const token = getToken();
+    const res = (await invokeTauri('api_request', {
+      method: normMethod,
+      path,
+      body,
+      token: token || undefined,
+    })) as { status: number; body: T };
+
+    if (res.status === 401) {
+      clearToken();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('galleon:unauthorized'));
+      }
+      throw new Error(`Unauthorized (401): ${path}`);
+    }
+
+    if (res.status < 200 || res.status >= 300) {
+      const errMsg =
+        typeof res.body === 'object' && res.body !== null && 'error' in (res.body as any)
+          ? (res.body as any).error
+          : `${normMethod} ${path} failed with status ${res.status}`;
+      throw new Error(errMsg);
+    }
+
+    return res.body;
+  }
+
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const res = await fetch(path, {
+    method: normMethod,
+    headers,
+    body: body !== undefined ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('galleon:unauthorized'));
+    }
+    throw new Error(`Unauthorized (401): ${path}`);
+  }
+
+  if (!res.ok) {
+    let errMsg = `${normMethod} ${path} failed with status ${res.status}`;
+    try {
+      const errData = await res.json();
+      if (errData && typeof errData === 'object' && 'error' in errData && errData.error) {
+        errMsg = errData.error;
+      }
+    } catch {
+      // Ignore JSON parse errors on error responses
+    }
+    throw new Error(errMsg);
+  }
+
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return (await res.json()) as T;
+  }
+
+  const text = await res.text();
+  if (!text) {
+    return undefined as unknown as T;
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return text as unknown as T;
+  }
+}
+
 export const apiClient = {
   isTauri(): boolean {
     return isTauriEnvironment();
   },
 
+  getToken,
+  setToken,
+  clearToken,
+  request,
+
   async getCollection<T>(name: string): Promise<T[]> {
-    if (this.isTauri()) {
-      try {
-        const data = await invokeTauri<T[]>('get_collection', { name });
-        if (data && Array.isArray(data) && data.length > 0) {
-          return data;
-        }
-      } catch (err) {
-        console.warn(`[API] Tauri get_collection("${name}") fallback to HTTP:`, err);
-      }
-    }
-    const res = await fetch(`/api/collections/${name}`);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch collection ${name}: ${res.statusText}`);
-    }
-    return res.json();
+    return request<T[]>('GET', `/api/collections/${name}`);
   },
 
   async saveCollection<T>(name: string, data: T[]): Promise<void> {
-    if (this.isTauri()) {
-      try {
-        await invokeTauri('save_collection', { name, data });
-        return;
-      } catch (err) {
-        console.warn(`[API] Tauri save_collection("${name}") fallback to HTTP:`, err);
-      }
-    }
-    const res = await fetch(`/api/collections/${name}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-      throw new Error(`Failed to save collection ${name}: ${res.statusText}`);
-    }
+    await request<void>('POST', `/api/collections/${name}`, data);
   },
 
-  async getFleetMetrics(): Promise<FleetMetrics> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<FleetMetrics>('get_fleet_metrics');
-      } catch (e) {
-        console.warn('[API] Tauri get_fleet_metrics fallback:', e);
-      }
-    }
-    const res = await fetch('/api/fleet/metrics');
-    return res.json();
+  async getFleetMetrics(): Promise<any> {
+    return request('GET', '/api/fleet/metrics');
   },
 
   async ringDeckBell(): Promise<string> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<string>('ring_deck_bell');
-      } catch (e) {
-        console.warn('[API] Tauri ring_deck_bell fallback:', e);
-      }
-    }
-    const res = await fetch('/api/fleet/deck-bell', { method: 'POST' });
-    const json = await res.json();
-    return json.message || 'Bell chimed successfully';
+    const json = await request<{ message?: string }>('POST', '/api/fleet/deck-bell');
+    return json?.message || 'Bell chimed successfully';
   },
 
   async getSystemMetrics(): Promise<SystemMetrics> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<SystemMetrics>('get_system_metrics');
-      } catch (e) {
-        console.warn('[API] Tauri get_system_metrics fallback:', e);
-      }
-    }
-    const res = await fetch('/api/system/metrics');
-    return res.json();
+    return request<SystemMetrics>('GET', '/api/system/metrics');
   },
 
   async getNetworkQrCode(url?: string): Promise<{ url: string; dataUrl: string }> {
     const query = url ? `?url=${encodeURIComponent(url)}` : '';
-    const res = await fetch(`/api/network/qrcode${query}`);
-    return res.json();
+    return request<{ url: string; dataUrl: string }>('GET', `/api/network/qrcode${query}`);
   },
 
-  async getExecutiveBriefing(): Promise<ExecutiveBriefing> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<ExecutiveBriefing>('get_executive_briefing');
-      } catch (e) {
-        console.warn('[API] Tauri get_executive_briefing fallback:', e);
-      }
-    }
-    const res = await fetch('/api/system/executive-briefing');
-    return res.json();
+  async getExecutiveBriefing(): Promise<any> {
+    return request('GET', '/api/system/executive-briefing');
   },
 
   async getHarborProviders(): Promise<HarborProvider[]> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<HarborProvider[]>('get_harbor_providers');
-      } catch (e) {
-        console.warn('[API] Tauri get_harbor_providers fallback:', e);
-      }
-    }
-    const res = await fetch('/api/providers/harbor');
-    return res.json();
+    return request<HarborProvider[]>('GET', '/api/providers/harbor');
   },
 
   async getDiagnostics(): Promise<DiagnosticItem[]> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<DiagnosticItem[]>('get_diagnostics');
-      } catch (e) {
-        console.warn('[API] Tauri get_diagnostics fallback:', e);
-      }
-    }
-    const res = await fetch('/api/diagnostics');
-    return res.json();
+    return request<DiagnosticItem[]>('GET', '/api/diagnostics');
   },
 
-  async applyRemedy(): Promise<DiagnosticItem[]> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<DiagnosticItem[]>('apply_remedy');
-      } catch (e) {
-        console.warn('[API] Tauri apply_remedy fallback:', e);
-      }
-    }
-    const res = await fetch('/api/diagnostics/remedy', { method: 'POST' });
-    return res.json();
+  async applyRemedy(): Promise<any> {
+    return request('POST', '/api/diagnostics/remedy');
   },
 
   async getSnapshots(): Promise<SnapshotItem[]> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<SnapshotItem[]>('get_snapshots');
-      } catch (e) {
-        console.warn('[API] Tauri get_snapshots fallback:', e);
-      }
-    }
-    const res = await fetch('/api/snapshots');
-    return res.json();
+    return request<SnapshotItem[]>('GET', '/api/snapshots');
   },
 
   async createSnapshot(title?: string): Promise<SnapshotItem> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri<SnapshotItem>('create_snapshot', { title: title || 'Manual Sovereign Fleet Snapshot' });
-      } catch (e) {
-        console.warn('[API] Tauri create_snapshot fallback:', e);
-      }
-    }
-    const res = await fetch('/api/snapshots', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title })
-    });
-    return res.json();
+    return request<SnapshotItem>('POST', '/api/snapshots', { title });
   },
 
   async getEngineProcesses(): Promise<ProcessItem[]> {
-    if (this.isTauri()) {
-      try {
-        const data = await invokeTauri<Array<{ pid: number; name: string; memory: number; cpu: number }>>('get_engine_processes');
-        // Map backend response {pid,name,memory,cpu} to ProcessItem interface
-        return data.map((item) => ({
-          id: String(item.pid), // pid -> id
-          name: item.name,
-          command: '', // missing from API - omitted
-          pid: item.pid,
-          cpu: item.cpu,
-          memoryMB: item.memory, // memory -> memoryMB
-          uptime: '', // missing from API - omitted
-          status: 'running' // default status
-        }));
-      } catch (e) {
-        console.warn('[API] Tauri get_engine_processes fallback:', e);
-      }
-    }
-    const res = await fetch('/api/engine/processes');
-    const data = await res.json() as Array<{ pid: number; name: string; memory: number; cpu: number }>;
-    // Map backend response {pid,name,memory,cpu} to ProcessItem interface
-    return data.map((item) => ({
-      id: String(item.pid), // pid -> id
+    const data = await request<Array<{ pid: number; name: string; memory: number; cpu: number }>>(
+      'GET',
+      '/api/engine/processes'
+    );
+    return (data || []).map((item) => ({
+      id: String(item.pid),
       name: item.name,
-      command: '', // missing from API - omitted
+      command: '',
       pid: item.pid,
       cpu: item.cpu,
-      memoryMB: item.memory, // memory -> memoryMB
-      uptime: '', // missing from API - omitted
-      status: 'running' // default status
+      memoryMB: item.memory,
+      uptime: '',
+      status: 'running',
     }));
   },
 
@@ -335,57 +325,27 @@ export const apiClient = {
     approved = false,
     authToken?: string
   ): Promise<{ stdout: string; stderr?: string; exitCode: number; duration: string; riskTier?: string; requiresApproval?: boolean }> {
+    if (authToken) {
+      setToken(authToken);
+    }
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      } else {
-        const storedToken = localStorage.getItem('galleon_auth_token');
-        if (storedToken) {
-          headers['Authorization'] = `Bearer ${storedToken}`;
-        }
-      }
-
-      const res = await fetch('/api/terminal/exec', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ command, approved, approved_by: 'web_terminal_ui' })
+      return await request('POST', '/api/terminal/exec', {
+        command,
+        approved,
+        approved_by: 'web_terminal_ui',
       });
-
-      if (res.status === 401) {
-        const data = await res.json().catch(() => ({}));
-        return {
-          stdout: '',
-          stderr: data.error || data.stderr || 'Unauthorized: caller principal not verified (S2-SEC-01)',
-          exitCode: 1,
-          duration: '0ms'
-        };
-      }
-
-      if (!res.ok && res.status !== 403) {
-        throw new Error(`Engine returned ${res.status}`);
-      }
-      return await res.json();
     } catch (e: any) {
       return {
         stdout: '',
-        stderr: e.message || 'Failed to connect to Go Policy Gateway (:9090)',
+        stderr: e.message || 'Failed to connect to Gateway',
         exitCode: 1,
-        duration: '0ms'
+        duration: '0ms',
       };
     }
   },
 
   async getFleetPolicies(): Promise<{ policies: Record<string, unknown>[]; riskTiers: Record<string, unknown>[] }> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri('get_fleet_policies');
-      } catch (e) {
-        console.warn('[API] Tauri get_fleet_policies fallback:', e);
-      }
-    }
-    const res = await fetch('/api/fleet/policies');
-    return res.json();
+    return request('GET', '/api/fleet/policies');
   },
 
   async chatQuartermaster(message: string, context?: Record<string, unknown>): Promise<{
@@ -393,83 +353,36 @@ export const apiClient = {
     suggestedActions?: { label: string; actionType: string; payload?: string }[];
     generatedArtifactPreview?: Record<string, unknown>;
   }> {
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri('chat_quartermaster', { message, context });
-      } catch (e) {
-        console.warn('[API] Tauri chat_quartermaster fallback:', e);
-      }
-    }
-    const res = await fetch('/api/chat/quartermaster', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, context })
-    });
-    return res.json();
+    return request('POST', '/api/chat/quartermaster', { message, context });
   },
 
-  async getHealth(): Promise<{ status: string; uptime: string; timestamp: string }> {
-    const res = await fetch('/api/health');
-    return res.json();
-  },
-
-  async getNetwork(): Promise<NetworkInfo> {
-    const res = await fetch('/api/system/network');
-    return res.json();
+  async getNetwork(): Promise<any> {
+    return request('GET', '/api/system/network');
   },
 
   async getProjectGitStatus(path?: string): Promise<ProjectGitStatus> {
     const query = path ? `?path=${encodeURIComponent(path)}` : '';
-    const res = await fetch(`/api/project/git-status${query}`);
-    return res.json();
+    return request<ProjectGitStatus>('GET', `/api/project/git-status${query}`);
   },
 
   async get<T>(path: string): Promise<T> {
-    const url = path.startsWith('/api') ? path : `/api${path}`;
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri('get_api', { path: url });
-      } catch (e) {
-        console.warn(`[API] Tauri get("${url}") fallback:`, e);
-      }
-    }
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`GET ${url} failed with status ${res.status}`);
-    }
-    return res.json();
+    const url = path.startsWith('/api') || path.startsWith('/pair')
+      ? path
+      : path.startsWith('/') ? `/api${path}` : `/api/${path}`;
+    return request<T>('GET', url);
   },
 
   async post<T>(path: string, body?: unknown): Promise<T> {
-    const url = path.startsWith('/api') ? path : `/api${path}`;
-    if (this.isTauri()) {
-      try {
-        return await invokeTauri('post_api', { path: url, body });
-      } catch (e) {
-        console.warn(`[API] Tauri post("${url}") fallback:`, e);
-      }
-    }
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
-    if (!res.ok) {
-      throw new Error(`POST ${url} failed with status ${res.status}`);
-    }
-    return res.json();
+    const url = path.startsWith('/api') || path.startsWith('/pair')
+      ? path
+      : path.startsWith('/') ? `/api${path}` : `/api/${path}`;
+    return request<T>('POST', url, body);
   },
 
   async approveToolExecution(id: string, decision: 'approved' | 'rejected', reason?: string): Promise<{ status: string }> {
     const action = decision === 'approved' ? 'approve' : 'deny';
-    const res = await fetch(`/api/v1/tool-executions/${id}/${action}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason: reason || `Decision by Captain: ${decision}` })
+    return request<{ status: string }>('POST', `/api/v1/tool-executions/${id}/${action}`, {
+      reason: reason || `Decision by Captain: ${decision}`,
     });
-    if (!res.ok) {
-      throw new Error(`Failed to ${action} tool execution ${id}: ${res.statusText}`);
-    }
-    return res.json();
-  }
+  },
 };
