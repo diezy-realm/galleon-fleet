@@ -6,30 +6,32 @@ pub mod error;
 pub mod intent;
 pub mod metrics;
 pub mod policies;
+pub mod project;
 pub mod seed;
 pub mod snapshots;
 pub mod store;
 
 pub use briefing::{
-    DEFAULT_BRIEFING_TITLE, ExecutiveBriefing, calculate_executive_briefing,
-    calculate_treasury_burn_rate,
+    calculate_executive_briefing, calculate_treasury_burn_rate, ExecutiveBriefing,
+    DEFAULT_BRIEFING_TITLE,
 };
 pub use collections::{
-    CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS, is_allowed_collection, is_canonical_collection,
-    resolve_allowed_collection, validate_collection_payload,
+    is_allowed_collection, is_canonical_collection, resolve_allowed_collection,
+    validate_collection_payload, CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS,
 };
 pub use error::FleetError;
-pub use metrics::{DECK_BELL_MESSAGE, DeckBellResponse, FleetMetrics, calculate_fleet_metrics};
+pub use metrics::{calculate_fleet_metrics, DeckBellResponse, FleetMetrics, DECK_BELL_MESSAGE};
 pub use policies::{
-    FleetPoliciesResponse, FleetPolicy, RiskTier, load_seed_policies, load_seed_policies_response,
-    load_seed_risk_tiers,
+    load_seed_policies, load_seed_policies_response, load_seed_risk_tiers, FleetPoliciesResponse,
+    FleetPolicy, RiskTier,
 };
+pub use project::{parse_git_status, ProjectGitStatus};
 pub use seed::{
-    FleetSeedData, SeedResponse, get_canonical_seed_map, get_policy_seed_map, get_seed_raw,
-    get_seed_response_json, load_fleet_seed_data, load_seed_response,
+    get_canonical_seed_map, get_policy_seed_map, get_seed_raw, get_seed_response_json,
+    load_fleet_seed_data, load_seed_response, FleetSeedData, SeedResponse,
 };
-pub use snapshots::{CreateSnapshotRequest, MAX_SNAPSHOTS, SnapshotItem};
-pub use store::{FLEET_MAX_BODY, FleetStore, ImportReport};
+pub use snapshots::{CreateSnapshotRequest, SnapshotItem, MAX_SNAPSHOTS};
+pub use store::{FleetStore, ImportReport, FLEET_MAX_BODY};
 
 #[cfg(test)]
 mod tests {
