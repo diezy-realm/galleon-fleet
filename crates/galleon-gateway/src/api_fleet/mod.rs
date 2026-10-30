@@ -8,6 +8,7 @@ pub mod diagnostics;
 pub mod fleet;
 pub mod harbor;
 pub mod project;
+pub mod quartermaster;
 pub mod snapshots;
 pub mod system;
 pub mod terminal;
@@ -28,5 +29,6 @@ pub fn routes(state: AppState) -> Router<AppState> {
         .merge(project::routes(state.clone()))
         .merge(harbor::routes(state.clone()))
         .merge(diagnostics::routes(state.clone()))
-        .merge(terminal::routes(state))
+        .merge(terminal::routes(state.clone()))
+        .merge(quartermaster::routes(state))
 }
