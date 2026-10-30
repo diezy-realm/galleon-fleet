@@ -116,6 +116,7 @@ test('apiClient.pair sends POST /pair with X-Pairing-Code header', async () => {
   const originalFetch = globalThis.fetch;
   let capturedUrl = '';
   let capturedHeaders: Record<string, string> = {};
+  const sampleAuth = 'sample-pair-tok';
 
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     capturedUrl = input.toString();
@@ -127,7 +128,7 @@ test('apiClient.pair sends POST /pair with X-Pairing-Code header', async () => {
       json: async () => ({
         paired: true,
         persisted: true,
-        token: 'bearer-token-minted-xyz',
+        token: sampleAuth,
         message: 'Paired successfully',
       }),
     } as any;
@@ -138,7 +139,7 @@ test('apiClient.pair sends POST /pair with X-Pairing-Code header', async () => {
     assert.equal(capturedUrl, '/pair');
     assert.equal(capturedHeaders['X-Pairing-Code'], 'CODE-123');
     assert.equal(result.paired, true);
-    assert.equal(result.token, 'bearer-token-minted-xyz');
+    assert.equal(result.token, sampleAuth);
   } finally {
     globalThis.fetch = originalFetch;
   }
