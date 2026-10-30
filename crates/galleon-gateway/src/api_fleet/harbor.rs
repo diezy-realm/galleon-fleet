@@ -9,13 +9,13 @@
 
 use std::sync::Arc;
 
+use axum::Router;
 use axum::extract::State;
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
 use galleon_config::schema::Config;
-use galleon_fleet_core::{build_harbor_provider, HarborProvider, FLEET_MAX_BODY};
+use galleon_fleet_core::{FLEET_MAX_BODY, HarborProvider, build_harbor_provider};
 use parking_lot::RwLock;
 use serde_json::json;
 use tower_http::limit::RequestBodyLimitLayer;

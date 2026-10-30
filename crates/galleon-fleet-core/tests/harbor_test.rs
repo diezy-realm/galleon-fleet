@@ -8,7 +8,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use galleon_fleet_core::{
-    build_harbor_provider, HarborProvider, STATUS_CONFIGURED, STATUS_MISSING_CREDENTIALS,
+    HarborProvider, STATUS_CONFIGURED, STATUS_MISSING_CREDENTIALS, build_harbor_provider,
 };
 use serde_json::Value;
 
