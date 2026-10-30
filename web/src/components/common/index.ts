@@ -22,3 +22,4 @@ export * from './ToolButton';
 export * from './HeaderToolbar';
 export * from './TauriDesktopModal';
 export * from './ChatboxSparksEffect';
+export * from './PairingGate';

@@ -1,5 +1,6 @@
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
+import { PairingGate } from './components/common/PairingGate';
 import './index.css';
 import { initSavedTheme } from './utils/themeEngine';
 import { initSavedFonts } from './utils/fontEngine';
@@ -8,4 +9,8 @@ import { initSavedFonts } from './utils/fontEngine';
 initSavedTheme();
 initSavedFonts();
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(
+  <PairingGate>
+    <App />
+  </PairingGate>
+);

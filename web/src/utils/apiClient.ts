@@ -135,6 +135,19 @@ export interface ProjectGitStatus {
   policy_check: string;
 }
 
+export interface PairResponse {
+  paired: boolean;
+  persisted: boolean;
+  token: string;
+  message: string;
+}
+
+export interface PairCodeResponse {
+  success: boolean;
+  pairing_required: boolean;
+  pairing_code: string | null;
+}
+
 export const TOKEN_KEY = 'galleon_auth_token';
 
 export function getToken(): string | null {
@@ -159,7 +172,8 @@ export function clearToken(): void {
 export async function request<T>(
   method: string,
   path: string,
-  body?: unknown
+  body?: unknown,
+  customHeaders?: Record<string, string>
 ): Promise<T> {
   const normMethod = method.toUpperCase();
 
@@ -170,6 +184,7 @@ export async function request<T>(
       path,
       body,
       token: token || undefined,
+      headers: customHeaders,
     })) as { status: number; body: T };
 
     if (res.status === 401) {
@@ -191,12 +206,12 @@ export async function request<T>(
     return res.body;
   }
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...customHeaders };
   const token = getToken();
-  if (token) {
+  if (token && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  if (body !== undefined) {
+  if (body !== undefined && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
 
@@ -377,6 +392,16 @@ export const apiClient = {
       ? path
       : path.startsWith('/') ? `/api${path}` : `/api/${path}`;
     return request<T>('POST', url, body);
+  },
+
+  async getPairCode(): Promise<PairCodeResponse> {
+    return request<PairCodeResponse>('GET', '/pair/code');
+  },
+
+  async pair(code: string): Promise<PairResponse> {
+    return request<PairResponse>('POST', '/pair', undefined, {
+      'X-Pairing-Code': code.trim(),
+    });
   },
 
   async approveToolExecution(id: string, decision: 'approved' | 'rejected', reason?: string): Promise<{ status: string }> {
