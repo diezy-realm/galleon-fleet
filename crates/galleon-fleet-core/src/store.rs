@@ -344,6 +344,25 @@ impl FleetStore {
         crate::metrics::calculate_fleet_metrics(self, memory_used_mb)
     }
 
+    /// Retrieve fleet policies and risk tiers from this store.
+    ///
+    /// Reads `<root>/policies.json` and `<root>/riskTiers.json` if they exist in the
+    /// store, falling back to the canonical embedded seed definitions if absent.
+    pub fn get_policies(&self) -> Result<crate::policies::FleetPoliciesResponse, FleetError> {
+        let policies = match self.read_collection("policies")? {
+            Some(bytes) => serde_json::from_slice(&bytes)?,
+            None => crate::policies::load_seed_policies()?,
+        };
+        let risk_tiers = match self.read_collection("riskTiers")? {
+            Some(bytes) => serde_json::from_slice(&bytes)?,
+            None => crate::policies::load_seed_risk_tiers()?,
+        };
+        Ok(crate::policies::FleetPoliciesResponse {
+            policies,
+            risk_tiers,
+        })
+    }
+
     /// Check if the store has already been marked as imported.
     pub fn is_imported(&self) -> bool {
         self.root.join(".imported").exists()

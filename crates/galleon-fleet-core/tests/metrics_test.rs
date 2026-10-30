@@ -15,9 +15,11 @@ fn test_deck_bell_default_and_message_contract() {
     assert_eq!(bell.message, DECK_BELL_MESSAGE);
 
     // Verify against Go fixture POST_api_fleet_deck_bell.json
-    let fixture_str =
-        include_str!("../../../tests/fixtures/go-fleet/POST_api_fleet_deck_bell.json");
-    let fixture_val: Value = serde_json::from_str(fixture_str).expect("parse Go deck bell fixture");
+    let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/go-fleet/POST_api_fleet_deck_bell.json");
+    let fixture_str = std::fs::read_to_string(&fixture_path).expect("read Go deck bell fixture");
+    let fixture_val: Value =
+        serde_json::from_str(&fixture_str).expect("parse Go deck bell fixture");
 
     let serialized = serde_json::to_value(&bell).expect("serialize bell response");
     assert_eq!(serialized["success"], fixture_val["success"]);
@@ -165,8 +167,10 @@ async fn test_calculate_fleet_metrics_resilient_to_malformed_and_non_array_files
 
 #[test]
 fn test_metrics_json_serialization_exact_shape_vs_go_fixture() {
-    let fixture_str = include_str!("../../../tests/fixtures/go-fleet/GET_api_fleet_metrics.json");
-    let fixture_val: Value = serde_json::from_str(fixture_str).expect("parse Go fixture");
+    let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/go-fleet/GET_api_fleet_metrics.json");
+    let fixture_str = std::fs::read_to_string(&fixture_path).expect("read Go fixture");
+    let fixture_val: Value = serde_json::from_str(&fixture_str).expect("parse Go fixture");
     let fixture_obj = fixture_val.as_object().expect("fixture must be object");
 
     let sample_metrics = FleetMetrics {

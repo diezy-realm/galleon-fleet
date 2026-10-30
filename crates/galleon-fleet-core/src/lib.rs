@@ -15,6 +15,10 @@ pub use collections::{
 };
 pub use error::FleetError;
 pub use metrics::{DECK_BELL_MESSAGE, DeckBellResponse, FleetMetrics, calculate_fleet_metrics};
+pub use policies::{
+    FleetPoliciesResponse, FleetPolicy, RiskTier, load_seed_policies, load_seed_policies_response,
+    load_seed_risk_tiers,
+};
 pub use seed::{
     FleetSeedData, SeedResponse, get_canonical_seed_map, get_policy_seed_map, get_seed_raw,
     get_seed_response_json, load_fleet_seed_data, load_seed_response,
