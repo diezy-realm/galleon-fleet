@@ -6,6 +6,7 @@ pub mod error;
 pub mod intent;
 pub mod metrics;
 pub mod policies;
+pub mod project;
 pub mod seed;
 pub mod snapshots;
 pub mod store;
@@ -24,6 +25,7 @@ pub use policies::{
     FleetPoliciesResponse, FleetPolicy, RiskTier, load_seed_policies, load_seed_policies_response,
     load_seed_risk_tiers,
 };
+pub use project::{ProjectGitStatus, parse_git_status};
 pub use seed::{
     FleetSeedData, SeedResponse, get_canonical_seed_map, get_policy_seed_map, get_seed_raw,
     get_seed_response_json, load_fleet_seed_data, load_seed_response,
