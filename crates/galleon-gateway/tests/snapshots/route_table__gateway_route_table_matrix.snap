@@ -5,6 +5,15 @@ expression: snapshot_results
 - method: GET
   path: /api/auth/ratelimit
   status: 200
+- method: POST
+  path: /api/chat/quartermaster
+  status: 401
+- method: GET
+  path: "/api/collections/{name}"
+  status: 401
+- method: PUT
+  path: "/api/collections/{name}"
+  status: 401
 - method: GET
   path: /api/config
   status: 401
@@ -39,10 +48,37 @@ expression: snapshot_results
   path: /api/config/status
   status: 401
 - method: GET
+  path: /api/diagnostics
+  status: 401
+- method: GET
+  path: /api/engine/processes
+  status: 401
+- method: POST
+  path: /api/fleet/deck-bell
+  status: 401
+- method: GET
+  path: /api/fleet/metrics
+  status: 401
+- method: GET
+  path: /api/fleet/policies
+  status: 401
+- method: GET
+  path: /api/fleet/seed
+  status: 401
+- method: GET
   path: /api/health
   status: 200
 - method: GET
   path: /api/logs
+  status: 401
+- method: GET
+  path: /api/network/qrcode
+  status: 401
+- method: GET
+  path: /api/project/git-status
+  status: 401
+- method: GET
+  path: /api/providers/harbor
   status: 401
 - method: GET
   path: /api/sections
@@ -66,7 +102,28 @@ expression: snapshot_results
   path: "/api/sections/{section}/items/{key}"
   status: 401
 - method: GET
+  path: /api/snapshots
+  status: 401
+- method: POST
+  path: /api/snapshots
+  status: 401
+- method: GET
   path: /api/status
+  status: 401
+- method: GET
+  path: /api/system/executive-briefing
+  status: 401
+- method: GET
+  path: /api/system/metrics
+  status: 401
+- method: GET
+  path: /api/system/network
+  status: 401
+- method: POST
+  path: /api/terminal/exec
+  status: 401
+- method: GET
+  path: /api/v1/audit/trail
   status: 401
 - method: GET
   path: /health

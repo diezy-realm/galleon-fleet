@@ -33,26 +33,26 @@ Setiap baris mencantumkan referensi konsumen konkret (`file:line`) atau `'none'`
 | DELETE | `/api/devices/{id}` | `web/src/components/features/ConnectedDevicesView.tsx:71` (target migrasi dari `/api/pairing/revoke`) | Rust handler unmounted (`api_pairing.rs:568`) | restore | Bearer |
 | POST | `/api/devices/{id}/token/rotate` | `crates/galleon-gateway/src/api_pairing.rs:674` (device token lifecycle) | Rust handler unmounted (`api_pairing.rs:674`) | restore | Bearer |
 | **Rute Fleet / Dashboard (Port dari Go ke Rust `galleon-fleet-core`)** | | | | | |
-| GET | `/api/fleet/metrics` | `web/src/utils/apiClient.ts:188`, `apps/tauri/src/main.rs:45` | Go (`engine/src/fleet/delivery.go:56`) | port | Bearer |
-| POST | `/api/fleet/deck-bell` | `web/src/utils/apiClient.ts:200`, `apps/tauri/src/main.rs:50` | Go (`engine/src/fleet/delivery.go:57`) | port | Bearer |
-| GET | `/api/collections/{name}` | `web/src/utils/apiClient.ts:154`, `apps/tauri/src/main.rs:58` | Go (`engine/src/fleet/delivery.go:65`) | port | Bearer |
-| PUT | `/api/collections/{name}` | `web/src/utils/apiClient.ts:170`, `apps/tauri/src/main.rs:66` (via POST) | Go (`engine/src/fleet/delivery.go:65`) | port | Bearer |
-| GET | `/api/system/metrics` | `web/src/utils/apiClient.ts:213`, `apps/tauri/src/main.rs:73` | Go (`engine/src/fleet/delivery.go:68`) | port | Bearer |
-| GET | `/api/network/qrcode` | `web/src/utils/apiClient.ts:219` | Go (`engine/src/fleet/delivery.go:67`) | port | Bearer |
-| GET | `/api/system/executive-briefing` | `web/src/utils/apiClient.ts:231`, `apps/tauri/src/main.rs:87` | Go (`engine/src/fleet/delivery.go:59`) | port | Bearer |
-| GET | `/api/providers/harbor` | `web/src/utils/apiClient.ts:243`, `apps/tauri/src/main.rs:92` | Go (`engine/src/fleet/delivery.go:60`) | port | Bearer |
-| GET | `/api/diagnostics` | `web/src/utils/apiClient.ts:255`, `apps/tauri/src/main.rs:97` | Go (`engine/src/fleet/delivery.go:61`) | port | Bearer |
+| GET | `/api/fleet/metrics` | `web/src/utils/apiClient.ts:188`, `apps/tauri/src/main.rs:45` | Rust (`crates/galleon-gateway/src/api_fleet/fleet.rs:31`) | port | Bearer |
+| POST | `/api/fleet/deck-bell` | `web/src/utils/apiClient.ts:200`, `apps/tauri/src/main.rs:50` | Rust (`crates/galleon-gateway/src/api_fleet/fleet.rs:32`) | port | Bearer |
+| GET | `/api/collections/{name}` | `web/src/utils/apiClient.ts:154`, `apps/tauri/src/main.rs:58` | Rust (`crates/galleon-gateway/src/api_fleet/collections.rs:29`) | port | Bearer |
+| PUT | `/api/collections/{name}` | `web/src/utils/apiClient.ts:170`, `apps/tauri/src/main.rs:66` (via POST) | Rust (`crates/galleon-gateway/src/api_fleet/collections.rs:30`) | port | Bearer |
+| GET | `/api/system/metrics` | `web/src/utils/apiClient.ts:213`, `apps/tauri/src/main.rs:73` | Rust (`crates/galleon-gateway/src/api_fleet/system.rs:129`) | port | Bearer |
+| GET | `/api/network/qrcode` | `web/src/utils/apiClient.ts:219` | Rust (`crates/galleon-gateway/src/api_fleet/system.rs:135`) | port | Bearer |
+| GET | `/api/system/executive-briefing` | `web/src/utils/apiClient.ts:231`, `apps/tauri/src/main.rs:87` | Rust (`crates/galleon-gateway/src/api_fleet/system.rs:132`) | port | Bearer |
+| GET | `/api/providers/harbor` | `web/src/utils/apiClient.ts:243`, `apps/tauri/src/main.rs:92` | Rust (`crates/galleon-gateway/src/api_fleet/harbor.rs:29`) | port | Bearer |
+| GET | `/api/diagnostics` | `web/src/utils/apiClient.ts:255`, `apps/tauri/src/main.rs:97` | Rust (`crates/galleon-gateway/src/api_fleet/diagnostics.rs:52`) | port | Bearer |
 | POST | `/api/diagnostics/remedy` | `web/src/utils/apiClient.ts:267`, `apps/tauri/src/main.rs:102` | Go (`engine/src/fleet/delivery.go:62`) | drop | Bearer (Go palsu / stub) |
-| GET | `/api/snapshots` | `web/src/utils/apiClient.ts:279`, `apps/tauri/src/main.rs:107` | Go (`engine/src/fleet/delivery.go:63`) | port | Bearer |
-| POST | `/api/snapshots` | `web/src/utils/apiClient.ts:291`, `apps/tauri/src/main.rs:112` | Go (`engine/src/fleet/delivery.go:63`) | port | Bearer |
-| GET | `/api/engine/processes` | `web/src/utils/apiClient.ts:318`, `apps/tauri/src/main.rs:117` | Go (`engine/src/fleet/delivery.go:71`) | port | Bearer |
-| POST | `/api/terminal/exec` | `web/src/utils/apiClient.ts:349` | Go (`engine/src/fleet/delivery.go:74`) | port | Bearer |
-| GET | `/api/fleet/policies` | `web/src/utils/apiClient.ts:387`, `apps/tauri/src/main.rs:122` | Go (`engine/src/fleet/delivery.go:64`) | port | Bearer |
-| POST | `/api/chat/quartermaster` | `web/src/utils/apiClient.ts:403`, `apps/tauri/src/main.rs:127` | Go (`engine/src/fleet/delivery.go:66`) | port | Bearer |
-| GET | `/api/system/network` | `web/src/utils/apiClient.ts:417` | Go (`engine/src/fleet/delivery.go:70`) | port | Bearer |
-| GET | `/api/project/git-status` | `web/src/utils/apiClient.ts:423` | Go (`engine/src/fleet/delivery.go:72`) | port | Bearer |
-| GET | `/api/v1/audit/trail` | `web/src/components/features/OrganizationView.tsx:30`, `nginx/galleon.conf:68` | Go (`engine/src/fleet/delivery.go:76`) | port | Bearer |
-| GET | `/api/fleet/seed` | `web/src/store/fleetStore.ts:429` | Go (`engine/src/fleet/delivery.go:58`) | port | Bearer |
+| GET | `/api/snapshots` | `web/src/utils/apiClient.ts:279`, `apps/tauri/src/main.rs:107` | Rust (`crates/galleon-gateway/src/api_fleet/snapshots.rs:27`) | port | Bearer |
+| POST | `/api/snapshots` | `web/src/utils/apiClient.ts:291`, `apps/tauri/src/main.rs:112` | Rust (`crates/galleon-gateway/src/api_fleet/snapshots.rs:27`) | port | Bearer |
+| GET | `/api/engine/processes` | `web/src/utils/apiClient.ts:318`, `apps/tauri/src/main.rs:117` | Rust (`crates/galleon-gateway/src/api_fleet/system.rs:136`) | port | Bearer |
+| POST | `/api/terminal/exec` | `web/src/utils/apiClient.ts:349` | Rust (`crates/galleon-gateway/src/api_fleet/terminal.rs:75`) | port | Bearer |
+| GET | `/api/fleet/policies` | `web/src/utils/apiClient.ts:387`, `apps/tauri/src/main.rs:122` | Rust (`crates/galleon-gateway/src/api_fleet/fleet.rs:33`) | port | Bearer |
+| POST | `/api/chat/quartermaster` | `web/src/utils/apiClient.ts:403`, `apps/tauri/src/main.rs:127` | Rust (`crates/galleon-gateway/src/api_fleet/quartermaster.rs:111`) | port | Bearer |
+| GET | `/api/system/network` | `web/src/utils/apiClient.ts:417` | Rust (`crates/galleon-gateway/src/api_fleet/system.rs:130`) | port | Bearer |
+| GET | `/api/project/git-status` | `web/src/utils/apiClient.ts:423` | Rust (`crates/galleon-gateway/src/api_fleet/project.rs:50`) | port | Bearer |
+| GET | `/api/v1/audit/trail` | `web/src/components/features/OrganizationView.tsx:30`, `nginx/galleon.conf:68` | Rust (`crates/galleon-gateway/src/api_fleet/terminal.rs:76`) | port | Bearer |
+| GET | `/api/fleet/seed` | `web/src/store/fleetStore.ts:429` | Rust (`crates/galleon-gateway/src/api_fleet/fleet.rs:30`) | port | Bearer |
 | **Rute Channel, Webhook, dan ACP/SSE** | | | | | |
 | POST | `/sop/{*rest}` | penyedia webhook SOP eksternal | Rust unmounted (`crates/galleon-gateway/src/lib.rs:539`) | restore | Signature Webhook |
 | GET, POST | `/whatsapp` | penyedia webhook WhatsApp | Rust unmounted (`crates/galleon-gateway/src/lib.rs:518-519`) | restore | Signature Webhook |
