@@ -19,15 +19,15 @@
 
 use std::sync::Arc;
 
+use axum::Router;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
-use axum::Router;
 use galleon_config::schema::Config;
 use galleon_fleet_core::{
-    answer_engine_room, answer_report, classify, DiagnosticItem, FleetStore, Intent,
-    QuartermasterChatResponse, FLEET_MAX_BODY,
+    DiagnosticItem, FLEET_MAX_BODY, FleetStore, Intent, QuartermasterChatResponse,
+    answer_engine_room, answer_report, classify,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -293,9 +293,9 @@ pub async fn handle_chat_quartermaster_impl(
 mod tests {
     use super::*;
     use axum::body::Body;
-    use axum::http::{header, Request};
+    use axum::http::{Request, header};
     use galleon_api::agent::{
-        set_agent_runner, AgentRunner, AgentSession, AgentTurnError, AgentTurnSuccess, TurnEvent,
+        AgentRunner, AgentSession, AgentTurnError, AgentTurnSuccess, TurnEvent, set_agent_runner,
     };
     use galleon_config::pairing::{PairingCodePolicy, PairingGuard};
     use http_body_util::BodyExt;
@@ -661,10 +661,12 @@ mod tests {
 
         let body_bytes = resp.into_body().collect().await.unwrap().to_bytes();
         let parsed: Value = serde_json::from_slice(&body_bytes).unwrap();
-        assert!(parsed["error"]
-            .as_str()
-            .unwrap()
-            .contains("model execution failure"));
+        assert!(
+            parsed["error"]
+                .as_str()
+                .unwrap()
+                .contains("model execution failure")
+        );
     }
 
     #[tokio::test]
