@@ -6,6 +6,7 @@
 pub mod collections;
 pub mod fleet;
 pub mod snapshots;
+pub mod system;
 
 use crate::state::AppState;
 use axum::Router;
@@ -18,5 +19,6 @@ pub fn routes(state: AppState) -> Router<AppState> {
     Router::new()
         .merge(collections::routes(state.clone()))
         .merge(snapshots::routes(state.clone()))
-        .merge(fleet::routes(state))
+        .merge(fleet::routes(state.clone()))
+        .merge(system::routes(state))
 }
