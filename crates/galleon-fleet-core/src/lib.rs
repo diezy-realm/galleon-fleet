@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+pub mod briefing;
 pub mod collections;
 pub mod error;
 pub mod intent;
@@ -9,6 +10,10 @@ pub mod seed;
 pub mod snapshots;
 pub mod store;
 
+pub use briefing::{
+    DEFAULT_BRIEFING_TITLE, ExecutiveBriefing, calculate_executive_briefing,
+    calculate_treasury_burn_rate,
+};
 pub use collections::{
     CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS, is_allowed_collection, is_canonical_collection,
     resolve_allowed_collection, validate_collection_payload,

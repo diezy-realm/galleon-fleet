@@ -1,6 +1,6 @@
-//! HTTP handlers for Galleon Fleet system endpoints (`/api/system/*`, `/api/engine/processes`).
+//! HTTP handlers for Galleon Fleet system endpoints (`/api/system/*`, `/api/engine/processes`, `/api/network/qrcode`).
 //!
-//! Under SPEC-013 §Model Data (TASK-073):
+//! Under SPEC-013 §Model Data (TASK-073 & TASK-074):
 //! - `GET /api/system/metrics`:
 //!   - Uses `sysinfo` 0.36 for real OS CPU, memory, and active process count.
 //!   - `goVersion` is removed from the response.
@@ -13,17 +13,29 @@
 //!   - `engine_port` is removed from the response.
 //!   - `gateway_port` reports the real configured bind port.
 //!   - `local_address` and `status` ("online") reflect canonical gateway state.
+//! - `GET /api/network/qrcode`:
+//!   - Generates QR code using `qrcode 0.14` with SVG feature without pulling `image`.
+//!   - Encodes SVG payload as base64 in `dataUrl` (`data:image/svg+xml;base64,...`).
+//!   - Strict validation: URL must start with `http://` or `https://`, length <= 2048 chars.
+//!   - Default target URL falls back to local gateway LAN URL.
+//! - `GET /api/system/executive-briefing`:
+//!   - Aggregates sovereign fleet watch report across active artifacts, crew, underway voyages,
+//!     and pending approvals.
+//!   - `treasuryBurnRate` is honestly calculated from `treasuryLedger` collection or returns `null`.
 //! - `GET /api/engine/processes`:
 //!   - Uses `sysinfo` 0.36 to enumerate processes.
 //!   - Filters strictly for processes whose name starts with `galleon*`.
 //!   - Returns array of `{ pid, name, memory, cpu }`.
 
+use std::sync::Arc;
+
 use axum::Router;
-use axum::extract::State;
+use axum::extract::{Query, State};
 use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use galleon_fleet_core::FLEET_MAX_BODY;
+use base64::Engine;
+use galleon_fleet_core::{FLEET_MAX_BODY, FleetStore};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sysinfo::{
@@ -70,6 +82,20 @@ pub struct SystemNetworkResponse {
     pub status: String,
 }
 
+/// Query parameters for `GET /api/network/qrcode`.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct QrCodeQuery {
+    pub url: Option<String>,
+}
+
+/// Network QR code response with base64 dataUrl and canonical url.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NetworkQrCodeResponse {
+    #[serde(rename = "dataUrl")]
+    pub data_url: String,
+    pub url: String,
+}
+
 /// Process item representation for `/api/engine/processes`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EngineProcessItem {
@@ -79,11 +105,12 @@ pub struct EngineProcessItem {
     pub pid: u32,
 }
 
-/// Standalone configuration for testing system network endpoints without AppState.
+/// Standalone configuration for testing system network and briefing endpoints without AppState.
 #[derive(Clone, Debug)]
 pub struct SystemApiConfig {
     pub gateway_port: u16,
     pub local_address: String,
+    pub store: Arc<FleetStore>,
 }
 
 impl Default for SystemApiConfig {
@@ -91,6 +118,7 @@ impl Default for SystemApiConfig {
         Self {
             gateway_port: 50052,
             local_address: "127.0.0.1".to_string(),
+            store: Arc::new(FleetStore::from_env()),
         }
     }
 }
@@ -100,6 +128,11 @@ pub fn routes(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/api/system/metrics", get(handle_get_system_metrics))
         .route("/api/system/network", get(handle_get_system_network_state))
+        .route(
+            "/api/system/executive-briefing",
+            get(handle_get_executive_briefing_state),
+        )
+        .route("/api/network/qrcode", get(handle_get_network_qrcode_state))
         .route("/api/engine/processes", get(handle_get_engine_processes))
         .layer(RequestBodyLimitLayer::new(FLEET_MAX_BODY))
         .with_state(state)
@@ -107,14 +140,37 @@ pub fn routes(state: AppState) -> Router<AppState> {
 
 /// Standalone router for testing with dedicated configuration.
 pub fn router_for_config(config: SystemApiConfig) -> Router {
+    let cfg_net = config.clone();
+    let cfg_qr = config.clone();
+    let cfg_brief = config.clone();
     Router::new()
         .route("/api/system/metrics", get(handle_get_system_metrics))
         .route(
             "/api/system/network",
             get({
-                let config = config.clone();
+                let config = cfg_net;
                 move || async move {
                     handle_get_system_network_impl(config.gateway_port, config.local_address)
+                }
+            }),
+        )
+        .route(
+            "/api/system/executive-briefing",
+            get({
+                let config = cfg_brief;
+                move || async move { handle_get_executive_briefing_impl(&config.store) }
+            }),
+        )
+        .route(
+            "/api/network/qrcode",
+            get({
+                let config = cfg_qr;
+                move |Query(query): Query<QrCodeQuery>| async move {
+                    handle_get_network_qrcode_impl(
+                        query,
+                        config.gateway_port,
+                        &config.local_address,
+                    )
                 }
             }),
         )
@@ -199,6 +255,112 @@ fn handle_get_system_network_impl(gateway_port: u16, local_address: String) -> R
         local_address,
         status: "online".to_string(),
     };
+    match serde_json::to_string(&resp) {
+        Ok(json_str) => (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            json_str,
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "application/json")],
+            json!({ "error": e.to_string() }).to_string(),
+        )
+            .into_response(),
+    }
+}
+
+async fn handle_get_executive_briefing_state(State(state): State<AppState>) -> Response {
+    let store = {
+        let config = state.config.read();
+        FleetStore::from_data_dir(&config.data_dir)
+    };
+    handle_get_executive_briefing_impl(&store)
+}
+
+pub fn handle_get_executive_briefing_impl(store: &FleetStore) -> Response {
+    let date = chrono::Local::now().format("%A, %d %B %Y").to_string();
+    let generated_at = chrono::Utc::now().to_rfc3339();
+    let briefing = store.get_executive_briefing(date, generated_at);
+
+    match serde_json::to_string(&briefing) {
+        Ok(json_str) => (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            json_str,
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "application/json")],
+            json!({ "error": e.to_string() }).to_string(),
+        )
+            .into_response(),
+    }
+}
+
+async fn handle_get_network_qrcode_state(
+    State(state): State<AppState>,
+    Query(query): Query<QrCodeQuery>,
+) -> Response {
+    let (gateway_port, local_address) = {
+        let config = state.config.read();
+        (config.gateway.port, config.gateway.host.clone())
+    };
+    handle_get_network_qrcode_impl(query, gateway_port, &local_address)
+}
+
+pub fn handle_get_network_qrcode_impl(
+    query: QrCodeQuery,
+    gateway_port: u16,
+    local_address: &str,
+) -> Response {
+    let target_url = match query.url {
+        Some(u) if !u.trim().is_empty() => {
+            let trimmed = u.trim();
+            if trimmed.len() > 2048 {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    json!({ "error": "url exceeds 2048 characters" }).to_string(),
+                )
+                    .into_response();
+            }
+            if !trimmed.starts_with("http://") && !trimmed.starts_with("https://") {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    json!({ "error": "url must start with http:// or https://" }).to_string(),
+                )
+                    .into_response();
+            }
+            trimmed.to_string()
+        }
+        _ => format!("http://{local_address}:{gateway_port}"),
+    };
+
+    let code = match qrcode::QrCode::new(target_url.as_bytes()) {
+        Ok(c) => c,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                [(header::CONTENT_TYPE, "application/json")],
+                json!({ "error": format!("failed to generate QR code: {e}") }).to_string(),
+            )
+                .into_response();
+        }
+    };
+
+    let svg_xml = code.render::<qrcode::render::svg::Color>().build();
+    let encoded = base64::engine::general_purpose::STANDARD.encode(svg_xml.as_bytes());
+    let data_url = format!("data:image/svg+xml;base64,{encoded}");
+
+    let resp = NetworkQrCodeResponse {
+        data_url,
+        url: target_url,
+    };
+
     match serde_json::to_string(&resp) {
         Ok(json_str) => (
             StatusCode::OK,
@@ -405,6 +567,7 @@ mod tests {
         let app = router_for_config(SystemApiConfig {
             gateway_port: 50052,
             local_address: "127.0.0.1".to_string(),
+            ..Default::default()
         });
 
         let req = Request::builder()
@@ -500,5 +663,220 @@ mod tests {
                 p.name
             );
         }
+    }
+
+    #[tokio::test]
+    async fn test_get_network_qrcode_default_and_contract_shape() {
+        let app = router_for_config(SystemApiConfig {
+            gateway_port: 9090,
+            local_address: "127.0.0.1".to_string(),
+            ..Default::default()
+        });
+
+        // 1. Default URL fallback
+        let req = Request::builder()
+            .method("GET")
+            .uri("/api/network/qrcode")
+            .body(Body::empty())
+            .expect("request builder");
+
+        let resp = app.clone().oneshot(req).await.expect("oneshot call");
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let body_bytes = resp
+            .into_body()
+            .collect()
+            .await
+            .expect("read body")
+            .to_bytes();
+        let parsed: Value = serde_json::from_slice(&body_bytes).expect("parse JSON response");
+        assert_eq!(parsed["url"], "http://127.0.0.1:9090");
+
+        let data_url = parsed["dataUrl"].as_str().expect("dataUrl must be string");
+        assert!(
+            data_url.starts_with("data:image/svg+xml;base64,"),
+            "dataUrl must be SVG base64"
+        );
+        let b64_payload = data_url
+            .strip_prefix("data:image/svg+xml;base64,")
+            .expect("strip prefix");
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(b64_payload)
+            .expect("decode base64");
+        let svg_str = String::from_utf8(decoded).expect("valid utf-8 SVG");
+        assert!(svg_str.contains("<svg") && svg_str.contains("</svg>"));
+
+        // 2. Go fixture contract check
+        let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/go-fleet/GET_api_network_qrcode.json");
+        let fixture_str = std::fs::read_to_string(&fixture_path).expect("read Go fixture");
+        let fixture_val: Value = serde_json::from_str(&fixture_str).expect("parse Go fixture");
+        let fixture_obj = fixture_val.as_object().expect("fixture object");
+
+        for key in fixture_obj.keys() {
+            assert!(
+                parsed.as_object().unwrap().contains_key(key),
+                "Missing fixture key in QR code response: {key}"
+            );
+        }
+
+        // 3. Custom URL query parameter
+        let custom_url = "https://galleon.local:8443/dashboard";
+        let req_custom = Request::builder()
+            .method("GET")
+            .uri("/api/network/qrcode?url=https%3A%2F%2Fgalleon.local%3A8443%2Fdashboard")
+            .body(Body::empty())
+            .expect("request builder");
+
+        let resp_custom = app.oneshot(req_custom).await.expect("oneshot call");
+        assert_eq!(resp_custom.status(), StatusCode::OK);
+        let body_bytes_custom = resp_custom
+            .into_body()
+            .collect()
+            .await
+            .expect("read body")
+            .to_bytes();
+        let parsed_custom: Value =
+            serde_json::from_slice(&body_bytes_custom).expect("parse JSON response");
+        assert_eq!(parsed_custom["url"], custom_url);
+    }
+
+    #[tokio::test]
+    async fn test_get_network_qrcode_validation_errors() {
+        let app = router();
+
+        // 1. Non-http(s) scheme
+        let req_ftp = Request::builder()
+            .method("GET")
+            .uri("/api/network/qrcode?url=ftp://invalid-scheme.org")
+            .body(Body::empty())
+            .expect("request builder");
+        let resp_ftp = app.clone().oneshot(req_ftp).await.expect("oneshot call");
+        assert_eq!(resp_ftp.status(), StatusCode::BAD_REQUEST);
+
+        // 2. Javascript scheme
+        let req_js = Request::builder()
+            .method("GET")
+            .uri("/api/network/qrcode?url=javascript:alert(1)")
+            .body(Body::empty())
+            .expect("request builder");
+        let resp_js = app.clone().oneshot(req_js).await.expect("oneshot call");
+        assert_eq!(resp_js.status(), StatusCode::BAD_REQUEST);
+
+        // 3. Length > 2048 chars
+        let long_path = "a".repeat(2045);
+        let long_url = format!("http://example.com/{long_path}");
+        let req_long = Request::builder()
+            .method("GET")
+            .uri(format!("/api/network/qrcode?url={long_url}"))
+            .body(Body::empty())
+            .expect("request builder");
+        let resp_long = app.oneshot(req_long).await.expect("oneshot call");
+        assert_eq!(resp_long.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn test_get_executive_briefing_contract_and_burn_rate()
+    -> Result<(), galleon_fleet_core::FleetError> {
+        let tmp = tempfile::tempdir().map_err(galleon_fleet_core::FleetError::Io)?;
+        let store = Arc::new(FleetStore::new(tmp.path()));
+
+        // Populate mock collections
+        store
+            .save_collection("artifacts", b"[{\"id\":\"art-1\"},{\"id\":\"art-2\"}]")
+            .await?;
+        store
+            .save_collection("crew", b"[{\"id\":\"c1\"},{\"id\":\"c2\"}]")
+            .await?;
+        store
+            .save_collection(
+                "approvals",
+                b"[{\"id\":\"a1\",\"status\":\"pending\"},{\"id\":\"a2\",\"status\":\"pending\"}]",
+            )
+            .await?;
+        store
+            .save_collection(
+                "treasuryLedger",
+                b"[{\"id\":\"tr-1\",\"costUSD\":0.12},{\"id\":\"tr-2\",\"costUSD\":0.04}]",
+            )
+            .await?;
+
+        let app = router_for_config(SystemApiConfig {
+            gateway_port: 50052,
+            local_address: "127.0.0.1".to_string(),
+            store: store.clone(),
+        });
+
+        let req = Request::builder()
+            .method("GET")
+            .uri("/api/system/executive-briefing")
+            .body(Body::empty())
+            .expect("request builder");
+
+        let resp = app.oneshot(req).await.expect("oneshot call");
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let body_bytes = resp
+            .into_body()
+            .collect()
+            .await
+            .expect("read body")
+            .to_bytes();
+        let parsed: Value = serde_json::from_slice(&body_bytes).expect("parse JSON response");
+        let parsed_obj = parsed.as_object().expect("response must be object");
+
+        // Verify contract against Go fixture
+        let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/go-fleet/GET_api_system_executive_briefing.json");
+        let fixture_str = std::fs::read_to_string(&fixture_path).expect("read Go fixture");
+        let fixture_val: Value = serde_json::from_str(&fixture_str).expect("parse Go fixture");
+        let fixture_obj = fixture_val.as_object().expect("fixture object");
+
+        for key in fixture_obj.keys() {
+            assert!(
+                parsed_obj.contains_key(key),
+                "Missing expected key from Go executive briefing fixture: {key}"
+            );
+        }
+
+        // Verify fields
+        assert_eq!(parsed["title"], "Sovereign Fleet Watch Report");
+        assert_eq!(
+            parsed["admiralStatus"],
+            "Awaiting Captain — 2 approval(s) pending"
+        );
+        assert_eq!(
+            parsed["activeAlerts"],
+            json!(["2 pending Captain's Approval await signature"])
+        );
+        assert_eq!(parsed["treasuryBurnRate"], "$0.16");
+
+        // Now test empty treasury ledger -> null
+        let tmp_empty = tempfile::tempdir().map_err(galleon_fleet_core::FleetError::Io)?;
+        let store_empty = Arc::new(FleetStore::new(tmp_empty.path()));
+        let app_empty = router_for_config(SystemApiConfig {
+            gateway_port: 50052,
+            local_address: "127.0.0.1".to_string(),
+            store: store_empty,
+        });
+
+        let req_empty = Request::builder()
+            .method("GET")
+            .uri("/api/system/executive-briefing")
+            .body(Body::empty())
+            .expect("request builder");
+
+        let resp_empty = app_empty.oneshot(req_empty).await.expect("oneshot call");
+        assert_eq!(resp_empty.status(), StatusCode::OK);
+        let body_empty = resp_empty
+            .into_body()
+            .collect()
+            .await
+            .expect("read body")
+            .to_bytes();
+        let parsed_empty: Value = serde_json::from_slice(&body_empty).expect("parse JSON response");
+        assert!(parsed_empty["treasuryBurnRate"].is_null());
+
+        Ok(())
     }
 }

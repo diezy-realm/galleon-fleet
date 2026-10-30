@@ -344,6 +344,15 @@ impl FleetStore {
         crate::metrics::calculate_fleet_metrics(self, memory_used_mb)
     }
 
+    /// Calculate an executive briefing report snapshot from this store with given date and timestamp.
+    pub fn get_executive_briefing(
+        &self,
+        date: String,
+        generated_at: String,
+    ) -> crate::briefing::ExecutiveBriefing {
+        crate::briefing::calculate_executive_briefing(self, date, generated_at)
+    }
+
     /// Retrieve fleet policies and risk tiers from this store.
     ///
     /// Reads `<root>/policies.json` and `<root>/riskTiers.json` if they exist in the
