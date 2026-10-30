@@ -14,34 +14,34 @@ pub mod snapshots;
 pub mod store;
 
 pub use briefing::{
-    calculate_executive_briefing, calculate_treasury_burn_rate, ExecutiveBriefing,
-    DEFAULT_BRIEFING_TITLE,
+    DEFAULT_BRIEFING_TITLE, ExecutiveBriefing, calculate_executive_briefing,
+    calculate_treasury_burn_rate,
 };
 pub use collections::{
-    is_allowed_collection, is_canonical_collection, resolve_allowed_collection,
-    validate_collection_payload, CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS,
+    CANONICAL_COLLECTIONS, POLICY_DATA_COLLECTIONS, is_allowed_collection, is_canonical_collection,
+    resolve_allowed_collection, validate_collection_payload,
 };
 pub use diagnostics::{
-    severity_str_to_status, DiagnosticItem, LATENCY_UNMEASURED, STATUS_ERROR, STATUS_HEALTHY,
-    STATUS_WARNING,
+    DiagnosticItem, LATENCY_UNMEASURED, STATUS_ERROR, STATUS_HEALTHY, STATUS_WARNING,
+    severity_str_to_status,
 };
 pub use error::FleetError;
 pub use harbor::{
-    build_harbor_provider, resolve_capabilities, resolve_vendor_and_name, HarborProvider,
-    STATUS_CONFIGURED, STATUS_MISSING_CREDENTIALS,
+    HarborProvider, STATUS_CONFIGURED, STATUS_MISSING_CREDENTIALS, build_harbor_provider,
+    resolve_capabilities, resolve_vendor_and_name,
 };
-pub use metrics::{calculate_fleet_metrics, DeckBellResponse, FleetMetrics, DECK_BELL_MESSAGE};
+pub use metrics::{DECK_BELL_MESSAGE, DeckBellResponse, FleetMetrics, calculate_fleet_metrics};
 pub use policies::{
-    load_seed_policies, load_seed_policies_response, load_seed_risk_tiers, FleetPoliciesResponse,
-    FleetPolicy, RiskTier,
+    FleetPoliciesResponse, FleetPolicy, RiskTier, load_seed_policies, load_seed_policies_response,
+    load_seed_risk_tiers,
 };
-pub use project::{parse_git_status, ProjectGitStatus};
+pub use project::{ProjectGitStatus, parse_git_status};
 pub use seed::{
-    get_canonical_seed_map, get_policy_seed_map, get_seed_raw, get_seed_response_json,
-    load_fleet_seed_data, load_seed_response, FleetSeedData, SeedResponse,
+    FleetSeedData, SeedResponse, get_canonical_seed_map, get_policy_seed_map, get_seed_raw,
+    get_seed_response_json, load_fleet_seed_data, load_seed_response,
 };
-pub use snapshots::{CreateSnapshotRequest, SnapshotItem, MAX_SNAPSHOTS};
-pub use store::{FleetStore, ImportReport, FLEET_MAX_BODY};
+pub use snapshots::{CreateSnapshotRequest, MAX_SNAPSHOTS, SnapshotItem};
+pub use store::{FLEET_MAX_BODY, FleetStore, ImportReport};
 
 #[cfg(test)]
 mod tests {

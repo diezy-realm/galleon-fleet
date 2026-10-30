@@ -8,8 +8,8 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use galleon_fleet_core::{
-    severity_str_to_status, DiagnosticItem, LATENCY_UNMEASURED, STATUS_ERROR, STATUS_HEALTHY,
-    STATUS_WARNING,
+    DiagnosticItem, LATENCY_UNMEASURED, STATUS_ERROR, STATUS_HEALTHY, STATUS_WARNING,
+    severity_str_to_status,
 };
 use serde_json::Value;
 

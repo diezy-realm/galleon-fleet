@@ -10,11 +10,11 @@
 
 use std::sync::Arc;
 
+use axum::Router;
 use axum::extract::State;
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
 use galleon_api::doctor::{DiagResult, DiagnosticsRunner, Severity};
 use galleon_config::schema::Config;
 use galleon_fleet_core::{
