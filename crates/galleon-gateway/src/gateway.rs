@@ -3,10 +3,10 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::{
-    Json, Router,
     extract::State,
     response::IntoResponse,
     routing::{delete, get, patch, post},
+    Json, Router,
 };
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::timeout::TimeoutLayer;
@@ -235,9 +235,12 @@ pub fn build_gateway_router(state: AppState) -> Router {
             "/api/config/agent-options",
             get(crate::api_sections::handle_agent_options),
         )
-        // ── WebSocket agent chat ──
+        // ── WebSocket agent chat & ACP ──
         .route("/ws", get(crate::ws::handle_ws_chat))
         .route("/ws/chat", get(crate::ws::handle_ws_chat))
+        .route("/acp", get(crate::acp::handle_ws_acp))
+        // ── SSE events ──
+        .route("/api/events", get(crate::sse::handle_sse_events))
         // ── Core REST endpoints ──
         .route("/api/status", get(crate::api::handle_api_status))
         .route("/api/health", get(crate::api::handle_api_health))
