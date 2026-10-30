@@ -75,6 +75,17 @@ const translations: Record<Locale, TranslationDictionary> = {
     'memory.proposals.feedback': 'Owner Feedback',
     'memory.proposals.add_feedback': 'Add Feedback',
     'memory.proposals.rollback_to': 'Rollback to Version',
+
+    // Pairing Gate (SPEC-014)
+    'pairing.title': 'Gateway Pairing',
+    'pairing.subtitle': 'Connect this web console to your local Galleon gateway',
+    'pairing.code_label': 'Pairing Code',
+    'pairing.code_placeholder': 'Enter pairing code...',
+    'pairing.submit': 'Pair Gateway',
+    'pairing.submitting': 'Pairing...',
+    'pairing.help_text': 'Run `galleon gateway get-paircode` in your terminal to obtain the pairing code.',
+    'pairing.unauthorized_notice': 'Your session is unauthorized or has expired (401). Please pair again.',
+    'pairing.prefilled_notice': 'Pairing code detected from gateway setup.',
   },
   id: {
     // Navigasi & Umum
@@ -140,6 +151,17 @@ const translations: Record<Locale, TranslationDictionary> = {
     'memory.proposals.feedback': 'Umpan Balik Pemilik',
     'memory.proposals.add_feedback': 'Beri Masukan',
     'memory.proposals.rollback_to': 'Kembalikan ke Versi',
+
+    // Gerbang Pairing (SPEC-014)
+    'pairing.title': 'Pairing Gateway',
+    'pairing.subtitle': 'Hubungkan konsol web ini ke gateway lokal Galleon Anda',
+    'pairing.code_label': 'Kode Pairing',
+    'pairing.code_placeholder': 'Masukkan kode pairing...',
+    'pairing.submit': 'Hubungkan Gateway',
+    'pairing.submitting': 'Menghubungkan...',
+    'pairing.help_text': 'Jalankan `galleon gateway get-paircode` di terminal untuk mendapatkan kode pairing.',
+    'pairing.unauthorized_notice': 'Sesi Anda tidak terotorisasi atau telah kedaluwarsa (401). Silakan lakukan pairing ulang.',
+    'pairing.prefilled_notice': 'Kode pairing terdeteksi dari konfigurasi awal gateway.',
   },
 };
 
