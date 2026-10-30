@@ -10,6 +10,7 @@ pub mod harbor;
 pub mod project;
 pub mod snapshots;
 pub mod system;
+pub mod terminal;
 
 use crate::state::AppState;
 use axum::Router;
@@ -26,5 +27,6 @@ pub fn routes(state: AppState) -> Router<AppState> {
         .merge(system::routes(state.clone()))
         .merge(project::routes(state.clone()))
         .merge(harbor::routes(state.clone()))
-        .merge(diagnostics::routes(state))
+        .merge(diagnostics::routes(state.clone()))
+        .merge(terminal::routes(state))
 }
