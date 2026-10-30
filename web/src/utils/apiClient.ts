@@ -39,7 +39,7 @@ export interface HarborProvider {
   vendor: string;
   status: string;
   models: string[];
-  latencyMs: number;
+  latencyMs: number | null;
   capabilities: string[];
 }
 
@@ -67,7 +67,7 @@ export interface ExecutiveBriefing {
   admiralStatus: string;
   keyAchievements: string[];
   activeAlerts: string[];
-  treasuryBurnRate: string;
+  treasuryBurnRate: string | null;
   recommendedFocus: string;
   generatedAt: string;
 }
@@ -80,9 +80,9 @@ export interface FleetMetrics {
   totalArtifacts: number;
   totalSpecialists: number;
   totalSquads: number;
-  systemUptime: string;
-  gatewayLatencyMs: number;
-  activeWorkers: number;
+  systemUptime: string | null;
+  gatewayLatencyMs: number | null;
+  activeWorkers: number | null;
   memoryUsedMB: number;
 }
 
@@ -94,14 +94,16 @@ export interface SystemMetrics {
     percent: number;
   };
   activeProcesses: number;
-  uptime: string;
+  uptime: string | null;
   platform: string;
   arch: string;
-  goVersion: string;
-  gateway_latency_ms: number;
+  version?: string;
+  goVersion?: string | null;
+  gateway_latency_ms: number | null;
   active_threads: number;
-  isolation_mode: string;
-  memory_db_mb: number;
+  isolation_mode: string | null;
+  memory_db_mb: number | null;
+  nodeVersion?: string | null;
 }
 
 export interface NetworkInterfaceInfo {
@@ -114,7 +116,7 @@ export interface NetworkInfo {
   status?: string;
   local_address?: string;
   gateway_port?: number;
-  engine_port?: number;
+  engine_port?: number | null;
   hostname?: string;
   port?: number;
   host?: string;
@@ -122,7 +124,7 @@ export interface NetworkInfo {
   preferredLanUrl?: string;
   isProduction?: boolean;
   platform?: string;
-  memoryUsageMB?: number;
+  memoryUsageMB?: number | null;
 }
 
 export interface ProjectGitStatus {
@@ -306,10 +308,6 @@ export const apiClient = {
     return request<DiagnosticItem[]>('GET', '/api/diagnostics');
   },
 
-  async applyRemedy(): Promise<any> {
-    return request('POST', '/api/diagnostics/remedy');
-  },
-
   async getSnapshots(): Promise<SnapshotItem[]> {
     return request<SnapshotItem[]>('GET', '/api/snapshots');
   },
@@ -394,6 +392,13 @@ export const apiClient = {
     return request<T>('POST', url, body);
   },
 
+  async delete<T>(path: string): Promise<T> {
+    const url = path.startsWith('/api') || path.startsWith('/pair')
+      ? path
+      : path.startsWith('/') ? `/api${path}` : `/api/${path}`;
+    return request<T>('DELETE', url);
+  },
+
   async getPairCode(): Promise<PairCodeResponse> {
     return request<PairCodeResponse>('GET', '/pair/code');
   },
@@ -401,13 +406,6 @@ export const apiClient = {
   async pair(code: string): Promise<PairResponse> {
     return request<PairResponse>('POST', '/pair', undefined, {
       'X-Pairing-Code': code.trim(),
-    });
-  },
-
-  async approveToolExecution(id: string, decision: 'approved' | 'rejected', reason?: string): Promise<{ status: string }> {
-    const action = decision === 'approved' ? 'approve' : 'deny';
-    return request<{ status: string }>('POST', `/api/v1/tool-executions/${id}/${action}`, {
-      reason: reason || `Decision by Captain: ${decision}`,
     });
   },
 };

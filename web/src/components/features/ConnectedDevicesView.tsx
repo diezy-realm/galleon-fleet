@@ -5,17 +5,20 @@ import { Smartphone, Laptop, QrCode, Trash2, RefreshCw, Plus, CheckCircle, Shiel
 
 export interface DeviceInfo {
   id: string;
-  name: string;
-  device_type: string;
+  name?: string | null;
+  device_type?: string | null;
   paired_at: string;
   last_seen: string;
-  status?: string;
+  status?: string | null;
+  ip_address?: string | null;
+  capabilities?: string[] | null;
 }
 
 interface PairingSession {
   pairing_code: string;
-  token: string;
-  expires_in_seconds: number;
+  token?: string | null;
+  expires_in_seconds?: number | null;
+  message?: string | null;
 }
 
 export const ConnectedDevicesView: React.FC = () => {
@@ -30,9 +33,11 @@ export const ConnectedDevicesView: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiClient.get<DeviceInfo[]>('/api/pairing/devices');
+      const data = await apiClient.get<{ devices: DeviceInfo[]; count: number } | DeviceInfo[]>('/api/devices');
       if (Array.isArray(data)) {
         setDevices(data);
+      } else if (data && Array.isArray(data.devices)) {
+        setDevices(data.devices);
       } else {
         setDevices([]);
       }
@@ -50,10 +55,7 @@ export const ConnectedDevicesView: React.FC = () => {
   const handleInitiatePairing = async () => {
     try {
       setIsLoading(true);
-      const data = await apiClient.post<PairingSession>('/api/pairing/initiate', {
-        device_name: 'Companion Client',
-        device_type: 'mobile'
-      });
+      const data = await apiClient.post<PairingSession>('/api/pairing/initiate');
       if (data) {
         setActiveSession(data);
         setIsPairingModalOpen(true);
@@ -68,7 +70,7 @@ export const ConnectedDevicesView: React.FC = () => {
   const handleRevoke = async (deviceId: string) => {
     setRevokingId(deviceId);
     try {
-      await apiClient.post('/api/pairing/revoke', { device_id: deviceId });
+      await apiClient.delete(`/api/devices/${encodeURIComponent(deviceId)}`);
       setDevices(prev => prev.filter(d => d.id !== deviceId));
     } catch (err: any) {
       setError(err?.message || 'Failed to revoke device');
@@ -150,17 +152,17 @@ export const ConnectedDevicesView: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <div className="font-bold text-neutral-200 font-sans text-sm">{device.name}</div>
+                      <div className="font-bold text-neutral-200 font-sans text-sm">{device.name || '—'}</div>
                       <div className="text-[10px] text-neutral-500 mt-0.5">
-                        ID: {device.id} · Type: <span className="text-cyan-300">{device.device_type}</span>
+                        ID: {device.id} · Type: <span className="text-cyan-300">{device.device_type || '—'}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 self-end sm:self-auto">
                     <div className="text-right text-[11px] text-neutral-400">
-                      <div>{t('devices.last_seen')}: <span className="text-neutral-300">{device.last_seen || 'Active now'}</span></div>
-                      <div className="text-[10px] text-neutral-500">Paired: {device.paired_at}</div>
+                      <div>{t('devices.last_seen')}: <span className="text-neutral-300">{device.last_seen || '—'}</span></div>
+                      <div className="text-[10px] text-neutral-500">Paired: {device.paired_at || '—'}</div>
                     </div>
                     <button
                       onClick={() => handleRevoke(device.id)}
@@ -213,7 +215,7 @@ export const ConnectedDevicesView: React.FC = () => {
             </div>
 
             <p className="text-[11px] text-neutral-500">
-              Valid for {Math.floor(activeSession.expires_in_seconds / 60)} minutes. One-time exchange.
+              Valid for {activeSession.expires_in_seconds ? Math.floor(activeSession.expires_in_seconds / 60) : 10} minutes. One-time exchange.
             </p>
 
             <button
