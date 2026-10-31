@@ -1,6 +1,9 @@
-# Clippy configuration for ClawCrew.
+# Clippy configuration for Galleon.
 # Thresholds tuned to match codebase patterns and reduce noise from
 # existing allow-attributes while still catching genuinely complex code.
+
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
 
 cognitive-complexity-threshold = 30
 
@@ -13,34 +16,34 @@ too-many-lines-threshold = 200
 array-size-threshold = 65536
 
 # Hard ban on direct tracing/log/print log-event macros workspace-wide.
-# Every log emission goes through `::clawcrew_log::record!` so events
+# Every log emission goes through `::galleon_log::record!` so events
 # carry the structured `zc_*` shape, the alias-bound attribution span
 # fields, and the rest of the project's observability discipline.
-# clawcrew-log itself bootstraps the pipeline and allows the macros
+# galleon-log itself bootstraps the pipeline and allows the macros
 # locally via `#![allow(clippy::disallowed_macros)]` on the few files
 # that need them. Every other crate is denied here. With `-D warnings`
 # in CI, any attempt to add `tracing::info!`, `println!`, etc. fails
 # the build with a message that names the right replacement.
 disallowed-macros = [
-    { path = "tracing::trace", reason = "use ::clawcrew_log::record!(TRACE, ...) instead" },
-    { path = "tracing::debug", reason = "use ::clawcrew_log::record!(DEBUG, ...) instead" },
-    { path = "tracing::info",  reason = "use ::clawcrew_log::record!(INFO, ...) instead" },
-    { path = "tracing::warn",  reason = "use ::clawcrew_log::record!(WARN, ...) instead" },
-    { path = "tracing::error", reason = "use ::clawcrew_log::record!(ERROR, ...) instead" },
-    { path = "log::trace",     reason = "use ::clawcrew_log::record!(TRACE, ...) instead" },
-    { path = "log::debug",     reason = "use ::clawcrew_log::record!(DEBUG, ...) instead" },
-    { path = "log::info",      reason = "use ::clawcrew_log::record!(INFO, ...) instead" },
-    { path = "log::warn",      reason = "use ::clawcrew_log::record!(WARN, ...) instead" },
-    { path = "log::error",     reason = "use ::clawcrew_log::record!(ERROR, ...) instead" },
-    { path = "std::dbg",       reason = "use ::clawcrew_log::record!(DEBUG, ...) instead; dbg! bypasses the log pipeline" },
+    { path = "tracing::trace", reason = "use ::galleon_log::record!(TRACE, ...) instead" },
+    { path = "tracing::debug", reason = "use ::galleon_log::record!(DEBUG, ...) instead" },
+    { path = "tracing::info",  reason = "use ::galleon_log::record!(INFO, ...) instead" },
+    { path = "tracing::warn",  reason = "use ::galleon_log::record!(WARN, ...) instead" },
+    { path = "tracing::error", reason = "use ::galleon_log::record!(ERROR, ...) instead" },
+    { path = "log::trace",     reason = "use ::galleon_log::record!(TRACE, ...) instead" },
+    { path = "log::debug",     reason = "use ::galleon_log::record!(DEBUG, ...) instead" },
+    { path = "log::info",      reason = "use ::galleon_log::record!(INFO, ...) instead" },
+    { path = "log::warn",      reason = "use ::galleon_log::record!(WARN, ...) instead" },
+    { path = "log::error",     reason = "use ::galleon_log::record!(ERROR, ...) instead" },
+    { path = "std::dbg",       reason = "use ::galleon_log::record!(DEBUG, ...) instead; dbg! bypasses the log pipeline" },
     # Bare `anyhow!(...)` interpolates attribution-relevant context (agent_id,
     # key, alias, …) into a string blob that loses the Attributable span
     # binding by the time the error surfaces. Emit the structured event via
-    # `::clawcrew_log::record!` (which inherits the wrapping span's typed
+    # `::galleon_log::record!` (which inherits the wrapping span's typed
     # attribution attrs) then return a plain error via `anyhow::bail!`,
     # `anyhow::Error::msg`, or a typed error. Do not sidestep this by
     # re-importing the macro under another name.
-    { path = "anyhow::anyhow", reason = "emit ::clawcrew_log::record! at the call site so span attribution propagates; then anyhow::bail! / anyhow::Error::msg for the returned error" },
+    { path = "anyhow::anyhow", reason = "emit ::galleon_log::record! at the call site so span attribution propagates; then anyhow::bail! / anyhow::Error::msg for the returned error" },
 ]
 
 # Hard ban on direct `tokio::spawn` workspace-wide. Every fire-and-forget
@@ -57,10 +60,10 @@ disallowed-methods = [
 # `std::println` / `std::eprintln` — DAEMON-PATH INTENT: these must NOT be
 # used in daemon/supervisor code paths (clawcrew-channels orchestrator,
 # clawcrew-runtime daemon). All daemon-path output must go through
-# `::clawcrew_log::record!` so it flows through the structured log pipeline.
+# `::galleon_log::record!` so it flows through the structured log pipeline.
 # They are NOT in disallowed-macros yet because ~430 existing violations across
 # the codebase would break CI. Tracked for cleanup. New daemon-path code must
-# use `::clawcrew_log::record!` — reviewers must reject any new `println!`
+# use `::galleon_log::record!` — reviewers must reject any new `println!`
 # in crates/clawcrew-channels/src/orchestrator/ and crates/clawcrew-runtime/src/daemon/.
 # Build scripts emit cargo directives (`cargo:rerun-if-changed`) via println;
 # CLI-facing commands (doctor, bind-identity, send-message) use them for
