@@ -18,7 +18,8 @@ Target branch: testing
          run: cargo test --doc --workspace --locked
    ```
 2. Komentar `.config/nextest.toml` pada profil default telah diselaraskan dengan nilai `retries = 0`.
-3. Verifikasi lokal `cargo test --doc --workspace --locked` bersih (1 passed di `galleon-tool-call-parser`, 2 ignored di `galleon-macros`, 0 failed di seluruh workspace).
+3. Test arsitektur `tests/architecture/ci_runner_labels.rs` diselaraskan dengan menambahkan `"doctest"` ke `HEAVY_JOBS` (`const HEAVY_JOBS: [&str; 4] = ["lint", "check", "test", "doctest"];`) agar inventory runner workflow tetap konsisten dan suite arsitektur lolos 100%.
+4. Verifikasi lokal `cargo test --doc --workspace --locked` bersih (2 passed: `galleon-api` & `galleon-tool-call-parser`, 2 ignored di `galleon-macros`, 0 failed di seluruh workspace).
 
 ## Rekomendasi Pembaruan `gates.sh` di `~/Apps/dev-ci`
 Tambahkan gate doctest ke `LIST` dan fungsi `gate_doctest`:
