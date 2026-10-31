@@ -2,8 +2,8 @@
 # test-binary). Pakai: `cargo nextest run -p <crate>` untuk inner loop,
 # `cargo nextest run --profile ci` untuk pre-PR. Dok: https://nexte.st
 [profile.default]
-# Retry sekali untuk test yang flaky secara transient (jaringan/timing) tanpa
-# menyembunyikan kegagalan nyata — laporan tetap menandai retried.
+# Tanpa retry otomatis pada inner loop lokal (retries = 0) agar kegagalan
+# langsung terdeteksi; retry untuk transient hanya aktif pada profil ci.
 retries = 0
 # Tampilkan output test yang gagal langsung, bukan di akhir.
 failure-output = "immediate"

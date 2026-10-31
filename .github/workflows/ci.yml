@@ -223,6 +223,17 @@ jobs:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: clang
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: "-C link-arg=-fuse-ld=mold"
 
+  doctest:
+    name: Doc Tests
+    runs-on: [self-hosted, linux, galleon-heavy]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure web/dist placeholder exists
+        run: mkdir -p web/dist && touch web/dist/.gitkeep
+      - name: Run doctests
+        run: cargo test --doc --workspace --locked
+
   security:
     name: Security
     runs-on: [self-hosted, linux, galleon-light]
@@ -260,7 +271,7 @@ jobs:
   gate:
     name: CI Required Gate
     if: always()
-    needs: [fmt, repo-structure, zerocode-rpc-boundary, lint, check, test, security]
+    needs: [fmt, repo-structure, zerocode-rpc-boundary, lint, check, test, doctest, security]
     runs-on: [self-hosted, linux, galleon-light]
     steps:
       - name: Check results
