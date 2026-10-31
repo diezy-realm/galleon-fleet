@@ -40,7 +40,8 @@ build() {
 
 package() {
   cd "${_reponame}-${pkgver}"
-  install -Dm0755 -t "${pkgdir}/usr/bin/" "target/dist/clawcrew"
+  install -Dm0755 -t "${pkgdir}/usr/bin/" "target/dist/galleon"
+  ln -s galleon "${pkgdir}/usr/bin/clawcrew"
   install -Dm0755 target/dist/galleoncode "${pkgdir}/usr/bin/zerocode"
 
   # Install web dashboard assets (served from filesystem at runtime)

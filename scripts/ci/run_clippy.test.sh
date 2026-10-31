@@ -69,7 +69,6 @@ assert_args "workspace" \
     clippy \
     --locked \
     --workspace \
-    --exclude clawcrew-desktop \
     --all-targets \
     --features ci-all \
     -- -D warnings
@@ -90,7 +89,6 @@ assert_args "targeted workspace" \
     clippy \
     --locked \
     --workspace \
-    --exclude clawcrew-desktop \
     --all-targets \
     --features ci-all \
     --target aarch64-apple-darwin \

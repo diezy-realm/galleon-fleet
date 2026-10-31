@@ -8,7 +8,7 @@ version = "0.8.5"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/diezy-realm/galleon-fleet"
-homepage = "https://www.clawcrew.com"
+homepage = "https://github.com/diezy-realm/galleon-fleet"
 rust-version = "1.96.0"
 
 [workspace.dependencies]

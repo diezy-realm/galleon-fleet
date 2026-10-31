@@ -64,7 +64,7 @@ jobs:
 
       - name: Build
         if: matrix.language == 'rust'
-        run: cargo build --locked --workspace --exclude clawcrew-desktop --features ci-all
+        run: cargo build --locked --workspace --features ci-all
         env:
           CARGO_TERM_COLOR: always
 

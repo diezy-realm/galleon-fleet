@@ -76,4 +76,4 @@ jobs:
         run: curl -LsSf "https://get.nexte.st/latest/${{ matrix.nextest-platform }}" | tar zxf - -C "$HOME/.cargo/bin"
       - name: Run tests
         shell: bash
-        run: cargo nextest run --locked --workspace --exclude clawcrew-desktop --no-fail-fast
+        run: cargo nextest run --locked --workspace --no-fail-fast

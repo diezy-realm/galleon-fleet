@@ -179,7 +179,7 @@ jobs:
               ;;
             full)
               set +e
-              cargo nextest run --locked --no-fail-fast --workspace --exclude clawcrew-desktop 2>&1 | tee "$baseline_log"
+              cargo nextest run --locked --no-fail-fast --workspace 2>&1 | tee "$baseline_log"
               baseline_status=${PIPESTATUS[0]}
               set -e
               ;;
@@ -209,7 +209,7 @@ jobs:
             plugin_started_at=$SECONDS
             set +e
             cargo nextest run --locked --no-fail-fast \
-              -p clawcrew-plugins \
+              -p galleon-plugins \
               --features plugins-wasm-cranelift \
               --test channel_plugin_e2e \
               --test tool_plugin_timeout_e2e \
@@ -218,19 +218,19 @@ jobs:
               --test tool_plugin_e2e 2>&1 | tee "$plugin_components_log"
             plugin_components_status=${PIPESTATUS[0]}
             cargo nextest run --locked --no-fail-fast \
-              -p clawcrew-plugins \
+              -p galleon-plugins \
               --no-default-features \
               --features plugins-wasm-cranelift \
               --lib 2>&1 | tee "$plugin_lib_log"
             plugin_lib_status=${PIPESTATUS[0]}
             cargo nextest run --locked --no-fail-fast \
-              -p clawcrew-runtime \
+              -p galleon-runtime \
               --features plugins-wasm-cranelift \
               --lib \
               live_agent_plugin_tool_observes_config_reload_after_construction 2>&1 | tee "$plugin_runtime_config_log"
             plugin_runtime_config_status=${PIPESTATUS[0]}
             cargo nextest run --locked --no-fail-fast \
-              -p clawcrew-runtime \
+              -p galleon-runtime \
               --features plugins-wasm-cranelift \
               --lib \
               plugin_runtime:: \
@@ -240,13 +240,13 @@ jobs:
               tools::tests::colliding_plugin 2>&1 | tee "$plugin_runtime_admission_log"
             plugin_runtime_admission_status=${PIPESTATUS[0]}
             cargo nextest run --locked --no-fail-fast \
-              -p clawcrew-gateway \
+              -p galleon-gateway \
               --features plugins-wasm \
               --lib 2>&1 | tee "$plugin_gateway_log"
             plugin_gateway_status=${PIPESTATUS[0]}
             cargo nextest run --locked --no-fail-fast \
               --features plugins-wasm-cranelift \
-              --bin clawcrew \
+              --bin galleon \
               plugin_registry:: 2>&1 | tee "$plugin_cli_log"
             plugin_cli_status=${PIPESTATUS[0]}
             cargo nextest run --locked --no-fail-fast \

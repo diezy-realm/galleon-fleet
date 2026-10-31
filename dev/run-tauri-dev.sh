@@ -14,7 +14,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # If a previous instance is still alive, single-instance plugin will block us.
-pkill -f 'target/debug/clawcrew-desktop' 2>/dev/null || true
+pkill -f 'target/debug/galleon-desktop' 2>/dev/null || true
 sleep 0.5
 
 cd "$REPO/apps/tauri"
@@ -25,5 +25,5 @@ if cargo tauri --version >/dev/null 2>&1; then
   exec cargo tauri dev
 else
   echo "tauri-cli not found (cargo install tauri-cli); falling back to 'cargo run'." >&2
-  exec cargo run -p clawcrew-desktop
+  exec cargo run -p galleon-desktop
 fi
