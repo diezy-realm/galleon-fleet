@@ -273,42 +273,6 @@ fn is_false(b: &bool) -> bool {
     !*b
 }
 
-/// The `[engine]` section: external Go agent engine integration.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub(crate) struct EngineSection {
-    /// Whether the Go Agent Engine is enabled as the canonical orchestrator.
-    #[serde(default = "default_engine_disabled")]
-    pub enabled: bool,
-    /// Base URL of the Go Agent Engine REST/SSE API (default: http://localhost:9090).
-    #[serde(default = "default_engine_endpoint")]
-    pub endpoint: String,
-    /// gRPC IPC endpoint (default: localhost:50051).
-    #[serde(default = "default_engine_grpc_endpoint")]
-    pub grpc_endpoint: String,
-}
-
-impl Default for EngineSection {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            endpoint: default_engine_endpoint(),
-            grpc_endpoint: default_engine_grpc_endpoint(),
-        }
-    }
-}
-
-fn default_engine_disabled() -> bool {
-    false
-}
-
-fn default_engine_endpoint() -> String {
-    "http://localhost:9090".to_string()
-}
-
-fn default_engine_grpc_endpoint() -> String {
-    "localhost:50051".to_string()
-}
-
 /// The `[sidebar]` section: the shell-level agent sidebar.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct SidebarSection {
@@ -501,8 +465,6 @@ pub(crate) struct ZerocodeConfig {
     keybindings: HashMap<String, ChordSpec>,
     #[serde(default)]
     pub todotracker: TodoTrackerSection,
-    #[serde(default)]
-    pub engine: EngineSection,
 }
 
 impl Default for ZerocodeConfig {
@@ -514,7 +476,6 @@ impl Default for ZerocodeConfig {
             sidebar: SidebarSection::default(),
             keybindings: HashMap::new(),
             todotracker: TodoTrackerSection::default(),
-            engine: EngineSection::default(),
         }
     }
 }
@@ -1258,6 +1219,30 @@ mod tests {
         let c = ZerocodeConfig::default();
         assert_eq!(c.theme.name, theme::DEFAULT_THEME_NAME);
         assert!(c.resolve_theme().is_ok());
+    }
+
+    #[test]
+    fn legacy_config_with_engine_section_is_accepted() {
+        let raw = r#"
+locale = "en"
+
+[theme]
+name = "nord"
+
+[engine]
+enabled = true
+endpoint = "http://localhost:9090"
+grpc_endpoint = "localhost:50051"
+"#;
+        let parsed: Result<ZerocodeConfig, _> = toml::from_str(raw);
+        assert!(
+            parsed.is_ok(),
+            "legacy config with [engine] section must parse successfully; got: {:?}",
+            parsed.err()
+        );
+        let config = parsed.unwrap();
+        assert_eq!(config.locale.as_deref(), Some("en"));
+        assert_eq!(config.theme.name, "nord");
     }
 
     #[test]
