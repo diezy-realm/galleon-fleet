@@ -5,13 +5,13 @@
 //! tokio-tungstenite with handshake, ping/pong heartbeats, and chat stream frame delivery.
 //! Zero mockup transport or stub routers used.
 
+use futures_util::{SinkExt, StreamExt};
 use galleon_config::multi_agent::MemoryBackendKind;
 use galleon_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
 use galleon_gateway::{AppState, build_gateway_router};
-use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;
 use tokio_tungstenite::tungstenite::Message as WsMessage;
 
