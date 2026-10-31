@@ -117,6 +117,9 @@ jobs:
       - name: Brand compliance gate
         run: bash scripts/ci/brand_gate.sh
 
+      - name: Test brand compliance gate
+        run: bash scripts/ci/brand_gate.test.sh
+
   zerocode-rpc-boundary:
     name: Zerocode RPC Boundary
     runs-on: [self-hosted, linux, galleon-light]
