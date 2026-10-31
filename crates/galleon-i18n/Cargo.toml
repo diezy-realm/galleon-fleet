@@ -9,6 +9,9 @@ repository.workspace = true
 homepage.workspace = true
 publish = true
 
+[lints]
+workspace = true
+
 [dependencies]
 # RF-B: the body moved verbatim from galleon-runtime::i18n. Its real deps are
 # the Fluent engine, config (for ftl_locale_dir disk-override resolution + the

@@ -9,6 +9,9 @@ repository.workspace = true
 homepage.workspace = true
 publish = true
 
+[lints]
+workspace = true
+
 [dependencies]
 # galleon-spawn IS the sanctioned interface against tokio::spawn for the
 # workspace. It sits one rung above galleon-log so the spawn macro can

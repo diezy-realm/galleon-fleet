@@ -10,7 +10,6 @@ const TWITTER_API_BASE: &str = "https://api.x.com/2";
 
 /// X/Twitter channel — uses the Twitter API v2 with OAuth 2.0 Bearer Token
 /// for sending tweets/DMs and filtered stream for receiving mentions.
-
 async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
