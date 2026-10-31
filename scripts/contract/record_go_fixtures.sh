@@ -50,7 +50,7 @@ echo "Temp data dir: $TMP_DATA_DIR"
 if [ -d "$ENGINE_DIR/data" ]; then
   cp -r "$ENGINE_DIR/data"/* "$TMP_DATA_DIR/"
 else
-  echo "ERROR: $ENGINE_DIR/data not found." >&2
+  echo "ERROR: Go Agent Engine has been decommissioned ($ENGINE_DIR not found, TASK-090). Fixtures in tests/fixtures/go-fleet are frozen." >&2
   exit 1
 fi
 

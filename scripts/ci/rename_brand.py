@@ -40,7 +40,6 @@ REPLACEMENTS = [
     # 1. URL / Org slugs
     (re.compile(r"github\.com/clawcrew-labs/clawcrew", re.IGNORECASE), "github.com/diezy-realm/galleon-fleet"),
     (re.compile(r"ghcr\.io/clawcrew-labs/clawcrew", re.IGNORECASE), "ghcr.io/diezy-realm/galleon-fleet"),
-    (re.compile(r"github\.com/diezy-labs/claw-crew/engine", re.IGNORECASE), "github.com/diezy-realm/galleon-fleet/engine"),
 
     # 2. Environment Variables
     (re.compile(r"\bGALLEON_"), "GALLEON_"),
