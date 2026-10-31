@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Superseded oleh ODR-2026-10-29 / ADR-0018.** Dokumen ini dipertahankan sebagai arsip. Jangan dijadikan acuan implementasi.
+
 # Lane G — Go Engine (otak tunggal, security layer)
 
 Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conventions.md`. Test: `go test -race ./...` di `engine/`.

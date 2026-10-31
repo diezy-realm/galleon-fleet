@@ -35,8 +35,8 @@ standard-docs/
 │   ├── 01-boundary-policy.md
 │   └── 03-c4-diagram.puml
 ├── tech-stack/                 # Language conventions
-│   ├── go-conventions.md
 │   ├── rust-conventions.md
+│   ├── rust-conventions-amendment-2026-10-29.md
 │   ├── tauri-conventions.md
 │   └── web-conventions.md
 ├── code-quality/               # Batas ukuran file/crate, arah dependency, lint produksi (Rust)
@@ -49,9 +49,8 @@ standard-docs/
 │   ├── components.md
 │   └── layout-grid.md
 └── api-contracts/              # Interface specs
-    ├── grpc-system-gateway.md  # Rust :50052 ← Go client
-    ├── grpc-agent-engine.md    # Go :50051 ← web/Tauri HTTP
-    └── http-engine-api.md      # Go :9090 routes
+    ├── consumer-inventory.md   # SSOT inventaris seluruh rute API aktif
+    └── http-engine-api.md      # [Superseded / Arsip] Go :9090 routes (rujuk consumer-inventory.md)
 ```
 
 ---
@@ -62,8 +61,8 @@ standard-docs/
 
 | Role | Start Here |
 |------|------------|
-| **Backend** (Go/Rust) | `tech-stack/go-conventions.md`, `tech-stack/rust-conventions.md`, `api-contracts/` |
-| **Frontend** (React/TS) | `tech-stack/web-conventions.md`, `design-system/`, `api-contracts/http-engine-api.md` |
+| **Backend** (Rust) | `tech-stack/rust-conventions.md`, `api-contracts/consumer-inventory.md` |
+| **Frontend** (React/TS) | `tech-stack/web-conventions.md`, `design-system/`, `api-contracts/consumer-inventory.md` |
 | **Lead Squad** | `architecture/`, `decisions/` (ADRs), all tech-stack/* |
 | **Product Owner** | `architecture/00-overview.md`, `decisions/` (ADRs) |
 | **QA** | `api-contracts/`, `tech-stack/` (test patterns per language) |

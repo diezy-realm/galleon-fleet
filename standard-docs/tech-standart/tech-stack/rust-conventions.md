@@ -681,7 +681,9 @@ pub async fn execute_turn(model: &str, messages: Vec<Message>) -> Result<TurnRes
 
 ## Related Documents
 
-- [Architecture Overview](../architecture/00-overview.md) — 4-tier system design
-- [Boundary Policy](../architecture/01-boundary-policy.md) — What Rust owns vs delegates
-- [ADR 0001: LLM SSOT Rust](../decisions/0001-llm-ssot-rust.md) — Rust executes LLM calls
-- [Go Conventions](./go-conventions.md) — Go patterns (Wire DI, HTTP)
+- [Architecture Overview](../architecture/00-overview.md) - System design
+- [Boundary Policy](../architecture/01-boundary-policy.md) - What Rust owns vs delegates
+- [ADR 0001: LLM SSOT Rust](../decisions/0001-llm-ssot-rust.md) - Rust executes LLM calls
+- [ADR-0018: Rust Single Language Architecture](../decisions/0018-rust-single-language-architecture.md) - Arsitektur bahasa tunggal Rust
+- [Rust Conventions Amendment](./rust-conventions-amendment-2026-10-29.md) - Amandemen konvensi Rust single language
+- [Go Conventions (Arsip)](../../archive/go-engine/go-conventions.md) - Dokumen historis

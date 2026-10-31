@@ -1,3 +1,7 @@
+> [!WARNING]
+> **Superseded oleh ODR-2026-10-29 / ADR-0018.** Dokumen ini dipertahankan sebagai arsip. Jangan dijadikan acuan implementasi.
+> Seluruh inventaris rute HTTP/WebSocket aktif dan status migrasi tercatat di [`consumer-inventory.md`](consumer-inventory.md).
+
 # HTTP Engine API (Go :9090)
 
 **Status:** Living spec (updated with each API change)  
@@ -375,7 +379,8 @@ ws.onmessage = (event) => {
 
 ## Related Documents
 
-- [Architecture Overview](../architecture/00-overview.md) — 4-tier system design
-- [Boundary Policy](../architecture/01-boundary-policy.md) — What HTTP API owns vs delegates
-- [Go Conventions](../tech-stack/go-conventions.md) — HTTP handler patterns
-- [gRPC System Gateway](./grpc-system-gateway.md) — Rust :50052 internal spec
+- [Architecture Overview](../architecture/00-overview.md) - System design
+- [Boundary Policy](../architecture/01-boundary-policy.md) - What HTTP API owns vs delegates
+- [Consumer Inventory](./consumer-inventory.md) - SSOT inventaris rute API aktif
+- [Go Conventions (Arsip)](../../archive/go-engine/go-conventions.md) - Dokumen historis
+- [gRPC System Gateway (Arsip)](../../archive/go-engine/grpc-system-gateway.md) - Dokumen historis
