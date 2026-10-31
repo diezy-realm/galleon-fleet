@@ -19,9 +19,9 @@ use crate::replay::TraceLlmProvider;
 use crate::report::{CaseReport, SuiteReport};
 use crate::tools::default_tools;
 
-/// Request payload sent to the Go engine turn service (`StartTurn`).
+/// Request payload sent to the turn service (`StartTurn`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GoTurnRequest {
+pub struct EvalTurnRequest {
     /// Session identifier for grouping turns.
     pub session_id: String,
     /// Agent identifier / alias (e.g., "eval" or "navigator").
@@ -32,6 +32,9 @@ pub struct GoTurnRequest {
     #[serde(default)]
     pub context_window: Vec<u8>,
 }
+
+/// Backwards compatibility alias for `EvalTurnRequest`.
+pub type GoTurnRequest = EvalTurnRequest;
 
 /// The event types streamed during Go engine turn execution (`TurnResponse.EventType`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -65,7 +68,7 @@ pub struct GoTurnOutcome {
 #[async_trait::async_trait]
 pub trait GoEngineTurnService: Send + Sync {
     /// Dispatches a turn through the Go engine interface and returns the outcome.
-    async fn start_turn(&mut self, request: GoTurnRequest) -> anyhow::Result<GoTurnOutcome>;
+    async fn start_turn(&mut self, request: EvalTurnRequest) -> anyhow::Result<GoTurnOutcome>;
 
     /// Concludes the evaluation run and returns the canonical RunRecord.
     fn into_run_record(self, final_response: String) -> anyhow::Result<RunRecord>;
@@ -155,7 +158,7 @@ impl MockGoEngineTurnClient {
 
 #[async_trait::async_trait]
 impl GoEngineTurnService for MockGoEngineTurnClient {
-    async fn start_turn(&mut self, request: GoTurnRequest) -> anyhow::Result<GoTurnOutcome> {
+    async fn start_turn(&mut self, request: EvalTurnRequest) -> anyhow::Result<GoTurnOutcome> {
         let calls_before = self.observer.calls().len();
 
         // Drive the underlying turn execution through the agent turn engine
@@ -275,7 +278,7 @@ pub async fn run_case_with_service<S: GoEngineTurnService>(
 ) -> anyhow::Result<RunRecord> {
     let mut final_response = String::new();
     for turn in &trace.turns {
-        let req = GoTurnRequest {
+        let req = EvalTurnRequest {
             session_id: format!("eval-{}", trace.model_name),
             agent_id: "eval".to_string(),
             prompt: turn.user_input.clone(),
@@ -337,7 +340,7 @@ mod tests {
     async fn go_engine_turn_service_emits_structured_events() {
         let trace: LlmTrace = serde_json::from_str(ECHO).unwrap();
         let mut client = MockGoEngineTurnClient::from_trace(&trace).await.unwrap();
-        let req = GoTurnRequest {
+        let req = EvalTurnRequest {
             session_id: "test-session".into(),
             agent_id: "eval".into(),
             prompt: "Echo hello for me".into(),

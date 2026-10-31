@@ -14,8 +14,8 @@ pub use observer::RecordedCall;
 pub use record::RunRecord;
 pub use report::{CaseReport, SuiteReport};
 pub use runner::{
-    GoEngineTurnService, GoTurnEvent, GoTurnEventType, GoTurnOutcome, GoTurnRequest,
-    MockGoEngineTurnClient, run_case, run_case_with_service, run_suite,
+    EvalTurnRequest, GoEngineTurnService, GoTurnEvent, GoTurnEventType, GoTurnOutcome,
+    GoTurnRequest, MockGoEngineTurnClient, run_case, run_case_with_service, run_suite,
 };
 
 use std::str::FromStr;
