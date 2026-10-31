@@ -5,6 +5,9 @@ edition.workspace = true
 license.workspace = true
 publish = false
 
+[lints]
+workspace = true
+
 [[bin]]
 name = "fill-translations"
 path = "src/main.rs"
