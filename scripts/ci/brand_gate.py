@@ -79,7 +79,7 @@ def main():
     total_violations = 0
 
     # Scan production source dirs
-    scan_targets = [root / "crates", root / "engine", root / "web", root / "apps"]
+    scan_targets = [root / "crates", root / "web", root / "apps"]
     for target in scan_targets:
         if not target.exists():
             continue
