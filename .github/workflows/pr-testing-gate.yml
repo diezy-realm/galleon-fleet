@@ -32,7 +32,6 @@ jobs:
           # Detect features / areas
           TOUCHES_CHANNELS=false
           TOUCHES_RUST=false
-          TOUCHES_GO=false
           TOUCHES_TAURI=false
           TOUCHES_WEB=false
           
@@ -41,9 +40,6 @@ jobs:
           fi
           if grep -q '^crates/' changed_files.txt || grep -q '\.rs$' changed_files.txt; then
             TOUCHES_RUST=true
-          fi
-          if grep -q '^engine/' changed_files.txt || grep -q '\.go$' changed_files.txt; then
-            TOUCHES_GO=true
           fi
           if grep -q '^apps/tauri/' changed_files.txt; then
             TOUCHES_TAURI=true
@@ -54,11 +50,10 @@ jobs:
           
           echo "touches_channels=$TOUCHES_CHANNELS" >> $GITHUB_OUTPUT
           echo "touches_rust=$TOUCHES_RUST" >> $GITHUB_OUTPUT
-          echo "touches_go=$TOUCHES_GO" >> $GITHUB_OUTPUT
           echo "touches_tauri=$TOUCHES_TAURI" >> $GITHUB_OUTPUT
           echo "touches_web=$TOUCHES_WEB" >> $GITHUB_OUTPUT
           
-          echo "Areas touched -> Channels: $TOUCHES_CHANNELS, Rust: $TOUCHES_RUST, Go: $TOUCHES_GO, Tauri: $TOUCHES_TAURI, Web: $TOUCHES_WEB"
+          echo "Areas touched -> Channels: $TOUCHES_CHANNELS, Rust: $TOUCHES_RUST, Tauri: $TOUCHES_TAURI, Web: $TOUCHES_WEB"
 
       # ── 2. Universal Rule: No unwrap() / expect() in Rust Production ──
       - name: "Gate: No unwrap() / expect() in production code"
@@ -126,7 +121,6 @@ jobs:
             const paths = {
               rust: '${{ steps.paths.outputs.touches_rust }}' === 'true',
               channels: '${{ steps.paths.outputs.touches_channels }}' === 'true',
-              go: '${{ steps.paths.outputs.touches_go }}' === 'true',
               tauri: '${{ steps.paths.outputs.touches_tauri }}' === 'true',
               web: '${{ steps.paths.outputs.touches_web }}' === 'true'
             };
@@ -154,7 +148,7 @@ jobs:
               `| **Gate D-1 (Orchestrator File-Split)** | Channels / RF-D | ${d1Status.startsWith('Passed') ? '✅ ' + d1Status : (d1Status.startsWith('N/A') ? '⚪ ' + d1Status : '⚠️ ' + d1Status)} |`,
               `| **Gate D-2 (Governance Coupling)** | Channels / RF-D | ${d2Status.startsWith('Passed') ? '✅ ' + d2Status : (d2Status.startsWith('N/A') ? '⚪ ' + d2Status : '⚠️ ' + d2Status)} |`,
               '',
-              `*Areas Detected: Rust (${paths.rust}), Channels (${paths.channels}), Go (${paths.go}), Tauri (${paths.tauri}), Web (${paths.web})*`,
+              `*Areas Detected: Rust (${paths.rust}), Channels (${paths.channels}), Tauri (${paths.tauri}), Web (${paths.web})*`,
               '*Evaluated against standard: `RF-D-principle-gateway-checklist.md` & `standard-docs/tech-standart`*'
             ].join('\n');
 

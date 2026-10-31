@@ -108,8 +108,8 @@ jobs:
       - name: Test release announcement composer
         run: bash scripts/ci/release_post_text.test.sh
 
-      - name: Guard no new Go files
-        run: bash scripts/ci/check_no_go.sh diff
+      - name: Guard no Go files (full)
+        run: bash scripts/ci/check_no_go.sh full
 
       - name: Test no-go guard
         run: bash scripts/ci/check_no_go.test.sh

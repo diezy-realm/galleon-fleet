@@ -38,13 +38,13 @@ registry rather than in source comments covered by the comment-hygiene gate.
 
 ### Required Gates for PR Merge:
 1. **`ci.yml`**: Rust compilation, `cargo clippy`, format, dan workspace tests.
-2. **`engine-ci.yml`**: Go engine unit tests (`go test -race ./src/...`).
-3. **`web-check.yml`**: Frontend TypeScript typecheck (`tsc --noEmit`) dan bundle build (`vite build`).
-4. **`desktop-check.yml`**: Tauri v2 desktop build dan validation.
-5. **`pr-testing-gate.yml`**: Quality gate and DoD checklist verification.
-6. **`brand-gate`** (`scripts/ci/brand_gate.sh`): Verifikasi kepatuhan penamaan merek.
+2. **`web-check.yml`**: Frontend TypeScript typecheck (`tsc --noEmit`) dan bundle build (`vite build`).
+3. **`desktop-check.yml`**: Tauri v2 desktop build dan validation.
+4. **`pr-testing-gate.yml`**: Quality gate and DoD checklist verification.
+5. **`brand-gate`** (`scripts/ci/brand_gate.sh`): Verifikasi kepatuhan penamaan merek.
 
 ### Pruned / Retired Workflows:
+- `engine-ci.yml`: Retired (Go engine didekomisi penuh di BL-090 / Sprint 13).
 - `pub-aur.yml`, `aur-freshness-check.yml`: Retired (distribusi Arch AUR eksternal dinonaktifkan untuk microkernel).
 - `pub-crates.yml`: Retired (workspace internal tidak lagi dipublikasikan terpisah ke crates.io).
 - `pub-scoop.yml`, `scoop-bucket-canary.yml`: Retired (distribusi Scoop eksternal dipangkas menjadi MSI/NSIS mandiri).
