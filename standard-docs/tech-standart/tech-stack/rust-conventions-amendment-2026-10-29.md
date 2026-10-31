@@ -1,6 +1,9 @@
 # Amandemen `rust-conventions.md` — 2026-10-29 (Rust Single Language)
 
-**Status:** Normative setelah PR TASK-052 merged
+> [!NOTE]
+> **Applied**: Amandemen ini telah diterapkan secara penuh ke [`rust-conventions.md`](./rust-conventions.md) melalui TASK-101 (PR `feat/docs-rust-conventions-amendment`).
+
+**Status:** Applied (diterapkan ke `rust-conventions.md` via TASK-101)
 **Dasar:** ODR-2026-10-29, ADR-0018, `board/research/RES-2026-10-29-rust-engineering-standards.md`
 **Cara menerapkan:** ganti/ tambah bagian di `standard-docs/tech-standart/tech-stack/rust-conventions.md` persis seperti tabel di bawah (TASK-052, TASK-101). Bagian yang tidak disebut tetap.
 

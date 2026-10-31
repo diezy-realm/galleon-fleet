@@ -1,7 +1,7 @@
 # Rust Conventions
 
 **Status:** Normative (code MUST follow this)  
-**Last updated:** 2026-10-03  
+**Last updated:** 2026-10-29
 **Rust edition:** 2024  
 **MSRV:** 1.96.0
 
@@ -11,7 +11,7 @@
 
 ```
 crates/
-├── galleon-gateway/         # gRPC server, vault, secret management
+├── galleon-gateway/         # HTTP API gateway, vault, secret management
 ├── galleon-runtime/         # Agent turn execution, tool dispatch
 ├── galleon-providers/       # LLM vendor APIs (SSOT ADR 0001)
 ├── galleon-channel-*/       # Channel plugins (Discord, Telegram, etc.)
@@ -39,7 +39,6 @@ license = "Apache-2.0"
 [workspace.dependencies]
 # Shared versions (single SSOT for deps)
 tokio = { version = "1.40", features = ["full"] }
-tonic = "0.12"
 serde = { version = "1.0", features = ["derive"] }
 ```
 
@@ -52,7 +51,7 @@ serde = { version = "1.0", features = ["derive"] }
 ### Gateway Crate (`galleon-gateway`)
 
 **Owns:**
-- gRPC server `SystemGatewayService` :50052
+- HTTP API gateway (`axum`)
 - Vault (secrets encryption/decryption)
 - WebSocket server (real-time message streaming)
 - mDNS A2A discovery
@@ -75,7 +74,6 @@ pub trait VaultService {
 [dependencies]
 galleon-runtime.workspace = true
 galleon-providers.workspace = true
-tonic.workspace = true
 tokio.workspace = true
 ```
 
@@ -206,6 +204,16 @@ impl ToolExecutor for ShellTool {
 
 ---
 
+## Crate Modularity
+
+1. Domain baru = crate baru `galleon-<domain>-core` tanpa `axum`, `galleon-runtime`, `galleon-gateway`. Adapter HTTP di `galleon-gateway/src/api_<domain>/`.
+2. Arah dependensi: `gateway → runtime → leaf`; `gateway → <domain>-core → leaf`. Leaf tidak boleh mengimpor `runtime`/`gateway`. Cek: `cargo tree -p <leaf> -e normal | rg 'galleon-(runtime|gateway)'` harus kosong.
+3. Tidak membuat crate untuk fitur tanpa konsumen (YAGNI). Stub/kerangka kosong dilarang.
+4. Nama crate tidak boleh `galleon-fleet` (nama package root).
+5. Dependensi pihak ketiga dideklarasikan di `[workspace.dependencies]` bila dipakai ≥ 2 crate.
+
+---
+
 ## Trait Boundaries
 
 ### Why Traits?
@@ -264,81 +272,6 @@ impl Provider for OpenAIProvider {
 
 ---
 
-## gRPC Server Patterns
-
-### Proto Definition
-
-```protobuf
-// proto/system_gateway.proto
-service SystemGatewayService {
-    rpc ExecuteTurn(ExecuteTurnRequest) returns (stream TurnToken);
-    rpc ExecuteTool(ExecuteToolRequest) returns (ExecuteToolResponse);
-    rpc GetSecret(GetSecretRequest) returns (GetSecretResponse);
-}
-```
-
-### Server Implementation
-
-```rust
-// galleon-gateway/src/grpc_server.rs
-use tonic::{Request, Response, Status};
-use proto::system_gateway_service_server::SystemGatewayService;
-
-pub struct SystemGatewayServer {
-    runtime: Arc<Runtime>,
-    vault: Arc<Vault>,
-}
-
-#[tonic::async_trait]
-impl SystemGatewayService for SystemGatewayServer {
-    type ExecuteTurnStream = ReceiverStream<Result<TurnToken, Status>>;
-    
-    async fn execute_turn(
-        &self,
-        request: Request<ExecuteTurnRequest>,
-    ) -> Result<Response<Self::ExecuteTurnStream>, Status> {
-        let req = request.into_inner();
-        
-        // Delegate to runtime
-        let stream = self.runtime
-            .execute_turn(&req.model, req.messages, req.tools)
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?;
-        
-        // Convert to gRPC stream
-        let (tx, rx) = tokio::sync::mpsc::channel(100);
-        tokio::spawn(async move {
-            while let Some(token) = stream.next().await {
-                let _ = tx.send(Ok(token)).await;
-            }
-        });
-        
-        Ok(Response::new(ReceiverStream::new(rx)))
-    }
-    
-    async fn get_secret(
-        &self,
-        request: Request<GetSecretRequest>,
-    ) -> Result<Response<GetSecretResponse>, Status> {
-        let key = request.into_inner().key;
-        
-        let value = self.vault
-            .get_secret(&key)
-            .await
-            .map_err(|e| Status::not_found(e.to_string()))?;
-        
-        Ok(Response::new(GetSecretResponse { value }))
-    }
-}
-```
-
-**Conventions:**
-- Streaming RPCs return `type FooStream = ReceiverStream<Result<T, Status>>`
-- Convert domain errors to `tonic::Status` with appropriate codes (`internal`, `not_found`, `invalid_argument`)
-- Spawn tokio task for async stream forwarding
-
----
-
 ## Error Handling
 
 ### Error Types
@@ -394,6 +327,21 @@ pub async fn execute_turn(model: &str, messages: Vec<Message>) -> TurnResponse {
 
 ---
 
+## Lints, Unsafe, Panic
+
+1. Setiap `Cargo.toml` member: `[lints] workspace = true`.
+2. Crate dengan hutang `unwrap/expect`: di `lib.rs`/`main.rs`
+   ```rust
+   // RATCHET(BL-091): baseline unwrap+expect = <N> pada <commit>. Turunkan, jangan naikkan.
+   #![allow(clippy::unwrap_used, clippy::expect_used)]
+   ```
+   Crate baru **tidak boleh** memakai allow ini. Penambahan `unwrap/expect` baru di jalur produksi dicegah oleh gate diff yang **sudah ada**, `scripts/ci/check_production_unwrap.py` (T-CI-01), dipasang ke gate di TASK-093, bukan membuat script ratchet baru.
+3. Crate baru: `#![forbid(unsafe_code)]`. Crate lama yang memakai `unsafe`: setiap blok wajib komentar `// SAFETY:` (clippy `undocumented_unsafe_blocks` diaktifkan per crate saat crate itu disentuh).
+4. Test boleh `unwrap()`/`expect()` (`#[cfg(test)]` + `#[allow(clippy::unwrap_used)]` di modul test).
+5. Library tidak memanggil `std::process::exit` atau `panic!` untuk kondisi yang bisa dipulihkan.
+
+---
+
 ## Async Patterns
 
 ### Use Tokio Runtime
@@ -415,7 +363,12 @@ async fn main() -> Result<()> {
 // ✅ Correct: spawn task, handle errors
 tokio::spawn(async move {
     if let Err(e) = background_work().await {
-        tracing::error!("Background task failed: {}", e);
+        ::galleon_log::record!(
+            ERROR,
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_attrs(::serde_json::json!({ "error": format!("{e}") })),
+            "Background task failed"
+        );
     }
 });
 
@@ -446,50 +399,38 @@ async fn process_with_timeout(work: impl Future<Output = Result<()>>) -> Result<
 
 ---
 
-## Logging (tracing)
+## Logging
 
-### Instrument Functions
-
-```rust
-use tracing::{info, error, instrument};
-
-#[instrument(skip(self))] // Skip large/non-Debug params
-pub async fn execute_turn(&self, model: &str, messages: Vec<Message>) -> Result<TurnResponse> {
-    info!("Starting turn execution");
-    
-    let provider = self.get_provider(model)?;
-    let response = provider.stream_chat(messages).await?;
-    
-    info!(tokens = response.tokens, "Turn completed");
-    Ok(response)
-}
-```
-
-**Conventions:**
-- `#[instrument]` on public async functions (auto-adds span with args)
-- `skip(self)` to avoid logging `self` (too verbose)
-- `info!` for normal flow, `error!` for errors, `debug!` for verbose detail
-- Log structured fields: `info!(field = value, "message")`
-
-### Initialize Tracing
+Semua event log lewat `::galleon_log::record!` (dipaksa oleh `clippy.toml` `disallowed-macros` + `-D warnings`). Contoh nyata dari `crates/galleon-gateway/src/api_pairing.rs:453`:
 
 ```rust
-// main.rs
-use tracing_subscriber::{fmt, EnvFilter};
-
-fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env()) // RUST_LOG=debug
-        .json() // JSON output (structured logs)
-        .init();
-    
-    // ...
-}
+::galleon_log::record!(
+    ERROR,
+    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+        .with_outcome(::galleon_log::EventOutcome::Failure)
+        .with_attrs(::serde_json::json!({ "error": format!("{e}") })),
+    "device registry insert failed after successful pairing; rolling back in-process token"
+);
 ```
+
+- Jangan log secret, token, atau body request mentah. Gunakan `galleon-security-scrub` bila perlu menyertakan input pengguna.
+- Catatan drift: teks `reason` di `clippy.toml` masih menyebut `::clawcrew_log::record!`; diperbaiki di TASK-093.
 
 ---
 
 ## Testing
+
+### Test Matrix and Guidelines
+
+| Lapisan | Alat | Perintah |
+|---|---|---|
+| Unit + integrasi | cargo-nextest | `cargo nextest run -p <crate> --locked` |
+| Doctest | cargo test | `cargo test --doc -p <crate> --locked` (nextest tidak menjalankan doctest) |
+| Kontrak HTTP | `insta` (sudah di `Cargo.lock`) | snapshot JSON per rute di `crates/galleon-gateway/tests/snapshots/` |
+| Negatif keamanan | test biasa | 401 tanpa token, 403 di luar allowlist, 400 field asing, 413 body > limit |
+
+- Profil `ci` nextest boleh retry; profil `default` **tidak**. Test flaky dicatat di backlog, bukan ditutup retry.
+- Test yang menulis file memakai `tempfile::TempDir`, tidak menulis ke repo.
 
 ### Unit Tests
 
@@ -520,7 +461,7 @@ mod tests {
 **Conventions:**
 - `#[cfg(test)]` module in same file
 - `#[tokio::test]` for async tests
-- Mock external dependencies (HTTP, filesystem, gRPC)
+- Mock external dependencies (HTTP, filesystem)
 - Test both success and error paths
 
 ### Integration Tests
@@ -549,7 +490,7 @@ async fn test_turn_execution_e2e() {
 | Type | Pattern | Example |
 |------|---------|---------|
 | Crate | `snake_case` | `galleon_gateway`, `galleon_providers` |
-| Module | `snake_case` | `mod grpc_server;`, `mod vault;` |
+| Module | `snake_case` | `mod api;`, `mod vault;` |
 | Struct | `PascalCase` | `Gateway`, `OpenAIProvider` |
 | Trait | `PascalCase` | `Provider`, `ToolExecutor` |
 | Function | `snake_case` | `execute_turn`, `get_secret` |
@@ -566,7 +507,7 @@ async fn test_turn_execution_e2e() {
 galleon-gateway/
 ├── src/
 │   ├── lib.rs            # Public API exports
-│   ├── grpc_server.rs    # gRPC server implementation
+│   ├── api.rs            # HTTP API router and handlers
 │   ├── vault.rs          # Vault service
 │   ├── ws.rs             # WebSocket server
 │   └── mdns.rs           # mDNS discovery
@@ -582,10 +523,10 @@ galleon-gateway/
 
 ```rust
 // lib.rs
-mod grpc_server;
+mod api;
 mod vault;
 
-pub use grpc_server::SystemGatewayServer;
+pub use api::build_router;
 pub use vault::{Vault, VaultService};
 ```
 
@@ -642,20 +583,29 @@ pub async fn process_messages(messages: Vec<Message>) -> Result<()> {
 ### Scrub Secrets from Logs
 
 ```rust
-use tracing::info;
-
 pub async fn call_llm(api_key: &str, prompt: &str) -> Result<String> {
-    // ❌ Wrong: logs full API key
-    info!("Calling LLM with key: {}", api_key);
-    
-    // ✅ Correct: redact secret
-    info!("Calling LLM with key: {}***", &api_key[..8]);
+    // ❌ Wrong: logs raw secret
+    ::galleon_log::record!(
+        INFO,
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Read)
+            .with_attrs(::serde_json::json!({ "key": api_key })),
+        "Calling LLM"
+    );
+
+    // ✅ Correct: redact or scrub secret using galleon-security-scrub
+    let scrubbed = ::galleon_security_scrub::scrub_secret(api_key);
+    ::galleon_log::record!(
+        INFO,
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Read)
+            .with_attrs(::serde_json::json!({ "key": scrubbed })),
+        "Calling LLM"
+    );
     
     // ...
 }
 ```
 
-**Convention:** Never log full secrets (API keys, tokens, passwords). Redact or skip.
+**Convention:** Never log full secrets (API keys, tokens, passwords). Redact or scrub using galleon-security-scrub.
 
 ### Validate Input at Boundaries
 
@@ -679,11 +629,50 @@ pub async fn execute_turn(model: &str, messages: Vec<Message>) -> Result<TurnRes
 
 ---
 
+## Build Cache (sccache)
+
+- `rustc-wrapper` **tidak** ditaruh di `.cargo/config.toml`. Aktifkan via env:
+  ```bash
+  export RUSTC_WRAPPER=sccache CARGO_INCREMENTAL=0
+  ```
+- Alasan: Cargo gagal bila sccache tidak terpasang; sccache tidak dapat meng-cache build incremental, dan crate `bin`/`dylib`/`cdylib`/`proc-macro` tidak di-cache ([sccache Rust docs](https://github.com/mozilla/sccache/blob/main/docs/Rust.md)).
+
+---
+
+## Pola Handler HTTP (gateway)
+
+```rust
+pub async fn handle_get_collection(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(name): Path<String>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    crate::api::require_auth(&state, &headers).map_err(ApiError::from)?;   // 1. auth dulu
+    let name = CollectionName::from_str(&name).map_err(ApiError::bad_request)?; // 2. validasi tipe
+    let value = state.fleet.load(name).await.map_err(ApiError::from)?;       // 3. panggil domain
+    Ok(Json(value))                                                           // 4. tanpa logika lain
+}
+```
+
+- `ApiError` memetakan error domain ke status eksplisit; pesan ke klien generik, detail ke `record!`.
+- Request body yang mengubah state: `#[serde(deny_unknown_fields)]`.
+- Body limit dan timeout dari layer router, bukan per handler (kecuali override eksplisit).
+
+---
+
+## File I/O
+
+- Tulis atomik: `tempfile::NamedTempFile::new_in(dir)` → `write_all` → `as_file().sync_all()` → `persist(path)`; pola rujukan `crates/galleon-infra/src/session_store.rs:223`.
+- Unix: permission 0600 untuk data pengguna.
+- I/O di handler async lewat `tokio::fs` atau `spawn_blocking`.
+- Nama file dari input pengguna **selalu** lewat enum/newtype tertutup, tidak pernah `format!("{dir}/{user_input}.json")`.
+
+---
+
 ## Related Documents
 
 - [Architecture Overview](../architecture/00-overview.md) - System design
 - [Boundary Policy](../architecture/01-boundary-policy.md) - What Rust owns vs delegates
-- [ADR 0001: LLM SSOT Rust](../decisions/0001-llm-ssot-rust.md) - Rust executes LLM calls
-- [ADR-0018: Rust Single Language Architecture](../decisions/0018-rust-single-language-architecture.md) - Arsitektur bahasa tunggal Rust
-- [Rust Conventions Amendment](./rust-conventions-amendment-2026-10-29.md) - Amandemen konvensi Rust single language
-- [Go Conventions (Arsip)](../../archive/go-engine/go-conventions.md) - Dokumen historis
+- [ADR 0001: LLM SSOT Rust](../../decisions/0001-llm-ssot-rust.md) - Rust executes LLM calls
+- [ADR-0018: Rust Single Language Architecture](../../decisions/0018-rust-single-language-architecture.md) - Arsitektur bahasa tunggal Rust
+- [Rust Conventions Amendment](./rust-conventions-amendment-2026-10-29.md) - Amandemen konvensi Rust single language (Applied)
