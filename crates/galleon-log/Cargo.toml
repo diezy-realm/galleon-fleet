@@ -9,6 +9,9 @@ repository.workspace = true
 homepage.workspace = true
 publish = true
 
+[lints]
+workspace = true
+
 [dependencies]
 galleon-api.workspace = true
 anyhow = "1.0"
@@ -38,5 +41,3 @@ tokio = { version = "1.50", features = ["rt-multi-thread", "macros", "time"] }
 # workspace clippy.toml. This crate's own implementation has to call
 # the underlying `tracing::*` macros directly to bootstrap the
 # pipeline, so the ban is lifted here and only here.
-[lints.clippy]
-disallowed_macros = "allow"

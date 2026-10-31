@@ -1,5 +1,8 @@
 //! Unified log emission surface for the ClawCrew workspace.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 1 per 2026-10-29; jangan menambah.
+#![allow(clippy::disallowed_macros)]
+
 pub mod broadcast;
 pub mod chain;
 pub mod config;

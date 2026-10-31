@@ -1,8 +1,10 @@
 //! Tool call parsing for LLM responses.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 18 per 2026-10-29; jangan menambah.
+
+pub use galleon_api::model_provider::strip_think_tags;
 use regex::Regex;
 use std::{collections::HashSet, sync::LazyLock};
-pub use galleon_api::model_provider::strip_think_tags;
 
 pub mod history_pruner;
 

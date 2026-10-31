@@ -1,3 +1,4 @@
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
     use serde_json::json;
@@ -24,14 +25,14 @@ mod tests {
         (format!("http://{address}"), server)
     }
 
-
     struct MockAudioTranscriber(&'static str);
     impl AudioTranscriber for MockAudioTranscriber {
         fn transcribe<'a>(
             &'a self,
             _audio_data: &'a [u8],
             _file_name: &'a str,
-        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>> {
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>>
+        {
             Box::pin(async move { Ok(self.0.to_string()) })
         }
     }
@@ -1173,8 +1174,7 @@ mod tests {
                 MAX_MATTERMOST_AUDIO_BYTES + 1
             )
             .into_bytes();
-            let (mattermost_url, server) =
-                spawn_raw_http_response(response, true).await;
+            let (mattermost_url, server) = spawn_raw_http_response(response, true).await;
             let mock_server = MockServer::start().await;
 
             Mock::given(method("POST"))

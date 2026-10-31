@@ -1,5 +1,7 @@
 //! WeChat personal iLink Bot channel.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 10 per 2026-10-29; jangan menambah.
+
 use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyInit, block_padding::Pkcs7};
 use anyhow::Context;
 use async_trait::async_trait;

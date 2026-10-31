@@ -187,10 +187,7 @@ pub trait HookHandler: Send + Sync {
 #[async_trait]
 pub trait ChannelHookRunner: Send + Sync {
     /// Hook invoked when a message is received from a channel.
-    async fn run_on_message_received(
-        &self,
-        message: ChannelMessage,
-    ) -> HookResult<ChannelMessage>;
+    async fn run_on_message_received(&self, message: ChannelMessage) -> HookResult<ChannelMessage>;
 
     /// Hook invoked before sending a message to a channel.
     async fn run_on_message_sending(
@@ -210,10 +207,7 @@ pub struct NoopChannelHookRunner;
 
 #[async_trait]
 impl ChannelHookRunner for NoopChannelHookRunner {
-    async fn run_on_message_received(
-        &self,
-        message: ChannelMessage,
-    ) -> HookResult<ChannelMessage> {
+    async fn run_on_message_received(&self, message: ChannelMessage) -> HookResult<ChannelMessage> {
         HookResult::Continue(message)
     }
 

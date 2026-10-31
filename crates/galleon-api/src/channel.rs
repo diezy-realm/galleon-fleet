@@ -1473,7 +1473,9 @@ impl StreamDelta {
     #[must_use]
     pub fn legacy_status(&self) -> Option<String> {
         match self {
-            Self::ToolStart { tool, arguments, .. } => {
+            Self::ToolStart {
+                tool, arguments, ..
+            } => {
                 let hint = arguments.as_object().and_then(|map| {
                     match tool.as_str() {
                         "shell" => map.get("command"),

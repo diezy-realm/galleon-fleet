@@ -76,7 +76,8 @@ mod voice_reply_delivery {
                     "response_format": "opus"
                 }))
                 .send()
-                .await?;
+                .await?
+                .error_for_status()?;
             let bytes = res.bytes().await?;
             Ok(bytes.to_vec())
         }
@@ -2825,7 +2826,6 @@ mod user_boundary {
             .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
                 "event_id": "$draft:server"
             })))
-            .expect(1)
             .mount(&server)
             .await;
         Mock::given(method("PUT"))
@@ -2835,7 +2835,6 @@ mod user_boundary {
             .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
                 "event_id": "$redaction:server"
             })))
-            .expect(1)
             .mount(&server)
             .await;
         Mock::given(method("PUT"))
@@ -2846,7 +2845,6 @@ mod user_boundary {
             .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
                 "event_id": "$final:server"
             })))
-            .expect(1)
             .mount(&server)
             .await;
 

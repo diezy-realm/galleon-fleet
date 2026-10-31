@@ -2,6 +2,7 @@
 //! Ed25519 `Hello`/`Challenge`/`Register` handshake over the outer TLS + WS, the
 //! open/allowlist policy (keyed on pubkey fingerprint, deny wins), and the
 //! node-id<->pubkey binding that stops a different key hijacking a live node-id.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 #![allow(clippy::disallowed_methods)]
 
 use std::collections::HashSet;

@@ -24,6 +24,9 @@ whatsapp-web = [
   "dep:whatsapp-rust-ureq-http-client",
 ]
 
+[lints]
+workspace = true
+
 [dependencies]
 galleon-channel-core.workspace = true
 galleon-api.workspace = true

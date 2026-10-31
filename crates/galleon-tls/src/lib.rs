@@ -7,6 +7,8 @@
 //! consumer crate's configuration struct, keeping this crate free of upward
 //! dependencies on `galleon-config` and friends.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 18 per 2026-10-29; jangan menambah.
+
 use anyhow::{Context, Result};
 use rustls::RootCertStore;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer};

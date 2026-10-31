@@ -428,7 +428,9 @@ pub enum ServiceError {
     DocumentParse(String),
     #[error("skill '{0}' is not present in any configured bundle")]
     NotFound(String),
-    #[error("skill '{name}' is not editable: it is a {origin} skill, only bundle skills are writable")]
+    #[error(
+        "skill '{name}' is not editable: it is a {origin} skill, only bundle skills are writable"
+    )]
     NotEditable { name: String, origin: String },
     #[error("I/O error: {0}")]
     Io(String),
@@ -437,9 +439,23 @@ pub enum ServiceError {
 pub trait SkillsRunner: Send + Sync {
     fn list_bundles(&self) -> Result<Vec<SkillBundleEntry>, ServiceError>;
     fn list_skills(&self, bundle: Option<&str>) -> Result<Vec<SkillListEntry>, ServiceError>;
-    fn resolve_effective_skills(&self, agent_alias: &str) -> Result<AgentSkillsResult, ServiceError>;
-    fn scaffold_skill(&self, bundle: &str, name: &str, frontmatter: SkillFrontmatter, options: ScaffoldOptions) -> Result<PathBuf, ServiceError>;
+    fn resolve_effective_skills(
+        &self,
+        agent_alias: &str,
+    ) -> Result<AgentSkillsResult, ServiceError>;
+    fn scaffold_skill(
+        &self,
+        bundle: &str,
+        name: &str,
+        frontmatter: SkillFrontmatter,
+        options: ScaffoldOptions,
+    ) -> Result<PathBuf, ServiceError>;
     fn read_skill(&self, bundle: &str, name: &str) -> Result<SkillsReadResult, ServiceError>;
-    fn write_skill(&self, bundle: &str, name: &str, doc: &SkillDocument) -> Result<(), ServiceError>;
+    fn write_skill(
+        &self,
+        bundle: &str,
+        name: &str,
+        doc: &SkillDocument,
+    ) -> Result<(), ServiceError>;
     fn remove_skill(&self, bundle: &str, name: &str, mode: RemoveMode) -> Result<(), ServiceError>;
 }

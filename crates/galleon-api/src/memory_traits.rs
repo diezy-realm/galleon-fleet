@@ -802,7 +802,8 @@ impl EraseIdentityReport {
     }
 
     pub fn record_failure(&mut self, backend: &str, err: &anyhow::Error) {
-        self.backends_failed.insert(backend.to_string(), err.to_string());
+        self.backends_failed
+            .insert(backend.to_string(), err.to_string());
     }
 
     pub fn is_complete_success(&self) -> bool {

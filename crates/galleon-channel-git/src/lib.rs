@@ -3,6 +3,8 @@
 //! review comments, CI outcomes, releases) through a per-event routing
 //! table.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 1 per 2026-10-29; jangan menambah.
+
 pub mod channel;
 pub mod events;
 pub mod poll;
