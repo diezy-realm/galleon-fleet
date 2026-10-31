@@ -149,6 +149,8 @@ jobs:
           fetch-depth: 0
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
+      - name: Check production unwrap
+        run: python3 scripts/ci/check_production_unwrap.py --base "${{ github.event.pull_request.base.sha || github.event.before || 'origin/testing' }}"
       - name: Clippy runner contract tests
         run: bash scripts/ci/run_clippy.test.sh
       - name: Clippy
