@@ -14,6 +14,7 @@ Folder ini berisi dokumen `standard-docs/` yang sudah **usang** (digantikan doku
 | `product-research-superseded/` | `tier-enforcement-method-d-c-deep-dive.md` | Status `superseded`, digantikan `product-research/tier-pricing-and-entitlement-final.md`. |
 | `superseded-specs/` | `prd-hybrid-engine.md` (eks `product/`), `go-engine-http-grpc-api-spec.md` (eks `tech-standart/api-contracts/`) | Keduanya self-tagged/isi substansi SUPERSEDED oleh `galleon-product-definition.md` dan `http-engine-api.md`. |
 | `dev-task-2-completed-sprints/` | 4 sprint `dev-task-2/` genuinely 100% `[x]` tanpa overclaim (sprint-1 63/63, sprint-2 8/8, sprint-3 13/13, sprint-7 23/23 — diverifikasi langsung hitung checkbox 2026-10-09) | Dipisah dari 5 sprint yang masih aktif (sprint-0/4/5/6 ada item `[ ]`, sprint-8 `planned`) sesuai keputusan Owner 2026-10-09 mencabut keputusan sebelumnya ("biarkan 9 sprint utuh") setelah PR #18/#19 menuntaskan sebagian besar kerja. |
+| `go-engine/` | Dokumen normatif dan kontrak Go Engine (`go-conventions.md`, `grpc-system-gateway.md`, `G-go-engine.md`) | Superseded oleh ODR-2026-10-29 / ADR-0018 (TASK-092, SPEC-015). |
 
 ## Catatan pengecualian penting
 

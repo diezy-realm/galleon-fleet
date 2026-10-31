@@ -19,14 +19,17 @@ Istilah lore (Ship, Quartermaster, …) hanya untuk UX; **kode/API/DB memakai is
 
 ## 2. Empat permukaan akses (bukan "channel messaging")
 
+> [!NOTE]
+> **Pembaruan Arsitektur (ODR-2026-10-29 / ADR-0018):** Seluruh permukaan akses kini berbicara langsung ke Rust gateway (`galleon-gateway`, :42617). Tier Go engine telah diarsipkan dan dihapus dari repositori inti (lihat `standard-docs/tech-standart/architecture/01-boundary-policy.md` v2).
+
 | Permukaan | Wujud | Berbicara ke |
 |---|---|---|
-| CLI | binary terminal | Go engine (HTTP :9090) |
-| Desktop | Tauri v2 (`apps/tauri/`) membungkus UI | Go engine (HTTP :9090), hanya proxy + fitur OS |
-| Web | React (`web/`) | Go engine (HTTP :9090) |
-| QR | login perangkat lain ke instance yang sedang berjalan | Go engine (pairing + otorisasi perangkat) |
+| CLI | binary terminal | Rust gateway (`galleon-gateway`, :42617) |
+| Desktop | Tauri v2 (`apps/tauri/`) membungkus UI | Rust gateway (`galleon-gateway`, :42617) |
+| Web | React (`web/`) | Rust gateway (`galleon-gateway`, :42617) |
+| QR | login perangkat lain ke instance yang sedang berjalan | Rust gateway (pairing + otorisasi perangkat) |
 
-Semua permukaan masuk lewat **Go**. Tidak ada yang bicara langsung ke Rust.
+Semua permukaan masuk lewat **Rust Gateway**. Tidak ada perantara runtime Go.
 
 ## 3. Channel messaging (integrasi eksternal)
 

@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Superseded oleh ODR-2026-10-29 / ADR-0018.** Dokumen ini dipertahankan sebagai arsip. Jangan dijadikan acuan implementasi.
+
 # gRPC System Gateway (Rust :50052)
 
 **Status:** Living spec (updated with each proto change)  

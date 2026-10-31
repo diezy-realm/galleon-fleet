@@ -9,7 +9,7 @@
 | Lane | File | Cakupan |
 |---|---|---|
 | R | [`R-rust.md`](R-rust.md) | Rust: klasifikasi runtime, gerbang kualitas, pemecahan crate, hardening, plugin |
-| G | [`G-go-engine.md`](G-go-engine.md) | Go: fail-closed, persistensi SQLite/Postgres, memori, QR/pairing, terminal ber-policy |
+| G | [`G-go-engine.md`](../archive/go-engine/G-go-engine.md) | [Arsip] Go: fail-closed, persistensi SQLite/Postgres, memori, QR/pairing, terminal ber-policy |
 | U | [`U-ui-desktop.md`](U-ui-desktop.md) | `web/` dan `apps/tauri/` |
 | P | [`P-platform-release.md`](P-platform-release.md) | Workspace, Docker, CI, Nginx/VPS, rilis |
 | D | [`D-docs-hygiene.md`](D-docs-hygiene.md) | Drift dokumen, errata ADR, kebersihan repo |

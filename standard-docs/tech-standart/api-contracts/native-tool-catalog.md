@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Superseded oleh ODR-2026-10-29 / ADR-0018.** Dokumen ini dipertahankan sebagai arsip. Jangan dijadikan acuan implementasi.
+
 # Native Tool Catalog & SSOT Contract (Go ↔ Rust)
 
 **Status:** Normative (SSOT)  
