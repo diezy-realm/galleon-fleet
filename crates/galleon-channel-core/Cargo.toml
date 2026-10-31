@@ -9,6 +9,9 @@ repository.workspace = true
 homepage.workspace = true
 publish = true
 
+[lints]
+workspace = true
+
 [dependencies]
 # RF-B1 seam #1 — allowlist. The grant/deny/`!name`/wildcard peer-policy SSOT
 # lives in `clawcrew_config::schema` (peer_policy_admits & co.), and

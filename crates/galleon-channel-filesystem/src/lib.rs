@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 1 per 2026-10-29; jangan menambah.
+
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

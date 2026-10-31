@@ -148,6 +148,7 @@ struct MatrixEntry {
 
 /// Parses the single `matrix.include` block of the release workflow into its
 /// entries, keyed by the fields this registry mirrors.
+#[allow(clippy::expect_used)]
 fn release_matrix_entries(workflow: &str) -> Vec<MatrixEntry> {
     let lines: Vec<&str> = workflow.lines().collect();
     let include_lines: Vec<usize> = lines

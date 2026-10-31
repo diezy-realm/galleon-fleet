@@ -29,6 +29,8 @@
 //! No production path uses `unwrap`/`expect`; every fallible call propagates a
 //! `Result` with `?`, and no `todo!()` remains.
 
+#![allow(clippy::manual_ok_err)]
+
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use parking_lot::Mutex;

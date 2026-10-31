@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 1 per 2026-10-29; jangan menambah.
 #![allow(clippy::uninlined_format_args)]
 #![allow(clippy::map_unwrap_or)]
 #![allow(clippy::redundant_closure_for_method_calls)]

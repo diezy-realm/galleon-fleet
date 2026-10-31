@@ -30,6 +30,8 @@
 //! daemon perform the Ed25519 signing/verification. This keeps the wire
 //! definition drift-free and the crate trivially vendorable.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 2 per 2026-10-29; jangan menambah.
+
 use serde::{Deserialize, Serialize};
 
 /// The WebSocket subprotocol identifier offered/selected on every relay session.

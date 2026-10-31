@@ -4,6 +4,8 @@
 //! gateway services can perform credential scrubbing without linking to the
 //! runtime monolith.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 53 per 2026-10-29; jangan menambah.
+
 pub mod content_safety;
 pub mod leak_detector;
 pub mod prompt_guard;

@@ -9,6 +9,9 @@ repository.workspace = true
 homepage.workspace = true
 publish = true
 
+[lints]
+workspace = true
+
 [dependencies]
 # RF-B1: the ported AT Protocol body is a `com.atproto` HTTP client over
 # reqwest with serde record/notification types, so it carries the HTTP + serde

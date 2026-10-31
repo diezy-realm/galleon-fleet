@@ -8,6 +8,8 @@
 //! English descriptions are embedded via `include_str!` at compile time.
 //! Non-English locales are loaded from disk and override English per-key.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 2 per 2026-10-29; jangan menambah.
+
 // The locale registry generated from the repo-root `locales.toml` by
 // `cargo generate installers runtime-locales`. Moved here with the i18n body so
 // `include_str!("../locales/...")` and `generated_locales` resolve inside this

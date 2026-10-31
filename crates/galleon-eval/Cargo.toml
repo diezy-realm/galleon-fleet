@@ -13,6 +13,9 @@ publish = true
 # test that cannot run for a consumer.
 exclude = ["tests/regression_suite.rs"]
 
+[lints]
+workspace = true
+
 [dependencies]
 galleon-api.workspace = true
 galleon-runtime.workspace = true

@@ -35,6 +35,9 @@
 //! Everything else is a faithful port. No production path uses `unwrap`/`expect`
 //! on fallible IO; errors propagate via `anyhow::Result` + `?`.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 1 per 2026-10-29; jangan menambah.
+#![allow(clippy::collapsible_if, clippy::doc_overindented_list_items)]
+
 use galleon_api::channel::{
     ApprovalSource, AttributedApprovalResponse, Channel, ChannelApprovalRequest,
     ChannelApprovalResponse, ChannelMessage, SendMessage,

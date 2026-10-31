@@ -9,6 +9,9 @@ repository.workspace = true
 homepage.workspace = true
 publish = true
 
+[lints]
+workspace = true
+
 [dependencies]
 # RF-B1: the ported Signal body is a signal-cli JSON-RPC/SSE HTTP client, so it
 # carries the HTTP + async-stream + collection deps upstream `galleon-channels`
