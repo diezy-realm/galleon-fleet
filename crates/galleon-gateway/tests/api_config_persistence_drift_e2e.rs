@@ -39,6 +39,7 @@ fn setup_physical_config(tmp: &tempfile::TempDir) -> Config {
     };
     config.gateway.port = 8080;
     config.gateway.host = "127.0.0.1".into();
+    config.gateway.require_pairing = false;
 
     config.providers.models.ollama.insert(
         "default".to_string(),

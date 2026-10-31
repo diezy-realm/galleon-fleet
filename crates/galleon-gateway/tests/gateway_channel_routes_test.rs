@@ -150,6 +150,7 @@ fn create_test_config(tmp: &tempfile::TempDir) -> Config {
         config_path: tmp.path().join("config.toml"),
         ..Config::default()
     };
+    config.gateway.require_pairing = false;
 
     config.providers.models.ollama.insert(
         "default".to_string(),

@@ -47,7 +47,6 @@ pub mod api_webhook;
 pub mod auth_rate_limit;
 pub mod canvas;
 pub mod cron_adapter;
-pub mod grpc_system_gateway;
 pub mod hardware_context;
 pub mod node_tool;
 pub mod nodes;
@@ -58,7 +57,6 @@ pub mod security_headers;
 pub mod session_queue;
 pub mod sse;
 pub mod static_files;
-pub mod strangler_runner;
 pub mod tls;
 pub mod version;
 #[cfg(feature = "gateway-voice-duplex")]
@@ -285,16 +283,13 @@ pub use api_config::{
 pub use api_pairing::{handle_pair, handle_pair_code};
 pub use gateway::{
     build_gateway_router, handle_health, handle_ready, run_gateway,
-    run_gateway_with_plugin_webhooks, start_grpc_server,
+    run_gateway_with_plugin_webhooks,
 };
 pub use rate_limit::{GatewayRateLimiter, IdempotencyStore, SlidingWindowRateLimiter};
 pub use rate_limit::{
     IDEMPOTENCY_MAX_KEYS_DEFAULT, RATE_LIMIT_MAX_KEYS_DEFAULT, RATE_LIMIT_WINDOW_SECS,
 };
 pub use state::{AppState, GatewaySupervision};
-pub use strangler_runner::{
-    StranglerAgentRunner, StranglerAgentSession, install_strangler_agent_runner,
-};
 
 // Types from other modules that extracted files need
 pub use galleon_api::memory_traits::MemoryStrategy;
