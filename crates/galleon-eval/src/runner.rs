@@ -108,29 +108,26 @@ impl MockGoEngineTurnClient {
         // sees exactly the same tools as before the seal.
         let eval_config = galleon_config::schema::Config::default();
         let eval_security = Arc::new(galleon_config::policy::SecurityPolicy::default());
-        let eval_registry =
-            galleon_runtime::tools::scoped::ScopedToolRegistry::assemble(
-                galleon_runtime::tools::scoped::ScopedAssembly {
-                    config: &eval_config,
-                    agent_alias: "eval",
-                    security: &eval_security,
-                    built: galleon_runtime::tools::AllToolsResult::from_prebuilt_tools(
-                        default_tools(),
-                    ),
-                    skills: &[],
-                    runtime: Arc::new(galleon_runtime::platform::NativeRuntime::new()),
-                    caller_allowed: None,
-                    connect_mcp: false,
-                    connect_peripherals: false,
-                    exclude_memory: false,
-                    acp_delivery: false,
-                    list_deferred_mcp_specs: false,
-                    emit_assembly_logs: false,
-                    mcp_registry: None,
-                },
-            )
-            .await
-            .registry;
+        let eval_registry = galleon_runtime::tools::scoped::ScopedToolRegistry::assemble(
+            galleon_runtime::tools::scoped::ScopedAssembly {
+                config: &eval_config,
+                agent_alias: "eval",
+                security: &eval_security,
+                built: galleon_runtime::tools::AllToolsResult::from_prebuilt_tools(default_tools()),
+                skills: &[],
+                runtime: Arc::new(galleon_runtime::platform::NativeRuntime::new()),
+                caller_allowed: None,
+                connect_mcp: false,
+                connect_peripherals: false,
+                exclude_memory: false,
+                acp_delivery: false,
+                list_deferred_mcp_specs: false,
+                emit_assembly_logs: false,
+                mcp_registry: None,
+            },
+        )
+        .await
+        .registry;
 
         let agent = Agent::builder()
             .model_provider(provider)
