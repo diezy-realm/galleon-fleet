@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# sccache acceleration (SPEC-016 / TASK-098)
+if command -v sccache >/dev/null 2>&1; then
+  export RUSTC_WRAPPER=sccache
+  export CARGO_INCREMENTAL=0
+fi
+
 if [ -f "dev/docker-compose.ci.yml" ]; then
   COMPOSE_FILE="dev/docker-compose.ci.yml"
 elif [ -f "docker-compose.ci.yml" ] && [ "$(basename "$(pwd)")" = "dev" ]; then

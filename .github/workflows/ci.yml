@@ -143,6 +143,9 @@ jobs:
     name: Lint
     runs-on: [self-hosted, linux, galleon-heavy]
     timeout-minutes: 60
+    env:
+      RUSTC_WRAPPER: sccache
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -177,6 +180,8 @@ jobs:
     timeout-minutes: 60
     env:
       RUSTFLAGS: ${{ matrix.rustflags }}
+      RUSTC_WRAPPER: sccache
+      CARGO_INCREMENTAL: 0
     strategy:
       fail-fast: false
       matrix:
@@ -203,6 +208,9 @@ jobs:
     name: Test
     runs-on: [self-hosted, linux, galleon-heavy]
     timeout-minutes: 90
+    env:
+      RUSTC_WRAPPER: sccache
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Check firmware protocol crate
