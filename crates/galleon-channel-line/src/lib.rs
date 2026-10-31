@@ -1,3 +1,5 @@
+#![allow(clippy::explicit_auto_deref)]
+
 use async_trait::async_trait;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
@@ -1268,6 +1270,7 @@ impl Channel for LineChannel {
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]
+#[allow(unsafe_code)]
 mod tests {
     use super::*;
     use tokio::sync::mpsc;

@@ -1,3 +1,6 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 1 per 2026-10-29; jangan menambah.
+#![allow(clippy::useless_format, clippy::collapsible_if)]
+
 use anyhow::Context;
 use async_trait::async_trait;
 use galleon_api::channel::{
@@ -8937,4 +8940,5 @@ impl UpdateDisposition {
 }
 
 #[cfg(test)]
+#[allow(unsafe_code)]
 mod tests;

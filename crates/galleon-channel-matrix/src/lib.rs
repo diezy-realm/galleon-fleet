@@ -1,4 +1,6 @@
 #![recursion_limit = "256"]
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 2 per 2026-10-29; jangan menambah.
+#![allow(clippy::collapsible_if)]
 
 //! Matrix channel using matrix-rust-sdk 0.18.
 
@@ -3101,8 +3103,20 @@ pub(crate) struct TestLocalWhisperTranscriber {
 impl AudioTranscriber for TestLocalWhisperTranscriber {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
         let client = reqwest::Client::new();
-        let part =
+        let mut part =
             reqwest::multipart::Part::bytes(audio_data.to_vec()).file_name(file_name.to_string());
+        let mime = std::path::Path::new(file_name)
+            .extension()
+            .and_then(|e| e.to_str())
+            .and_then(mime_for_audio);
+        if let Some(mime) = mime {
+            if let Ok(p) = reqwest::multipart::Part::bytes(audio_data.to_vec())
+                .file_name(file_name.to_string())
+                .mime_str(mime)
+            {
+                part = p;
+            }
+        }
         let form = reqwest::multipart::Form::new().part("file", part);
         let mut req = client.post(&self.url).multipart(form);
         if let Some(ref t) = self.token {

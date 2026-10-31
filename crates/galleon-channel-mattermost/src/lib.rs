@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_if)]
+
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt, stream::SplitSink, stream::SplitStream};

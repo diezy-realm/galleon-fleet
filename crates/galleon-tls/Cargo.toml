@@ -9,6 +9,9 @@ homepage.workspace = true
 description = "Shared TLS / mTLS construction (server config, client verifier, certificate pinning, PEM loading) for ClawCrew."
 publish = true
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = "1.0"
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }

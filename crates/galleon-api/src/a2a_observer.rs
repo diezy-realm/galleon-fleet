@@ -90,7 +90,10 @@ mod tests {
         };
         emit_a2a_run_event(&event);
         if installed {
-            assert_eq!(recorder.0.lock().unwrap().as_slice(), std::slice::from_ref(&event));
+            assert_eq!(
+                recorder.0.lock().unwrap().as_slice(),
+                std::slice::from_ref(&event)
+            );
         }
     }
 }

@@ -34,6 +34,9 @@ plugins-wasmtime = [
 plugins-wasm-cranelift = ["plugins-wasmtime", "wasmtime/cranelift"]
 plugins-wasm-pulley = ["plugins-wasmtime", "wasmtime/pulley"]
 
+[lints]
+workspace = true
+
 [dependencies]
 galleon-log.workspace = true
 galleon-api.workspace = true

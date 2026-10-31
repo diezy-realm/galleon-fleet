@@ -12,6 +12,7 @@
 //! agree with a wrong implementation. The CSR must satisfy `galleon_tls`'s
 //! issuer, the pinned TLS leg must satisfy rustls against the daemon's actual
 //! certificate, and the pairing code must satisfy the daemon's actual guard.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 #![allow(clippy::disallowed_methods)]
 
 use std::sync::Arc;

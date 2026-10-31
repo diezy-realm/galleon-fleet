@@ -9,6 +9,9 @@ repository.workspace = true
 homepage.workspace = true
 publish = true
 
+[lints]
+workspace = true
+
 [dependencies]
 galleon-log.workspace = true
 galleon-api.workspace = true

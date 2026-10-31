@@ -1,3 +1,6 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 4 per 2026-10-29; jangan menambah.
+#![allow(clippy::useless_format)]
+
 use anyhow::Context;
 use async_trait::async_trait;
 use base64::Engine as _;

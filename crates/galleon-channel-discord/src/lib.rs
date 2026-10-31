@@ -1,3 +1,6 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 3 per 2026-10-29; jangan menambah.
+#![allow(clippy::collapsible_if)]
+
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
 use galleon_api::channel::{

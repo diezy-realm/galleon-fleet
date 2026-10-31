@@ -14,6 +14,7 @@
 //! `zerorelay` is a standalone networking app (not daemon-path code), so bare
 //! `tokio::spawn` is the right primitive here; the `galleon_spawn::spawn!` rule
 //! is for in-daemon tasks. Mirrors the `apps/zerocode` exemption (and lib.rs).
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 7 per 2026-10-29; jangan menambah.
 #![allow(clippy::disallowed_methods)]
 
 use std::fs::File;

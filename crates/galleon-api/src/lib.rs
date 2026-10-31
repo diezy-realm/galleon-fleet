@@ -1,5 +1,7 @@
 //! ClawCrew API layer — trait definitions and shared types.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 2 per 2026-10-29; jangan menambah.
+
 pub mod a2a_observer;
 pub mod a2a_wire;
 pub mod agent;
