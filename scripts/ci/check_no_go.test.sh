@@ -149,8 +149,8 @@ git -C "$repo" commit --quiet -m "remove all go files"
 
 # 11. Assert workflow ci.yml wiring
 if [ -f "$workflow" ]; then
-  grep -Fq 'bash scripts/ci/check_no_go.sh diff' "$workflow" || \
-    fail "ci.yml must contain 'bash scripts/ci/check_no_go.sh diff'"
+  grep -Fq 'bash scripts/ci/check_no_go.sh full' "$workflow" || \
+    fail "ci.yml must contain 'bash scripts/ci/check_no_go.sh full'"
 fi
 
 echo "check_no_go tests passed"

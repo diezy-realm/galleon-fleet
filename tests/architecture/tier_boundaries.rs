@@ -1,9 +1,8 @@
-//! Architecture gate: enforce strict 4-tier boundaries (ODR-01, ADR-0001, ADR-0002, GW-4).
+//! Architecture gate: enforce strict 3-tier boundaries (ODR-01, ODR-2026-10-29-rust-single-language, ADR-0001, ADR-0002, GW-4).
 //!
 //! Tier 1: Desktop Shell (Tauri) — OS packaging & IPC only; no direct shell execution, no fake metrics.
-//! Tier 2: System Core (Rust) — Security microkernel, sandbox, native tools, LLM execution (:50052).
-//! Tier 3: AI Orchestrator (Go) — Agent brain & fleet governance (:9090); no direct os/exec, no vendor LLM calls.
-//! Tier 4: UI Layer (web/) — Rendering & HTTP client only; zero backend logic, no direct LLM SDKs, no direct Rust calls.
+//! Tier 2: Rust Core / Gateway — Security microkernel, sandbox, native tools, LLM execution, fleet governance & single backend runtime.
+//! Tier 3: Web UI (web/) — Rendering & HTTP client only; zero backend logic, no direct LLM SDKs, no direct execution endpoints.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -20,19 +19,25 @@ fn test_ui_tier_boundaries() {
 
     // 1. web/src must not import vendor LLM SDKs or direct Rust gRPC clients
     fn scan_web_src(dir: &Path, violations: &mut Vec<String>) {
-        let Ok(entries) = fs::read_dir(dir) else { return };
+        let Ok(entries) = fs::read_dir(dir) else {
+            return;
+        };
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
                 scan_web_src(&path, violations);
                 continue;
             }
-            let Some(ext) = path.extension().and_then(|e| e.to_str()) else { continue };
+            let Some(ext) = path.extension().and_then(|e| e.to_str()) else {
+                continue;
+            };
             if ext != "ts" && ext != "tsx" && ext != "js" && ext != "jsx" {
                 continue;
             }
 
-            let Ok(src) = fs::read_to_string(&path) else { continue };
+            let Ok(src) = fs::read_to_string(&path) else {
+                continue;
+            };
             for (lineno, line) in src.lines().enumerate() {
                 let trimmed = line.trim();
                 // Forbid direct vendor LLM SDKs in UI tier
@@ -59,7 +64,8 @@ fn test_ui_tier_boundaries() {
                 }
 
                 // Forbid direct fetch(...) calls in UI components outside apiClient.ts (U-11 / ADR 0002)
-                let is_api_client = path.ends_with("apiClient.ts") || path.ends_with("apiClient.tsx");
+                let is_api_client =
+                    path.ends_with("apiClient.ts") || path.ends_with("apiClient.tsx");
                 if !is_api_client && (trimmed.contains("fetch(") || trimmed.starts_with("fetch(")) {
                     violations.push(format!(
                         "  {}:{}: Direct fetch() call in UI tier outside apiClient.ts (U-11 violation): {}",
@@ -96,7 +102,7 @@ fn test_ui_tier_boundaries() {
 
     assert!(
         violations.is_empty(),
-        "Tier 4 (UI Layer) boundary violations detected (ADR 0002 / GW-4):\n{}\n\
+        "Tier 3 (Web UI) boundary violations detected (ADR 0002 / GW-4):\n{}\n\
          UI tier owns rendering only; no direct LLM SDKs, no direct Rust calls, and no server execute endpoints.",
         violations.join("\n")
     );
@@ -149,78 +155,49 @@ fn test_desktop_tier_boundaries() {
     assert!(
         violations.is_empty(),
         "Tier 1 (Desktop Shell) boundary violations detected (ODR-07 / ADR 0003 / GW-4):\n{}\n\
-         Tauri shell must forward operations to Go :9090 and must not host shell execution or fake metrics.",
+         Tauri shell must forward operations to Rust Gateway / Core and must not host shell execution or fake metrics.",
         violations.join("\n")
     );
 }
 
 #[test]
-fn test_go_engine_tier_boundaries() {
+fn test_no_go_sources() {
     let root = workspace_root();
-    let engine_src = root.join("engine").join("src");
     let mut violations = Vec::new();
 
-    fn scan_go_src(dir: &Path, violations: &mut Vec<String>) {
-        let Ok(entries) = fs::read_dir(dir) else { return };
+    fn scan_for_go(dir: &Path, violations: &mut Vec<String>) {
+        let Ok(entries) = fs::read_dir(dir) else {
+            return;
+        };
         for entry in entries.flatten() {
             let path = entry.path();
+            let file_name = entry.file_name();
+            let name_str = file_name.to_string_lossy();
+
             if path.is_dir() {
-                scan_go_src(&path, violations);
+                if name_str == "target" || name_str == ".git" || name_str == "node_modules" {
+                    continue;
+                }
+                scan_for_go(&path, violations);
                 continue;
             }
-            if path.extension().and_then(|e| e.to_str()) != Some("go") {
-                continue;
-            }
 
-            let Ok(src) = fs::read_to_string(&path) else { continue };
-            for (lineno, line) in src.lines().enumerate() {
-                let trimmed = line.trim();
-
-                // 1. Forbid "os/exec" import in engine/src (fail-closed, must use Rust SystemGateway)
-                if trimmed == "\"os/exec\"" || trimmed.starts_with("\"os/exec\"") {
-                    violations.push(format!(
-                        "  {}:{}: Forbidden 'os/exec' import in Go engine: {}",
-                        path.display(),
-                        lineno + 1,
-                        trimmed
-                    ));
-                }
-
-                // 2. Forbid vendor LLM SDK imports in Go engine (SSOT in Rust System Core per ADR 0001)
-                if trimmed.contains("google.golang.org/genai")
-                    || trimmed.contains("github.com/google/generative-ai-go")
-                    || trimmed.contains("github.com/sashabaranov/go-openai")
-                    || trimmed.contains("github.com/anthropics/anthropic-sdk-go")
-                {
-                    violations.push(format!(
-                        "  {}:{}: Forbidden vendor LLM SDK import in Go engine: {}",
-                        path.display(),
-                        lineno + 1,
-                        trimmed
-                    ));
-                }
-
-                // 3. Forbid direct Ollama port 11434 probe in Go engine (G-02 / PR-16)
-                if trimmed.contains("http://localhost:11434") || trimmed.contains("http://127.0.0.1:11434") {
-                    violations.push(format!(
-                        "  {}:{}: Direct LLM vendor port (11434) probe in Go engine: {}",
-                        path.display(),
-                        lineno + 1,
-                        trimmed
-                    ));
-                }
+            if name_str.ends_with(".go")
+                || name_str == "go.mod"
+                || name_str == "go.sum"
+                || name_str == "go.work"
+            {
+                violations.push(path.display().to_string());
             }
         }
     }
 
-    if engine_src.exists() {
-        scan_go_src(&engine_src, &mut violations);
-    }
+    scan_for_go(&root, &mut violations);
 
     assert!(
         violations.is_empty(),
-        "Tier 3 (AI Orchestrator) boundary violations detected (ADR 0001 / G-01 / G-02 / GW-4):\n{}\n\
-         Go engine must not execute os/exec or call vendor LLMs directly; all native tools and LLMs route via Rust System Gateway (:50052).",
+        "Go source or module files found in repository (ODR-2026-10-29-rust-single-language / BL-090 / SPEC-015):\n{}\n\
+         The project is a unified Rust/TS 3-tier codebase; all Go files have been decommissioned.",
         violations.join("\n")
     );
 }
