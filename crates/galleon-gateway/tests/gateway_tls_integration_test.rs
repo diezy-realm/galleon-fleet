@@ -411,8 +411,8 @@ async fn test_gateway_tls_websocket_upgrade_wss() {
 
     // 2. Wrap TCP in TLS stream using server's CA
     let mut root_store = rustls::RootCertStore::empty();
-    let ca_certs = galleon_tls::load_certs(ca_file.path().to_str().unwrap())
-        .expect("load CA certs");
+    let ca_certs =
+        galleon_tls::load_certs(ca_file.path().to_str().unwrap()).expect("load CA certs");
     for cert in ca_certs {
         root_store.add(cert).expect("add CA cert");
     }
