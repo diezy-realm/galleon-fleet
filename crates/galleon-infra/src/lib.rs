@@ -1,6 +1,9 @@
 //! Channel infrastructure: session backends, debouncing, and stall watchdog.
 //! These are cross-cutting utilities used by multiple channel implementations.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 3 per 2026-10-29; jangan menambah.
+#![allow(clippy::collapsible_if)]
+
 pub mod acp_session_store;
 pub mod backup;
 pub mod cron_schedule;
@@ -18,9 +21,9 @@ pub mod net_guard;
 pub mod process_stats;
 pub mod restart;
 pub mod session_backend;
+pub mod session_metadata;
 pub mod session_queue;
 pub mod session_sqlite;
-pub mod session_metadata;
 pub mod session_store;
 pub mod stall_watchdog;
 
@@ -98,8 +101,8 @@ fn open_sqlite_with_jsonl_import(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use galleon_api::model_provider::ChatMessage;
+    use tempfile::TempDir;
 
     fn user_msg(content: &str) -> ChatMessage {
         ChatMessage::user(content)

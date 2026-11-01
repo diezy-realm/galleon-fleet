@@ -9,6 +9,7 @@
 //!    producing an accurate `ConfigDriftSummary`.
 //! 5. Zero mock stores: all reads and writes touch the physical operating system filesystem.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::time::Duration;

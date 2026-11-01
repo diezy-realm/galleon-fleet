@@ -1,5 +1,6 @@
 //! End-to-end migration tests for the V1 → V2 → V3 chain.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use galleon_config::autonomy::AutonomyLevel;
 use galleon_config::migration::{
     CURRENT_SCHEMA_VERSION, GenerateOptions, MigrateReport, detect_version, encrypt_secret_strings,
@@ -1992,9 +1993,9 @@ funnel = true
 
 #[test]
 fn v3_channel_types_covers_every_typed_channel_slot() {
-    use std::collections::HashSet;
     use galleon_config::schema::Config;
     use galleon_config::schema::v2::V3_CHANNEL_TYPES;
+    use std::collections::HashSet;
 
     let listed: HashSet<&str> = V3_CHANNEL_TYPES.iter().copied().collect();
 

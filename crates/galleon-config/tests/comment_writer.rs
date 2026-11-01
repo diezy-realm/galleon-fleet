@@ -3,10 +3,11 @@
 //! file to a temp directory, calls `apply_comments`, and asserts the on-disk
 //! result matches expectations.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::path::{Path, PathBuf};
 
-use tempfile::tempdir;
 use galleon_config::comment_writer::apply_comments;
+use tempfile::tempdir;
 
 // ─────────────────────────────────────────────────────────────
 // Helpers

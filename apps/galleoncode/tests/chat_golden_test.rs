@@ -2,6 +2,7 @@
 //! Verifies baseline turn progression, message parsing, and fallback handling
 //! prior to Phase 2 engine migration.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum GoldenTurnState {
     Queued,

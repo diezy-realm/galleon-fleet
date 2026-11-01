@@ -1,9 +1,12 @@
 //! Channel implementations and orchestration for messaging platform integrations.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 20 per 2026-10-29; jangan menambah.
+#![allow(unsafe_code)]
 #![allow(
     clippy::to_string_in_format_args,
     clippy::useless_format,
-    clippy::explicit_auto_deref
+    clippy::explicit_auto_deref,
+    clippy::collapsible_if
 )]
 #![cfg_attr(feature = "channel-matrix", recursion_limit = "256")]
 

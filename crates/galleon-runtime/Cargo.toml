@@ -148,5 +148,5 @@ galleon-config = { workspace = true, features = ["test-helpers"] }
 
 # Channel features (forwarded to galleon-channels)
 
-[lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(clawcrew_root_crate)'] }
+[lints]
+workspace = true

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -8,8 +9,6 @@ use axum::{
     extract::State,
     routing::{get, post},
 };
-use serde_json::{Value, json};
-use tokio::io::AsyncReadExt;
 use galleon_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
 use galleon_config::schema::{Config, HailoOllamaModelProviderConfig, ModelProviderConfig};
 use galleon_providers::hailo_ollama::HailoOllamaModelProvider;
@@ -18,6 +17,8 @@ use galleon_providers::traits::{
     ChatMessage, ChatRequest, ModelProvider, NonRetryableProviderError,
 };
 use galleon_providers::{ModelProviderRuntimeOptions, create_model_provider_for_alias_with_url};
+use serde_json::{Value, json};
+use tokio::io::AsyncReadExt;
 
 type Capture = Arc<Mutex<Option<Value>>>;
 type RawCapture = Arc<Mutex<Option<Vec<u8>>>>;
@@ -2635,14 +2636,12 @@ fn production_factory_rejects_hailo_vision_override() {
         "family factory must return a typed capability error: {direct_error:?}"
     );
 
-    let error = match galleon_providers::create_model_provider_with_options(
-        "hailo_ollama",
-        None,
-        &options,
-    ) {
-        Ok(_) => panic!("text-only Hailo must reject vision=true"),
-        Err(error) => error,
-    };
+    let error =
+        match galleon_providers::create_model_provider_with_options("hailo_ollama", None, &options)
+        {
+            Ok(_) => panic!("text-only Hailo must reject vision=true"),
+            Err(error) => error,
+        };
 
     assert!(
         error.to_string().contains("vision"),

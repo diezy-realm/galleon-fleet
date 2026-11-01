@@ -1,4 +1,5 @@
-#![allow(clippy::to_string_in_format_args)]
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 16 per 2026-10-29; jangan menambah.
+#![allow(clippy::to_string_in_format_args, clippy::collapsible_if)]
 //! Memory subsystem: backends, embeddings, consolidation, retrieval.
 
 /// Opening delimiter for recalled memory injected into provider context.

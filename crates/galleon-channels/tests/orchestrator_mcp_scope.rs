@@ -2,6 +2,7 @@
 //! connection site (`crates/galleon-channels/src/orchestrator/mod.rs`,
 //! search for `mcp_servers_for_agent`).
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::collections::HashMap;
 
 use galleon_config::schema::{

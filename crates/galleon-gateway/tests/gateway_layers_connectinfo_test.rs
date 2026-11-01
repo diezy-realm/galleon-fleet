@@ -6,6 +6,7 @@
 //! - ConnectInfo tersedia untuk handler
 //! - TimeoutLayer dan SecurityHeaders diaplikasikan
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use galleon_config::schema::{
     AliasedAgentConfig, Config, GatewayTlsConfig, ModelProviderConfig, OllamaModelProviderConfig,
     RiskProfileConfig, RuntimeProfileConfig,

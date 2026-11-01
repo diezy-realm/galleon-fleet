@@ -5,12 +5,13 @@
 //! nextest runs each test in a separate process, so this test can
 //! fork a Landlock-restricted child without affecting other tests.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 #![cfg(all(feature = "sandbox-landlock", target_os = "linux"))]
 
-use std::path::{Path, PathBuf};
-use std::process::Command;
 use galleon_runtime::security::landlock::LandlockSandbox;
 use galleon_runtime::security::traits::Sandbox;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 /// Query the Landlock ABI version via the documented kernel API:
 /// `landlock_create_ruleset(NULL, 0, LANDLOCK_CREATE_RULESET_VERSION)`.

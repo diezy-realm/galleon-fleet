@@ -5,6 +5,7 @@
 //! - Endpoint /admin/shutdown, /admin/reload, /admin/paircode, /admin/paircode/new bekerja
 //! - Endpoint /admin/sop/pending, /admin/sop/approve, /admin/sop/deny bekerja sesuai CLI
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
