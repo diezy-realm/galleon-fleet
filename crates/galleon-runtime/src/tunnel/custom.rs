@@ -51,10 +51,8 @@ impl Tunnel for CustomTunnel {
 
         let mut public_url = format!("http://{local_host}:{local_port}");
 
-        // If a URL pattern is provided, try to extract the public URL from stdout
-        if let Some(ref pattern) = self.url_pattern
-            && let Some(stdout) = child.stdout.take()
-        {
+        // If child stdout is available, try to extract public URL (guided by url_pattern or standard http/https)
+        if let Some(stdout) = child.stdout.take() {
             let mut reader = tokio::io::BufReader::new(stdout).lines();
             let deadline = tokio::time::Instant::now() + tokio::time::Duration::from_secs(15);
 
@@ -67,15 +65,14 @@ impl Tunnel for CustomTunnel {
                     Ok(Ok(Some(l))) => {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"l": l})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"l": l})),
                             "custom-tunnel: "
                         );
+                        let pattern_matched =
+                            self.url_pattern.as_ref().map_or(true, |p| l.contains(p));
                         // Simple substring match on the pattern
-                        if l.contains(pattern) || l.contains("https://") || l.contains("http://") {
+                        if pattern_matched && (l.contains("https://") || l.contains("http://")) {
                             // Extract URL from the line
                             if let Some(idx) = l.find("https://") {
                                 let url_part = &l[idx..];

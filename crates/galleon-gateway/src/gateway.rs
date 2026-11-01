@@ -80,10 +80,69 @@ pub async fn run_gateway_with_plugin_webhooks(
     let listener = tokio::net::TcpListener::bind(&bind_addr).await?;
     let actual_addr = listener.local_addr()?;
 
+    // ── Tunnel ────────────────────────────────────────────────
+    let tunnel_cfg = state.config.read().tunnel.clone();
+    let tunnel = match galleon_runtime::tunnel::create_tunnel(&tunnel_cfg) {
+        Ok(t) => t,
+        Err(e) => {
+            ::galleon_log::record!(
+                WARN,
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({
+                        "tunnel_provider": tunnel_cfg.tunnel_provider,
+                        "error": format!("{e}"),
+                    })),
+                "Gateway: tunnel adapter failed to construct; booting without a \
+                 tunnel. Fix [tunnel] and POST /admin/reload."
+            );
+            None
+        }
+    };
+    let mut _tunnel_url: Option<String> = None;
+
+    if let Some(ref tun) = tunnel {
+        ::galleon_log::record!(
+            INFO,
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                ::serde_json::json!({
+                    "tunnel_provider": tun.name(),
+                })
+            ),
+            &format!("Starting {} tunnel...", tun.name())
+        );
+        match tun.start(host, actual_addr.port()).await {
+            Ok(url) => {
+                ::galleon_log::record!(
+                    INFO,
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_attrs(::serde_json::json!({
+                            "tunnel_provider": tun.name(),
+                            "url": &url,
+                        })),
+                    &format!("Tunnel active: {url}")
+                );
+                _tunnel_url = Some(url);
+            }
+            Err(e) => {
+                ::galleon_log::record!(
+                    WARN,
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
+                        .with_attrs(::serde_json::json!({
+                            "tunnel_provider": tun.name(),
+                            "error": format!("{e}"),
+                        })),
+                    &format!("Tunnel failed to start: {e}; falling back to local-only mode.")
+                );
+            }
+        }
+    }
+
     supervision.report_ready(actual_addr);
 
     let mut shutdown_rx = state.shutdown_tx.subscribe();
-    axum::serve(
+    let serve_res = axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
@@ -94,7 +153,24 @@ pub async fn run_gateway_with_plugin_webhooks(
             }
         }
     })
-    .await?;
+    .await;
+
+    if let Some(ref tun) = tunnel {
+        if let Err(e) = tun.stop().await {
+            ::galleon_log::record!(
+                WARN,
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({
+                        "tunnel_provider": tun.name(),
+                        "error": format!("{e}"),
+                    })),
+                &format!("Tunnel stop failed: {e}")
+            );
+        }
+    }
+
+    serve_res?;
 
     Ok(())
 }
