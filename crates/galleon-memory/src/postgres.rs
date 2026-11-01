@@ -1,6 +1,6 @@
 //! PostgreSQL-backed memory implementation.
 
-use super::traits::{normalize_recent_recall_query, Memory, MemoryCategory, MemoryEntry};
+use super::traits::{Memory, MemoryCategory, MemoryEntry, normalize_recent_recall_query};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
