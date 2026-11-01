@@ -3,10 +3,10 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::{
+    Json, Router,
     extract::State,
     response::IntoResponse,
     routing::{delete, get, patch, post},
-    Json, Router,
 };
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::timeout::TimeoutLayer;

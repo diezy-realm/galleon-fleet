@@ -13,7 +13,7 @@ use galleon_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
-use galleon_gateway::{build_gateway_router, AppState};
+use galleon_gateway::{AppState, build_gateway_router};
 
 fn create_test_config(tmp: &tempfile::TempDir, path_prefix: Option<String>) -> Config {
     let data_dir = tmp.path().join("data");
