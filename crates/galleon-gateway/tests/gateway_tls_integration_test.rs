@@ -6,6 +6,7 @@
 //! - GET /health via TLS 200; HTTP polos gagal handshake
 
 #![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
+use futures_util::{SinkExt, StreamExt};
 use galleon_config::multi_agent::MemoryBackendKind;
 use galleon_config::schema::{
     AliasedAgentConfig, Config, GatewayClientAuthConfig, GatewayTlsConfig, ModelProviderConfig,
@@ -14,6 +15,7 @@ use galleon_config::schema::{
 use std::io::Write;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio_tungstenite::tungstenite::Message as WsMessage;
 
 fn ensure_crypto_provider() {
     let _ = rustls::crypto::ring::default_provider().install_default();
@@ -344,4 +346,144 @@ fn test_public_bind_detection() {
     assert!(!galleon_config::pairing::is_public_bind("::1"));
     assert!(galleon_config::pairing::is_public_bind("0.0.0.0"));
     assert!(galleon_config::pairing::is_public_bind("192.168.1.100"));
+}
+
+#[tokio::test]
+async fn test_gateway_tls_websocket_upgrade_wss() {
+    ensure_crypto_provider();
+    galleon_runtime::install_agent_runner();
+
+    let tmp = tempfile::TempDir::new().expect("tempdir");
+    let mut config = create_test_config(&tmp);
+
+    let (ca_cert_pem, _, ca_key) = generate_ca();
+    let (server_cert_pem, server_key_pem) = generate_server_cert(&ca_key);
+
+    let cert_file = write_temp_file(&server_cert_pem);
+    let key_file = write_temp_file(&server_key_pem);
+    let ca_file = write_temp_file(&ca_cert_pem);
+
+    config.gateway.tls = Some(GatewayTlsConfig {
+        enabled: true,
+        cert_path: cert_file.path().to_str().unwrap().to_string(),
+        key_path: key_file.path().to_str().unwrap().to_string(),
+        client_auth: None,
+    });
+
+    let (ready_tx, mut ready_rx) = tokio::sync::watch::channel(None);
+    let readiness = galleon_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
+        let _ = ready_tx.send(Some(addr));
+    });
+
+    let (shutdown_tx, _) = tokio::sync::watch::channel(false);
+    let (reload_tx, _) = tokio::sync::watch::channel(false);
+    let reload_controls = galleon_infra::gateway_controls::GatewayReloadControls {
+        shutdown_tx: shutdown_tx.clone(),
+        reload_tx,
+    };
+
+    let server_task = galleon_spawn::spawn!(async move {
+        galleon_gateway::run_gateway(
+            "127.0.0.1",
+            0,
+            config,
+            None,
+            Some(reload_controls),
+            None,
+            None,
+            None,
+            Some(readiness),
+        )
+        .await
+    });
+
+    ready_rx
+        .wait_for(|addr| addr.is_some())
+        .await
+        .expect("readiness reporter must fire");
+
+    let bound_addr = ready_rx.borrow().unwrap();
+
+    // 1. Establish TCP connection
+    let tcp_conn = tokio::net::TcpStream::connect(bound_addr)
+        .await
+        .expect("connect TCP");
+
+    // 2. Wrap TCP in TLS stream using server's CA
+    let mut root_store = rustls::RootCertStore::empty();
+    let ca_certs = galleon_tls::load_certs(ca_file.path().to_str().unwrap())
+        .expect("load CA certs");
+    for cert in ca_certs {
+        root_store.add(cert).expect("add CA cert");
+    }
+    let client_config = rustls::ClientConfig::builder()
+        .with_root_certificates(root_store)
+        .with_no_client_auth();
+    let connector = tokio_rustls::TlsConnector::from(std::sync::Arc::new(client_config));
+    let server_name = rustls::pki_types::ServerName::try_from("localhost")
+        .expect("localhost server name")
+        .to_owned();
+    let tls_stream = connector
+        .connect(server_name, tcp_conn)
+        .await
+        .expect("TLS handshake");
+
+    // 3. Connect WSS via tokio-tungstenite over the TLS stream
+    let ws_url = format!(
+        "wss://localhost:{}/ws?agent=default&session_id=tls-ws-session-1",
+        bound_addr.port()
+    );
+    let (mut ws_stream, response) = tokio_tungstenite::client_async(&ws_url, tls_stream)
+        .await
+        .expect("WSS handshake and upgrade");
+
+    assert_eq!(
+        response.status(),
+        axum::http::StatusCode::SWITCHING_PROTOCOLS,
+        "WSS response status must be 101 Switching Protocols"
+    );
+
+    // 4. Verify session_start frame received over TLS WebSocket
+    let first_frame = tokio::time::timeout(Duration::from_secs(3), ws_stream.next())
+        .await
+        .expect("session_start timeout")
+        .expect("session_start frame")
+        .expect("session_start transport");
+
+    let session_start_json: serde_json::Value = match first_frame {
+        WsMessage::Text(text) => serde_json::from_str(&text).expect("parse session_start JSON"),
+        other => panic!("expected text frame session_start, got: {other:?}"),
+    };
+    assert_eq!(session_start_json["type"], "session_start");
+    assert_eq!(session_start_json["session_id"], "tls-ws-session-1");
+
+    // 5. Verify ping/pong over TLS WebSocket
+    let ping_payload = vec![0xCA, 0xFE, 0xBA, 0xBE];
+    ws_stream
+        .send(WsMessage::Ping(ping_payload.clone().into()))
+        .await
+        .expect("send Ping frame over TLS");
+
+    let pong_frame = tokio::time::timeout(Duration::from_secs(3), ws_stream.next())
+        .await
+        .expect("pong timeout")
+        .expect("pong frame")
+        .expect("pong transport");
+
+    match pong_frame {
+        WsMessage::Pong(payload) => {
+            assert_eq!(
+                payload.as_ref(),
+                ping_payload.as_slice(),
+                "Pong payload must echo Ping payload over TLS"
+            );
+        }
+        other => panic!("expected Pong frame, got: {other:?}"),
+    }
+
+    // 6. Clean shutdown
+    let _ = shutdown_tx.send(true);
+    let _ = tokio::time::timeout(Duration::from_secs(5), server_task)
+        .await
+        .expect("timeout waiting for gateway shutdown");
 }

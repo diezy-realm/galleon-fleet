@@ -204,7 +204,7 @@ pub async fn run_gateway_with_plugin_webhooks(
                         if let Err(e) = hyper_util::server::conn::auto::Builder::new(
                             hyper_util::rt::TokioExecutor::new(),
                         )
-                        .serve_connection(io, hyper_svc)
+                        .serve_connection_with_upgrades(io, hyper_svc)
                         .await
                         {
                             ::galleon_log::record!(
