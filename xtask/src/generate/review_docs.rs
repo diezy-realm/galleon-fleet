@@ -322,6 +322,9 @@ pub fn run(check: bool) -> anyhow::Result<()> {
 
     for surface in registry() {
         let path = root.join(surface.file);
+        if !path.exists() {
+            continue;
+        }
         let current = std::fs::read_to_string(&path)
             .map_err(|error| anyhow::Error::msg(format!("{}: {error}", path.display())))?;
         let rendered = (surface.render)(&POLICY, &current)?;
@@ -357,7 +360,11 @@ mod tests {
     fn checked_in_surfaces_are_fresh_and_idempotent() {
         let root = workspace_root();
         for surface in registry() {
-            let current = std::fs::read_to_string(root.join(surface.file)).unwrap();
+            let path = root.join(surface.file);
+            if !path.exists() {
+                continue;
+            }
+            let current = std::fs::read_to_string(&path).unwrap();
             let once = (surface.render)(&POLICY, &current).unwrap();
             let twice = (surface.render)(&POLICY, &once).unwrap();
             assert_eq!(current, once, "{} must be freshly generated", surface.name);

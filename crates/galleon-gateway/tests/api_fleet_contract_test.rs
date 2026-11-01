@@ -8,6 +8,7 @@
 //! - All 19 ported endpoints match the shape of `tests/fixtures/go-fleet/*.json`
 //!   (ignoring volatile keys documented in VOLATILE.md and intentional differences in SPEC-013).
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};

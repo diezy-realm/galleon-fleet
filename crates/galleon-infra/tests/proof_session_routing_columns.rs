@@ -3,6 +3,8 @@
 //! and that `set_session_context` writes through to disk where a raw
 //! sqlite reader can see them.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 use std::path::PathBuf;
 
 use galleon_api::model_provider::ChatMessage;

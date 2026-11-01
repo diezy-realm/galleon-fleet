@@ -14,6 +14,7 @@
 //! - ChannelMessage is created with correct fields
 //! - Test verifies sender, content, channel_id match
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 // Import Discord types from the actual module
 // Note: adjust path if tests are run from a different location
 use galleon_api::channel::ChannelMessage;

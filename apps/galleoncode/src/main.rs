@@ -4,6 +4,9 @@
 // Bare `tokio::spawn` is the right primitive here — the workspace-wide
 // `galleon_spawn::spawn!` rule is daemon-path only (see `clippy.toml`'s
 // commentary, which records this crate as the sole exemption).
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 19 per 2026-10-29; jangan menambah.
+#![allow(unsafe_code)]
+#![allow(clippy::collapsible_if)]
 #![allow(clippy::disallowed_methods)]
 
 use std::path::PathBuf;

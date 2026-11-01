@@ -8,13 +8,14 @@
 //! WSS (TLS + WebSocket) mTLS listener built from the runtime's own
 //! `build_tls_acceptor` - the daemon's actual remote-plane stack. The relay only
 //! ever forwards opaque DATA frames; it terminates only the outer TLS.
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 #![allow(clippy::disallowed_methods)]
 
 use std::sync::Arc;
 use std::time::Duration;
 
-use galleon_relay_proto::{Control, SUBPROTOCOL, decode_data, encode_data};
 use futures_util::{SinkExt, StreamExt};
+use galleon_relay_proto::{Control, SUBPROTOCOL, decode_data, encode_data};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;

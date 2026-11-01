@@ -5,6 +5,7 @@
 //! tokio-tungstenite with handshake, ping/pong heartbeats, and chat stream frame delivery.
 //! Zero mockup transport or stub routers used.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use futures_util::{SinkExt, StreamExt};
 use galleon_config::multi_agent::MemoryBackendKind;
 use galleon_config::schema::{

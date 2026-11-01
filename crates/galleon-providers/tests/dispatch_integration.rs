@@ -3,6 +3,7 @@
 //! asserts every captured `LogEvent` carries the inner provider's
 //! `model_provider_type` / `model_provider_alias`.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::sync::Arc;
 
 use futures_util::StreamExt;

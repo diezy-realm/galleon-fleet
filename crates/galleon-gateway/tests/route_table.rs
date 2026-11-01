@@ -6,6 +6,7 @@
 //!   - Tanpa token -> 401 Unauthorized kecuali publik
 //! - insta::assert_yaml_snapshot! merekam daftar (method, path, status)
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;

@@ -7,6 +7,7 @@
 //!   GET /api/devices, PATCH /api/devices/me/capabilities, DELETE /api/devices/{id},
 //!   POST /api/devices/{id}/token/rotate) terpasang dan berfungsi.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use axum::http::StatusCode;
 use galleon_config::pairing::PairingGuard;
 use galleon_config::schema::{

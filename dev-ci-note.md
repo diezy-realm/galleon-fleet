@@ -44,9 +44,9 @@ gate_doctest() {
 Catatan: Worker produk dilarang mengedit repositori `~/Apps/dev-ci` secara langsung; integrasi lane lokal dilakukan melalui handoff ini.
 
 ## Penyelarasan Test Arsitektur (Audit Recovery 2026-11-01)
-Suite arsitektur `tests/architecture/ci_runner_labels.rs` telah diperbarui dengan mendaftarkan `"doctest"` ke array `HEAVY_JOBS`:
+Suite arsitektur `tests/architecture/ci_runner_labels.rs` telah diperbarui dengan mendaftarkan `"doctest"` dan `"sonar"` (sinkronisasi upstream testing) ke array `HEAVY_JOBS`:
 ```rust
-const HEAVY_JOBS: [&str; 4] = ["lint", "check", "test", "doctest"];
+const HEAVY_JOBS: [&str; 5] = ["lint", "check", "test", "doctest", "sonar"];
 ```
 Sesuai koreksi audit blocked 2026-11-01, `tests/architecture/ci_runner_labels.rs` telah dimasukkan ke dalam `write_scope` TASK-097.
 Verifikasi `cargo test --locked --test architecture ci_runner_labels` lulus 100% (4 passed, 0 failed).

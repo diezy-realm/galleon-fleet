@@ -299,6 +299,7 @@ impl PostgresMemory {
             tenant_id: None,
             agent_alias: row.try_get("agent_alias").ok(),
             agent_id: row.try_get("agent_id").ok(),
+            scope: galleon_api::memory_traits::MemoryScope::Workspace,
         })
     }
 }

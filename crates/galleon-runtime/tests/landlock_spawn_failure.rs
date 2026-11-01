@@ -10,13 +10,14 @@
 //! nextest runs each test in a separate process, so exhausting all 16
 //! Landlock layers in this test does not affect other tests.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 #![cfg(all(feature = "sandbox-landlock", target_os = "linux"))]
 
+use galleon_runtime::security::landlock::LandlockSandbox;
+use galleon_runtime::security::traits::Sandbox;
 use landlock::{AccessFs, PathBeneath, PathFd, Ruleset, RulesetAttr, RulesetCreatedAttr};
 use std::path::Path;
 use std::process::Command;
-use galleon_runtime::security::landlock::LandlockSandbox;
-use galleon_runtime::security::traits::Sandbox;
 
 /// `E2BIG` on Linux (errno 7) — returned by `landlock_restrict_self(2)` when
 /// `LANDLOCK_MAX_NUM_LAYERS` (16) is exceeded. Defined inline because `libc`

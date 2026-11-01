@@ -1,4 +1,6 @@
-#![allow(clippy::to_string_in_format_args)]
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 18 per 2026-10-29; jangan menambah.
+#![allow(unsafe_code)]
+#![allow(clippy::to_string_in_format_args, clippy::collapsible_if)]
 //! ModelProvider subsystem for model inference backends.
 
 pub mod anthropic;

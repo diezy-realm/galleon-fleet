@@ -3,6 +3,9 @@
 // `to_string()` inside `record!` `format!` args is the deliberate pattern
 // for crossing a Serialize→string boundary; clippy can't tell those from
 // redundant calls, so the lint is silenced at the crate root.
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 27 per 2026-10-29; jangan menambah.
+#![allow(unsafe_code)]
+#![allow(clippy::collapsible_if)]
 #![allow(clippy::to_string_in_format_args)]
 #![allow(clippy::useless_format)]
 

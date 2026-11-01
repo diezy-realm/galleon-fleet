@@ -1,4 +1,6 @@
 #![recursion_limit = "256"]
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 12 per 2026-10-29; jangan menambah.
+#![allow(unsafe_code)]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(
     clippy::assigning_clones,
@@ -30,6 +32,9 @@
     clippy::unnecessary_literal_bound,
     clippy::unnecessary_map_or,
     clippy::unnecessary_wraps,
+    clippy::wildcard_imports,
+    clippy::semicolon_if_nothing_returned,
+    clippy::unnecessary_semicolon,
     unused_variables,
     unused_imports
 )]

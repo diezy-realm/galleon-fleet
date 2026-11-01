@@ -5,6 +5,7 @@
 //! - optional_channel_routes() dan /sop/{*rest} terpasang di build_gateway_router
 //! - PR dibuka ke branch testing, CI dev-ci (gates.sh) hijau
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 

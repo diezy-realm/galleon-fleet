@@ -1,12 +1,13 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::{Router, extract::State, routing::post};
-use tempfile::TempDir;
-use tokio::sync::Mutex as AsyncMutex;
 use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
 use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
+use tempfile::TempDir;
+use tokio::sync::Mutex as AsyncMutex;
 
 // Unique sentinel that exists ONLY in the planted Conversation entry: it must
 // not appear in the cron prompt or any system prompt. If it surfaces in the

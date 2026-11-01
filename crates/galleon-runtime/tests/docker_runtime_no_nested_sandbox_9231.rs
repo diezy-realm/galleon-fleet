@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 #![cfg(unix)]
 
 use std::collections::HashMap;

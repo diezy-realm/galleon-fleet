@@ -13496,7 +13496,7 @@ fn collect_configured_channels(
                         resolved_transcription_manager(&config, &format!("telegram.{alias}"))
                             .map(|m| m as Arc<dyn galleon_channel_telegram::AudioTranscriber>),
                     )
-                    .with_tts_synthesizer(resolve_telegram_tts(&config, &alias))
+                    .with_tts_synthesizer(resolve_telegram_tts(&config, alias))
                     .with_workspace_dir(config.channel_workspace_dir(&format!("telegram.{alias}")))
                     .with_proxy_url(tg.proxy_url.clone())
                     .with_tool_command_specs(tool_specs.to_vec())

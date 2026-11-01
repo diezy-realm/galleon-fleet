@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use galleon_config::schema::{Config, MdnsConfig, NodesConfig};
 
 #[test]

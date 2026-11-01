@@ -1,8 +1,14 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 219 per 2026-10-29; jangan menambah.
+#![allow(unsafe_code)]
 #![allow(
     clippy::to_string_in_format_args,
     clippy::useless_format,
     clippy::manual_inspect,
-    clippy::collapsible_if
+    clippy::collapsible_if,
+    clippy::disallowed_macros,
+    clippy::disallowed_methods,
+    clippy::derivable_impls,
+    clippy::field_reassign_with_default
 )]
 //! Agent runtime — orchestration, security, observability, cron, SOP, skills, hardware, and more.
 

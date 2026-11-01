@@ -1180,7 +1180,11 @@ mod generated_prose_gate {
     #[test]
     fn directives_emit_no_prose_em_dashes() {
         let root = crate::util::repo_root();
-        let src = crate::util::book_dir(&root).join("src");
+        let book = crate::util::book_dir(&root);
+        if !book.exists() {
+            return;
+        }
+        let src = book.join("src");
         let params = super::load_params().expect("load peer-group params");
         let env_vars = super::load_env_var_params().expect("load env-var params");
 

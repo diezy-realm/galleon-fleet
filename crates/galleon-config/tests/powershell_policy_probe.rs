@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use galleon_api::runtime_traits::ShellDialect;
 use galleon_config::policy::{CommandRiskLevel, SecurityPolicy};
 
