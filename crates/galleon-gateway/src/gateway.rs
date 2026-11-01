@@ -13,6 +13,32 @@ use tower_http::timeout::TimeoutLayer;
 
 use crate::state::{AppState, GatewaySupervision};
 
+/// Backoff after a transient `accept()` error so the serve loop does not
+/// hot-spin while the condition (e.g. fd exhaustion) clears.
+const ACCEPT_ERROR_BACKOFF_MS: u64 = 50;
+
+/// File-descriptor exhaustion errno values, stable across the Unix targets
+/// we support (Linux, macOS, BSD).
+#[cfg(unix)]
+const EMFILE: i32 = 24; // too many open files (this process)
+#[cfg(unix)]
+const ENFILE: i32 = 23; // too many open files (system-wide)
+
+fn is_recoverable_accept_error(e: &std::io::Error) -> bool {
+    use std::io::ErrorKind;
+    if matches!(
+        e.kind(),
+        ErrorKind::ConnectionAborted | ErrorKind::Interrupted | ErrorKind::WouldBlock
+    ) {
+        return true;
+    }
+    #[cfg(unix)]
+    if matches!(e.raw_os_error(), Some(EMFILE) | Some(ENFILE)) {
+        return true;
+    }
+    false
+}
+
 /// Run the HTTP gateway using axum with proper HTTP/1.1 compliance.
 pub async fn run_gateway(
     host: &str,
@@ -56,6 +82,22 @@ pub async fn run_gateway_with_plugin_webhooks(
     sop_runner: Option<std::sync::Arc<dyn galleon_api::sop::SopRunner>>,
     supervision: GatewaySupervision,
 ) -> Result<()> {
+    // ── Security: warn on public bind without tunnel or explicit opt-in ──
+    if galleon_config::pairing::is_public_bind(host)
+        && config.tunnel.tunnel_provider == "none"
+        && !config.gateway.allow_public_bind
+    {
+        ::galleon_log::record!(
+            WARN,
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
+            "⚠️  Binding to {host} — gateway will be exposed to all network interfaces.\n\
+             Suggestion: use --host 127.0.0.1 (default), configure a tunnel, or set\n\
+             [gateway] allow_public_bind = true in config.toml to silence this warning.\n\n\
+             Docker/VM: if you are running inside a container or VM, this is expected."
+        );
+    }
+
     let state = AppState::from_config_and_controls(
         config,
         external_event_tx,
@@ -66,13 +108,25 @@ pub async fn run_gateway_with_plugin_webhooks(
     );
     let app = build_gateway_router(state.clone());
 
-    let _tls_acceptor = match &state.config.read().gateway.tls {
-        Some(tls_cfg) if tls_cfg.enabled => match crate::tls::build_tls_acceptor(tls_cfg) {
-            Ok(acceptor) => Some(acceptor),
-            Err(e) => {
-                return Err(anyhow::Error::msg(format!("Gateway TLS setup failed: {e}")));
+    // ── TLS / mTLS setup ───────────────────────────────────────────
+    let tls_acceptor = match &state.config.read().gateway.tls {
+        Some(tls_cfg) if tls_cfg.enabled => {
+            let has_mtls = tls_cfg.client_auth.as_ref().is_some_and(|ca| ca.enabled);
+            if has_mtls {
+                ::galleon_log::record!(
+                    INFO,
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
+                    "TLS enabled with mutual TLS (mTLS) client verification"
+                );
+            } else {
+                ::galleon_log::record!(
+                    INFO,
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
+                    "TLS enabled (no client certificate requirement)"
+                );
             }
-        },
+            Some(crate::tls::build_tls_acceptor(tls_cfg)?)
+        }
         _ => None,
     };
 
@@ -83,18 +137,117 @@ pub async fn run_gateway_with_plugin_webhooks(
     supervision.report_ready(actual_addr);
 
     let mut shutdown_rx = state.shutdown_tx.subscribe();
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .with_graceful_shutdown(async move {
-        while let Ok(should_exit) = shutdown_rx.wait_for(|&x| x).await {
-            if *should_exit {
-                break;
+    if let Some(tls_acceptor) = tls_acceptor {
+        // Manual TLS accept loop — serves each connection via hyper.
+        let app = app.into_make_service_with_connect_info::<SocketAddr>();
+        let mut app = app;
+
+        let mut shutdown_signal = shutdown_rx;
+        if *shutdown_signal.borrow() {
+            return Ok(());
+        }
+        loop {
+            tokio::select! {
+                conn = listener.accept() => {
+                    let (tcp_stream, remote_addr) = match conn {
+                        Ok(pair) => pair,
+                        Err(e) => {
+                            if is_recoverable_accept_error(&e) {
+                                // Transient (e.g. EMFILE under fd pressure):
+                                // the listener is still valid. Back off
+                                // briefly to avoid hot-spinning, then keep
+                                // serving rather than killing the daemon
+                                ::galleon_log::record!(
+                                    WARN,
+                                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                        .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                        .with_attrs(::serde_json::json!({"error": format!("{e}")})),
+                                    "gateway accept() failed with a transient error; backing off and continuing"
+                                );
+                                tokio::time::sleep(Duration::from_millis(ACCEPT_ERROR_BACKOFF_MS)).await;
+                                continue;
+                            }
+                            return Err(e.into());
+                        }
+                    };
+                    let tls_acceptor = tls_acceptor.clone();
+                    let svc = match tower::MakeService::<
+                        SocketAddr,
+                        hyper::Request<hyper::body::Incoming>,
+                    >::make_service(&mut app, remote_addr)
+                    .await
+                    {
+                        Ok(svc) => svc,
+                        Err(never) => match never {},
+                    };
+
+                    galleon_spawn::spawn!(async move {
+                        let tls_stream = match tls_acceptor.accept(tcp_stream).await {
+                            Ok(s) => s,
+                            Err(e) => {
+                                ::galleon_log::record!(
+                                    DEBUG,
+                                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                        .with_attrs(::serde_json::json!({"error": format!("{e}"), "remote_addr": remote_addr})),
+                                    "TLS handshake failed from"
+                                );
+                                return;
+                            }
+                        };
+                        let io = hyper_util::rt::TokioIo::new(tls_stream);
+                        let hyper_svc = hyper::service::service_fn(move |req: hyper::Request<hyper::body::Incoming>| {
+                            let mut svc = svc.clone();
+                            async move {
+                                tower::Service::call(&mut svc, req).await
+                            }
+                        });
+                        if let Err(e) = hyper_util::server::conn::auto::Builder::new(
+                            hyper_util::rt::TokioExecutor::new(),
+                        )
+                        .serve_connection_with_upgrades(io, hyper_svc)
+                        .await
+                        {
+                            ::galleon_log::record!(
+                                DEBUG,
+                                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                    .with_attrs(::serde_json::json!({"error": format!("{e}"), "remote_addr": remote_addr})),
+                                "connection error from"
+                            );
+                        }
+                    });
+                }
+                res = shutdown_signal.changed() => {
+                    if res.is_err() || *shutdown_signal.borrow_and_update() {
+                        ::galleon_log::record!(
+                            INFO,
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
+                            "Galleon Gateway shutting down"
+                        );
+                        break;
+                    }
+                }
             }
         }
-    })
-    .await?;
+    } else {
+        // Plain TCP — use axum's built-in serve.
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .with_graceful_shutdown(async move {
+            while let Ok(should_exit) = shutdown_rx.wait_for(|&x| x).await {
+                if *should_exit {
+                    break;
+                }
+            }
+            ::galleon_log::record!(
+                INFO,
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
+                "Galleon Gateway shutting down"
+            );
+        })
+        .await?;
+    }
 
     Ok(())
 }
