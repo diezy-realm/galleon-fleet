@@ -2,6 +2,7 @@
 //! (table instead of array-of-tables) must be reported as a dropped section,
 //! never silently swallowed into defaults.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use galleon_config::migration::migrate_to_current_salvaged;
 
 #[test]

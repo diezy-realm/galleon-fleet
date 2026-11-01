@@ -1,9 +1,10 @@
 //! Integration tests for the SQLite multi-agent DB migration.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
+use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 use rusqlite::{Connection, OptionalExtension};
 use std::path::Path;
 use tempfile::TempDir;
-use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 
 fn db_path(workspace: &Path) -> std::path::PathBuf {
     workspace.join("memory").join("brain.db")

@@ -10,12 +10,13 @@
 //!   3. Child denied path (reads /etc/passwd — must fail)
 //!   4. Post-parent access (reads /etc/passwd after spawning children)
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 #![cfg(all(feature = "sandbox-landlock", target_os = "linux"))]
 
-use std::path::Path;
-use std::process::Command;
 use galleon_runtime::security::landlock::LandlockSandbox;
 use galleon_runtime::security::traits::Sandbox;
+use std::path::Path;
+use std::process::Command;
 
 #[test]
 fn landlock_contract() {

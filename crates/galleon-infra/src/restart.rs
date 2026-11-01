@@ -181,6 +181,7 @@ pub fn respawn_if_requested() -> Option<u32> {
         // SAFETY: `pre_exec` runs in the forked child before exec; `setsid` is
         // async-signal-safe and only detaches us into a new session/process
         // group so the child outlives this process and any terminal hangup.
+        #[allow(unsafe_code)]
         unsafe {
             command.pre_exec(|| {
                 libc::setsid();

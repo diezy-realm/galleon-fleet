@@ -9,6 +9,9 @@ description = "Interactive TUI config manager for ClawCrew."
 repository.workspace = true
 publish = true
 
+[lints]
+workspace = true
+
 [features]
 default = []
 

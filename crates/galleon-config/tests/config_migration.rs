@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use galleon_config::config_migration::{default_legacy_config_dir, migrate_config_directory};
 use std::fs;
 use tempfile::tempdir;

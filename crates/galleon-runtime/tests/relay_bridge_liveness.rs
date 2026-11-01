@@ -8,6 +8,7 @@
 //! registration and then never reading again (established). Both must end in a
 //! bounded time, and daemon cancellation must return promptly from any phase of
 //! the setup rather than waiting on a peer that has stopped speaking.
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 #![allow(clippy::disallowed_methods)]
 
 use std::net::SocketAddr;
@@ -18,6 +19,7 @@ use std::time::Duration;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as B64;
 use futures_util::{SinkExt, StreamExt};
+use galleon_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, encode_data};
 use tokio::io::AsyncReadExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc;
@@ -25,7 +27,6 @@ use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_util::sync::CancellationToken;
-use galleon_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, encode_data};
 
 /// Mirrors the bridge's own `SETUP_DEADLINE`. The constant is module-private, so
 /// these tests assert the behaviour it produces with margins wide enough that

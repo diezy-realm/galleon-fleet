@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 1 per 2026-10-29; jangan menambah.
+#![allow(unsafe_code)]
 #![allow(
     clippy::to_string_in_format_args,
     clippy::useless_format,

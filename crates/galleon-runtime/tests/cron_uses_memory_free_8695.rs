@@ -1,16 +1,17 @@
 //! Integration test a cron job with `uses_memory = false` must be
 //! memory-free end to end, not merely opted out of the context preamble.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::{Router, extract::State, routing::post};
-use tempfile::TempDir;
-use tokio::sync::Mutex as AsyncMutex;
 use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
 use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 use galleon_runtime::agent::loop_::AgentRunOverrides;
+use tempfile::TempDir;
+use tokio::sync::Mutex as AsyncMutex;
 
 // Present ONLY in the planted memory entry: if it surfaces in a provider
 // request body, recall injected it. A memory-free run must never surface it.

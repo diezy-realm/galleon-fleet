@@ -1,5 +1,9 @@
 //! Tool implementations for agent-callable capabilities.
 
+#![allow(clippy::unwrap_used, clippy::expect_used)] // RATCHET(BL-091): 22 per 2026-10-29; jangan menambah.
+#![allow(unsafe_code)]
+#![allow(clippy::collapsible_if, clippy::items_after_test_module)]
+
 pub mod attribution;
 pub mod helpers;
 pub(crate) mod i18n;

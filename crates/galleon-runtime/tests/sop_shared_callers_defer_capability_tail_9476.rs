@@ -13,6 +13,7 @@
 //! of the call graph, not of any single run. A behavioral test can only cover the
 //! surfaces it happens to enumerate; this fails for a surface added tomorrow.
 
+#![allow(clippy::unwrap_used, clippy::expect_used, unsafe_code)]
 use std::path::{Path, PathBuf};
 
 /// Files that own a shared, concurrently-reachable transport into the broker.
