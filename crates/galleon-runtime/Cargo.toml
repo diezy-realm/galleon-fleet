@@ -25,6 +25,7 @@ galleon-providers.workspace = true
 galleon-memory.workspace = true
 galleon-tools.workspace = true
 galleon-sop-graph.workspace = true
+galleon-tunnel.workspace = true
 galleon-plugins = { workspace = true, optional = true }
 galleon-tool-call-parser.workspace = true
 anyhow = "1.0"

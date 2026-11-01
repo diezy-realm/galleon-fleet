@@ -58,4 +58,4 @@ pub use agent::{Agent, RuntimeAgentRunner, install_agent_runner, process_message
 pub mod tools;
 pub mod trust;
 pub mod tui_identity;
-pub mod tunnel;
+pub use galleon_tunnel as tunnel;

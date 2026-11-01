@@ -4527,6 +4527,7 @@ dependencies = [
  "galleon-spawn",
  "galleon-tls",
  "galleon-tools",
+ "galleon-tunnel",
  "hex",
  "hmac 0.12.1",
  "http-body-util",
@@ -4833,6 +4834,7 @@ dependencies = [
  "galleon-tls",
  "galleon-tool-call-parser",
  "galleon-tools",
+ "galleon-tunnel",
  "galleonrelay",
  "glob",
  "hex",
@@ -5003,6 +5005,19 @@ dependencies = [
  "webpki-roots 1.0.9",
  "which",
  "wiremock",
+]
+
+[[package]]
+name = "galleon-tunnel"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "galleon-config",
+ "galleon-log",
+ "galleon-spawn",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

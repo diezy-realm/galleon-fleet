@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 mod cloudflare;
 mod custom;
 mod ngrok;

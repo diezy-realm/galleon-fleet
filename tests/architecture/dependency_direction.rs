@@ -5,6 +5,8 @@
 //! - galleon-api is a leaf: must not depend on higher-level workspace crates (runtime, gateway, channels, tools, providers).
 //! - galleon-plugins must not depend on galleon-runtime.
 //! - galleon-channel-* must not depend on galleon-runtime directly.
+//! - galleon-tunnel must not depend on galleon-runtime, galleon-gateway, or galleon-channels.
+//! - galleon-fleet-core must not depend on galleon-gateway, galleon-channels, or galleon-providers.
 
 use std::{fs, path::Path};
 
@@ -101,6 +103,32 @@ fn crate_dependency_direction_strictly_enforced() {
             assert!(
                 !has_active_dependency(&content, "galleon-runtime"),
                 "Channel crate {channel_crate} must not depend on galleon-runtime"
+            );
+        }
+    }
+
+    // 4. Check galleon-tunnel does not depend on galleon-runtime, galleon-gateway, galleon-channels
+    let tunnel_cargo = root.join("crates/galleon-tunnel/Cargo.toml");
+    if tunnel_cargo.exists() {
+        let content =
+            fs::read_to_string(&tunnel_cargo).expect("crates/galleon-tunnel/Cargo.toml readable");
+        for forbidden in ["galleon-runtime", "galleon-gateway", "galleon-channels"] {
+            assert!(
+                !has_active_dependency(&content, forbidden),
+                "galleon-tunnel must not depend on {forbidden}"
+            );
+        }
+    }
+
+    // 5. Check galleon-fleet-core does not depend on galleon-gateway, galleon-channels, galleon-providers
+    let fleet_core_cargo = root.join("crates/galleon-fleet-core/Cargo.toml");
+    if fleet_core_cargo.exists() {
+        let content = fs::read_to_string(&fleet_core_cargo)
+            .expect("crates/galleon-fleet-core/Cargo.toml readable");
+        for forbidden in ["galleon-gateway", "galleon-channels", "galleon-providers"] {
+            assert!(
+                !has_active_dependency(&content, forbidden),
+                "galleon-fleet-core must not depend on {forbidden}"
             );
         }
     }

@@ -32,6 +32,7 @@ galleon-routing.workspace = true
 galleon-security-scrub.workspace = true
 galleon-i18n.workspace = true
 galleon-fleet-core.workspace = true
+galleon-tunnel.workspace = true
 sysinfo = { version = "0.36", default-features = false, features = ["system"] }
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 
