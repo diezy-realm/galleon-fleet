@@ -82,7 +82,7 @@ pub async fn run_gateway_with_plugin_webhooks(
 
     // ── Tunnel ────────────────────────────────────────────────
     let tunnel_cfg = state.config.read().tunnel.clone();
-    let tunnel = match galleon_runtime::tunnel::create_tunnel(&tunnel_cfg) {
+    let tunnel = match galleon_tunnel::create_tunnel(&tunnel_cfg) {
         Ok(t) => t,
         Err(e) => {
             ::galleon_log::record!(
