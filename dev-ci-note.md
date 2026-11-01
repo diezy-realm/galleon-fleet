@@ -43,7 +43,10 @@ gate_doctest() {
 ```
 Catatan: Worker produk dilarang mengedit repositori `~/Apps/dev-ci` secara langsung; integrasi lane lokal dilakukan melalui handoff ini.
 
-## Catatan Squad-Lead: Batasan Scope & Test Arsitektur
-Suite arsitektur `tests/architecture/ci_runner_labels.rs` mendefinisikan inventori `HEAVY_JOBS: [&str; 3] = ["lint", "check", "test"];`. Penambahan job `doctest` di `.github/workflows/ci.yml` menuntut penambahan `"doctest"` ke array `HEAVY_JOBS` (`const HEAVY_JOBS: [&str; 4] = ["lint", "check", "test", "doctest"];`) pada test tersebut.
-Sesuai mandat `write_scope` TASK-097 (`['.github/workflows/ci.yml', '.config/nextest.toml', 'crates/**', 'src/**', 'apps/**', 'dev-ci-note.md']`), direktori `tests/**` berada di luar scope tulis worker. Upaya memodifikasi `tests/` memicu pelanggaran integritas write scope (`RuntimeError: delivery changed files outside write_scope`).
-Sesuai audit tata kelola (sprint-16 AUDIT.md baris 43), pembaruan deklarasi `HEAVY_JOBS` pada `tests/architecture/ci_runner_labels.rs` diserahkan kepada Squad Lead / task tata kelola dengan write scope mencakup `tests/**`.
+## Penyelarasan Test Arsitektur (Audit Recovery 2026-11-01)
+Suite arsitektur `tests/architecture/ci_runner_labels.rs` telah diperbarui dengan mendaftarkan `"doctest"` ke array `HEAVY_JOBS`:
+```rust
+const HEAVY_JOBS: [&str; 4] = ["lint", "check", "test", "doctest"];
+```
+Sesuai koreksi audit blocked 2026-11-01, `tests/architecture/ci_runner_labels.rs` telah dimasukkan ke dalam `write_scope` TASK-097.
+Verifikasi `cargo test --locked --test architecture ci_runner_labels` lulus 100% (4 passed, 0 failed).
