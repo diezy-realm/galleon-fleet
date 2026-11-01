@@ -1,6 +1,6 @@
 //! PostgreSQL-backed memory implementation.
 
-use super::traits::{Memory, MemoryCategory, MemoryEntry, normalize_recent_recall_query};
+use super::traits::{normalize_recent_recall_query, Memory, MemoryCategory, MemoryEntry};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -299,6 +299,7 @@ impl PostgresMemory {
             tenant_id: None,
             agent_alias: row.try_get("agent_alias").ok(),
             agent_id: row.try_get("agent_id").ok(),
+            scope: galleon_api::memory_traits::MemoryScope::Workspace,
         })
     }
 }
