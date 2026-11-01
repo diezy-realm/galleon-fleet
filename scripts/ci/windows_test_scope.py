@@ -12,9 +12,9 @@ from pathlib import Path
 from pathlib import PurePosixPath
 
 
-DESKTOP_PACKAGE = "clawcrew-desktop"
+DESKTOP_PACKAGE = "galleon-desktop"
 PLUGIN_HOST_PACKAGE = "galleon-plugins"
-PLUGIN_FEATURE_OWNER_PACKAGES = {"clawcrew", "galleon-gateway", "galleon-providers"}
+PLUGIN_FEATURE_OWNER_PACKAGES = {"galleon-fleet", "clawcrew", "galleon-gateway", "galleon-providers"}  # backward-compat
 SAFE_PACKAGE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.+-]*$")
 DOC_SUFFIXES = {".md", ".mdx", ".markdown", ".rst"}
 FULL_PATHS = {

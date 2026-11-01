@@ -42,5 +42,5 @@ jobs:
       - name: Install nextest
         uses: taiki-e/install-action@nextest
 
-      - name: Run clawcrew-eval regression suite
-        run: cargo nextest run -p clawcrew-eval
+      - name: Run galleon-eval regression suite
+        run: cargo nextest run -p galleon-eval

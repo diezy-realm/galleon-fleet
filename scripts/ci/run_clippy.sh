@@ -54,7 +54,6 @@ case "$scope" in
     workspace)
         command+=(
             --workspace
-            --exclude clawcrew-desktop
             --all-targets
             --features ci-all
         )

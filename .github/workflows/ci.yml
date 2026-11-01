@@ -51,6 +51,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Guard declared submodules
         shell: bash
         run: |
@@ -114,6 +116,17 @@ jobs:
       - name: Test no-go guard
         run: bash scripts/ci/check_no_go.test.sh
 
+      - name: Fetch base branch for brand gate
+        if: github.base_ref != ''
+        run: |
+          git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}" --depth=100 || git fetch origin "${{ github.base_ref }}" || true
+
+      - name: Brand compliance gate
+        run: bash scripts/ci/brand_gate.sh
+
+      - name: Test brand compliance gate
+        run: bash scripts/ci/brand_gate.test.sh
+
   zerocode-rpc-boundary:
     name: Zerocode RPC Boundary
     runs-on: [self-hosted, linux, galleon-light]
@@ -164,9 +177,7 @@ jobs:
             --summary-title "Lint diagnostics" \
             --log-name cargo-clippy.log
       - name: Rustdoc warnings gate
-        # Exclude clawcrew-desktop: same surface as xtask build_api / docs-deploy.
-        # Desktop pulls glib-sys on Linux; the lint runner does not install GTK libs.
-        run: cargo doc --no-deps --workspace --exclude clawcrew-desktop
+        run: cargo doc --no-deps --workspace
       - name: Comment hygiene gate (no issue refs / review notes / truncation artifacts)
         run: |
           bash scripts/ci/comment_hygiene_gate.test.sh
@@ -187,7 +198,7 @@ jobs:
       matrix:
         include:
           - name: no default features
-            args: --workspace --exclude clawcrew-desktop --no-default-features
+            args: --workspace --no-default-features
             rustflags: -D warnings
           # Lint already denies warnings with --all-targets, but only at
           # --features ci-all. Feature-gated call sites are live there, so a
@@ -195,7 +206,7 @@ jobs:
           # drift lands green. This row compiles the test targets on the
           # default surface, where that mismatch is visible.
           - name: default features, all targets
-            args: --workspace --exclude clawcrew-desktop --all-targets
+            args: --workspace --all-targets
             rustflags: -D warnings
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -218,7 +229,7 @@ jobs:
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Run tests
-        run: cargo nextest run --locked --workspace --exclude clawcrew-desktop
+        run: cargo nextest run --locked --workspace
         env:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: clang
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: "-C link-arg=-fuse-ld=mold"

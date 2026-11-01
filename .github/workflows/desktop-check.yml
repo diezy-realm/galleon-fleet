@@ -1,6 +1,6 @@
 name: Desktop App Check
 
-# Compiles + lints `clawcrew-desktop` (the Tauri app) on macOS, Linux, and
+# Compiles + lints `galleon-desktop` (the Tauri app) on macOS, Linux, and
 # Windows. The workspace-wide cross-platform-clippy job intentionally
 # `--exclude`s this crate (it needs the platform GUI toolchains), so without
 # this job the desktop app is never type-checked off the author's machine.

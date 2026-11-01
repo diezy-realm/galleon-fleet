@@ -444,7 +444,7 @@ jobs:
         run: |
           set -euo pipefail
           kernel="$GITHUB_WORKSPACE/apps/tauri/binaries/clawcrew-universal-apple-darwin"
-          smoke_root="$RUNNER_TEMP/clawcrew-desktop-smoke"
+          smoke_root="$RUNNER_TEMP/galleon-desktop-smoke"
           smoke_cwd="$smoke_root/cwd"
           smoke_home="$smoke_root/home"
           xdg_data_home="$smoke_root/xdg-data"

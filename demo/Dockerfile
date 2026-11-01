@@ -41,10 +41,11 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
         --example esp32_sim \
         --features "hardware dev-sim" \
     && cargo build \
-        --bin clawcrew \
+        --bin galleon \
         --no-default-features \
         --features "agent-runtime hardware dev-sim" \
-    && cp /build/target/debug/clawcrew /tmp/clawcrew \
+    && cp /build/target/debug/galleon /tmp/galleon \
+    && cp /build/target/debug/galleon /tmp/clawcrew \
     && cp /build/target/debug/examples/esp32_sim /tmp/esp32_sim
 
 # ─── Stage 2: runtime ──────────────────────────────────────────────────────
@@ -58,6 +59,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+COPY --from=builder /tmp/galleon /usr/local/bin/galleon
 COPY --from=builder /tmp/clawcrew /usr/local/bin/clawcrew
 COPY --from=builder /tmp/esp32_sim /usr/local/bin/esp32_sim
 

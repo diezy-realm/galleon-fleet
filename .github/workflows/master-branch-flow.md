@@ -65,7 +65,7 @@ tag push.
 1. Contributor opens or updates a PR targeting `master`.
 2. `ci.yml` runs:
    - `lint`: `cargo fmt --all -- --check`, `cargo clippy --workspace
-     --exclude clawcrew-desktop --all-targets --features ci-all -- -D warnings`
+     --all-targets --features ci-all -- -D warnings`
      (PRs only).
    - `build`: matrix across `x86_64-unknown-linux-gnu`,
      `aarch64-apple-darwin`, `x86_64-pc-windows-msvc`.

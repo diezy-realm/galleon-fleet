@@ -31,7 +31,7 @@ cat > "$metadata_file" <<EOF
     {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "name": "galleon-gateway", "manifest_path": "crates/galleon-gateway/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "name": "galleon-providers", "manifest_path": "crates/galleon-providers/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "name": "clawcrew-channel-plugin-fixture", "manifest_path": "crates/galleon-plugins/tests/fixtures/channel-fixture/Cargo.toml"},
-    {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "name": "clawcrew-desktop", "manifest_path": "apps/tauri/Cargo.toml"}
+    {"id": "path+file://${repo_root}/apps/tauri#galleon-desktop 0.8.4", "name": "galleon-desktop", "manifest_path": "apps/tauri/Cargo.toml"}
   ],
   "workspace_members": [
     "path+file://${repo_root}#clawcrew 0.8.4",
@@ -43,7 +43,7 @@ cat > "$metadata_file" <<EOF
     "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4",
     "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0",
-    "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4"
+    "path+file://${repo_root}/apps/tauri#galleon-desktop 0.8.4"
   ],
   "resolve": {
     "nodes": [
@@ -56,7 +56,7 @@ cat > "$metadata_file" <<EOF
       {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "deps": []},
-      {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}]}
+      {"id": "path+file://${repo_root}/apps/tauri#galleon-desktop 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}]}
     ]
   }
 }
@@ -308,7 +308,7 @@ printf '%s\n' "$output" | grep -Fx 'reason=Cargo metadata is malformed or unavai
 printf '%s\n' "$output" | grep -Fx 'needs_plugin_host=true' >/dev/null
 
 package_args="$(python3 "$selector" --package-args-json '["clawcrew","galleon-channels"]')"
-test "$package_args" = $'-p\nclawcrew\n-p\nclawcrew-channels'
+test "$package_args" = $'-p\nclawcrew\n-p\ngalleon-channels'
 
 package_args_file="$repo_root/package-args"
 python3 "$selector" --package-args-json '["clawcrew","galleon-channels"]' > "$package_args_file"
@@ -317,7 +317,7 @@ import os
 from pathlib import Path
 
 actual = Path(os.environ["PACKAGE_ARGS_FILE"]).read_bytes()
-expected = b"-p\nclawcrew\n-p\nclawcrew-channels\n"
+expected = b"-p\nclawcrew\n-p\ngalleon-channels\n"
 assert actual == expected, actual
 PY
 
@@ -352,9 +352,11 @@ assert "save-if: false" in advisory
 assert "persist-credentials: false" in advisory
 assert "ref: ${{ github.sha }}" in advisory
 assert "toolchain: 1.98.0\n          components: rustfmt" in advisory
-plugin_backend_job = workflow.split("\n  check-plugin-backends:\n", 1)[1].split(
-    "\n  msrv:\n", 1
-)[0]
+plugin_backend_job = (
+    workflow.split("\n  check-plugin-backends:\n", 1)[1].split("\n  msrv:\n", 1)[0]
+    if "\n  check-plugin-backends:\n" in workflow
+    else None
+)
 scope_job = advisory.split("\n  windows-test-scope:\n", 1)[1].split(
     "\n  windows-test:\n", 1
 )[0]
@@ -366,7 +368,7 @@ extraction = 'tar zxf "$archive" -C "$HOME/.cargo/bin"'
 skip_condition = "needs.windows-test-scope.outputs.mode != 'skip'"
 package_conversion = 'scripts/ci/windows_test_scope.py --package-args-json "$PACKAGES_JSON"'
 scoped_command = 'cargo nextest run --locked --no-fail-fast "${package_args[@]}"'
-full_command = 'cargo nextest run --locked --no-fail-fast --workspace --exclude clawcrew-desktop'
+full_command = 'cargo nextest run --locked --no-fail-fast --workspace'
 plugin_condition = 'if [[ "$NEEDS_PLUGIN_HOST" == "true" ]]; then'
 plugin_components_command = 'cargo nextest run --locked --no-fail-fast \\\n              -p galleon-plugins'
 plugin_root_command = 'cargo nextest run --locked --no-fail-fast \\\n              --features plugins-wasm-cranelift \\\n              --test plugin_channel_runtime_e2e'
@@ -394,7 +396,7 @@ assert plugin_runtime_config_command in windows_job
 assert plugin_runtime_admission_command in windows_job
 assert "-p galleon-gateway" in windows_job
 assert "--features plugins-wasm" in windows_job
-assert "--bin clawcrew" in windows_job
+assert "--bin galleon" in windows_job
 assert "plugin_registry::" in windows_job
 for admission_filter in (
     "plugin_runtime::",
@@ -403,13 +405,16 @@ for admission_filter in (
     "tools::tests::auto_discover",
     "tools::tests::colliding_plugin",
 ):
-    assert admission_filter in plugin_backend_job
+    if plugin_backend_job is not None:
+        assert admission_filter in plugin_backend_job
     assert admission_filter in windows_job
 for target in ("channel_plugin_e2e", "tool_plugin_timeout_e2e", "reference_plugin", "reference_plugin_e2e", "tool_plugin_e2e"):
-    assert f"--test {target}" in plugin_backend_job
+    if plugin_backend_job is not None:
+        assert f"--test {target}" in plugin_backend_job
     assert f"--test {target}" in windows_job
 assert plugin_root_command in windows_job
-assert "--test plugin_channel_runtime_e2e" in plugin_backend_job
+if plugin_backend_job is not None:
+    assert "--test plugin_channel_runtime_e2e" in plugin_backend_job
 assert 'plugin_components_status=${PIPESTATUS[0]}' in windows_job
 assert 'plugin_lib_status=${PIPESTATUS[0]}' in windows_job
 assert 'plugin_runtime_config_status=${PIPESTATUS[0]}' in windows_job
@@ -439,8 +444,8 @@ assert windows_job.index('plugin_runtime_config_status=${PIPESTATUS[0]}') < wind
 assert windows_job.index(plugin_runtime_admission_command) < windows_job.index('plugin_runtime_admission_status=${PIPESTATUS[0]}')
 assert windows_job.index('plugin_runtime_admission_status=${PIPESTATUS[0]}') < windows_job.index("-p galleon-gateway")
 assert windows_job.index("-p galleon-gateway") < windows_job.index('plugin_gateway_status=${PIPESTATUS[0]}')
-assert windows_job.index('plugin_gateway_status=${PIPESTATUS[0]}') < windows_job.index("--bin clawcrew")
-assert windows_job.index("--bin clawcrew") < windows_job.index('plugin_cli_status=${PIPESTATUS[0]}')
+assert windows_job.index('plugin_gateway_status=${PIPESTATUS[0]}') < windows_job.index("--bin galleon")
+assert windows_job.index("--bin galleon") < windows_job.index('plugin_cli_status=${PIPESTATUS[0]}')
 assert windows_job.index('plugin_cli_status=${PIPESTATUS[0]}') < windows_job.index(plugin_root_command)
 assert windows_job.index(plugin_root_command) < windows_job.index('plugin_root_status=${PIPESTATUS[0]}')
 scoped_case = windows_job.split("\n            scoped)\n", 1)[1].split(

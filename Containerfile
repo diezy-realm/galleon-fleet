@@ -121,14 +121,12 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
     touch web/dist/.gitkeep
     cargo fmt --all -- --check
     # --features ci-all matches CI's Lint job — validates all feature-gated code.
-    # --exclude clawcrew-desktop: needs GTK/WebKit (not in StageX).
     # --exclude galleoncode: inkjet/tree-sitter needs C++ compiler (not in StageX).
-    cargo clippy --workspace --exclude clawcrew-desktop --exclude galleoncode --all-targets --features ci-all --locked -- -D warnings
+    cargo clippy --workspace --exclude galleoncode --all-targets --features ci-all --locked -- -D warnings
 EOF
 
 # Test (needs loopback for wiremock — no --network=none)
 # --offline prevents cargo from fetching even if network is available.
-# --exclude clawcrew-desktop: requires GTK/GLib (tauri + tray-icon), not in StageX.
 # --exclude galleoncode: tree-sitter/inkjet inject -lstdc++ and need real C++ runtime
 #   symbols (operator new/delete, __cxa_throw, etc.) for YAML scanner code.
 #   The build stage succeeds because it uses -static + libstdc++.a stub, but test
@@ -136,7 +134,7 @@ EOF
 # --exclude xtask: its doc-gen gates read docs/ and .github/ paths that
 #   .dockerignore keeps out of the build context; those gates run in the
 #   standard CI Test job against the full tree.
-# --exclude clawcrew-tools: content_search/git_operations tests shell out to
+# --exclude galleon-tools: content_search/git_operations tests shell out to
 #   GNU rg/grep/git, which the minimal StageX image does not ship (busybox grep
 #   lacks the GNU flags); they run in the standard CI Test job.
 # --lib --bins --tests selects unit and integration tests only: doctests are
@@ -148,7 +146,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
     <<-EOF
     set -e
     export RUSTFLAGS="-C target-feature=-crt-static"
-    cargo test --workspace --lib --bins --tests --exclude clawcrew-desktop --exclude galleoncode --exclude xtask --exclude clawcrew-tools --offline --locked
+    cargo test --workspace --lib --bins --tests --exclude galleoncode --exclude xtask --exclude galleon-tools --offline --locked
 EOF
 
 # ── Stage: build (clawcrew + zerocode, default channels) ────
