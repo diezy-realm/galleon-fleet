@@ -3,10 +3,10 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::{
-    Json, Router,
     extract::State,
     response::IntoResponse,
     routing::{delete, get, patch, post},
+    Json, Router,
 };
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::timeout::TimeoutLayer;
@@ -316,6 +316,41 @@ pub fn build_gateway_router(state: AppState) -> Router {
         axum::http::StatusCode::REQUEST_TIMEOUT,
         Duration::from_secs(crate::REQUEST_TIMEOUT_SECS),
     ));
+
+    // Nest under path prefix when configured (axum strips prefix before routing).
+    // nest() at "/prefix" handles both "/prefix" and "/prefix/*" but not "/prefix/"
+    // with a trailing slash, so we add a fallback redirect for that case.
+    let path_prefix = {
+        let cfg = state.config.read();
+        cfg.gateway
+            .path_prefix
+            .as_deref()
+            .filter(|p| !p.is_empty())
+            .map(ToString::to_string)
+            .or_else(|| {
+                if !state.path_prefix.is_empty() {
+                    Some(state.path_prefix.clone())
+                } else {
+                    None
+                }
+            })
+    };
+
+    let app = if let Some(prefix) = path_prefix.as_deref() {
+        let redirect_target: std::sync::Arc<str> = prefix.into();
+        Router::new().nest(prefix, app).route(
+            &format!("{prefix}/"),
+            get({
+                let redirect_target = std::sync::Arc::clone(&redirect_target);
+                move || {
+                    let redirect_target = std::sync::Arc::clone(&redirect_target);
+                    async move { axum::response::Redirect::permanent(&redirect_target) }
+                }
+            }),
+        )
+    } else {
+        app
+    };
 
     let tls_enabled = state
         .config
