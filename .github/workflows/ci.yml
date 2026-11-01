@@ -51,6 +51,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Guard declared submodules
         shell: bash
         run: |
@@ -113,6 +115,11 @@ jobs:
 
       - name: Test no-go guard
         run: bash scripts/ci/check_no_go.test.sh
+
+      - name: Fetch base branch for brand gate
+        if: github.base_ref != ''
+        run: |
+          git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}" --depth=100 || git fetch origin "${{ github.base_ref }}" || true
 
       - name: Brand compliance gate
         run: bash scripts/ci/brand_gate.sh

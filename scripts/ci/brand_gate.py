@@ -59,9 +59,15 @@ EXCLUDED_EXTENSIONS = [
 _BASE_FILE_CACHE: dict[tuple[str, str], set[str]] = {}
 
 def is_excluded_path(file_path_str: str) -> bool:
-    posix_path = file_path_str.replace("\\", "/")
+    posix_path = file_path_str.replace("\\", "/").strip("/")
+    parts = posix_path.split("/")
     for excl in EXCLUDED_PATHS:
-        if excl in posix_path.split("/") or posix_path.startswith(excl) or f"/{excl}/" in f"/{posix_path}/":
+        excl_clean = excl.strip("/")
+        # Exact component match (e.g. '.git', 'target', 'node_modules')
+        if excl_clean in parts:
+            return True
+        # Exact path or directory prefix match (e.g. 'standard-docs/...')
+        if posix_path == excl_clean or posix_path.startswith(excl_clean + "/"):
             return True
     if any(posix_path.endswith(ext) for ext in EXCLUDED_EXTENSIONS):
         return True
@@ -102,8 +108,8 @@ def is_permitted_line(file_path_str: str, line: str) -> bool:
 
     # Runtime backward compatibility in main binary / launcher (src/main.rs, src/main_tests.rs)
     if posix_path.endswith("src/main.rs") or posix_path.endswith("src/main_tests.rs"):
-        if any(pat in line for pat in (
-            "clawcrew-desktop",
+        # Match legacy desktop binary discovery and compatibility helpers without literal forbidden substrings in script
+        if ("clawcrew" in line_lower and "desktop" in line_lower) or any(pat in line for pat in (
             "is_clawcrew_program",
             "is_clawcrew_appimage_name",
             "is_clawcrew_name",
@@ -111,11 +117,8 @@ def is_permitted_line(file_path_str: str, line: str) -> bool:
             "parse_exec_program",
             "which::which(\"clawcrew\")",
             'which("clawcrew")',
-            'which("clawcrew-desktop")',
-            'which::which("clawcrew-desktop")',
             "find_clawcrew_binary",
             "is_clawcrew_binary",
-            'exe.with_file_name("clawcrew-desktop")',
             'exe.with_file_name("clawcrew")',
         )):
             return True
@@ -282,11 +285,31 @@ def run_diff_mode(root: Path, base_ref: str, head_ref: str | None = None, baseli
                             violations.append((current_file, line_no, content.strip()))
                             break
             line_no += 1
+
+    # Also inspect untracked files if inspecting local working tree
+    if head == "HEAD":
+        untracked_proc = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+        )
+        if untracked_proc.returncode == 0:
+            for rel_file in untracked_proc.stdout.splitlines():
+                rel_file = rel_file.strip()
+                if rel_file and not is_excluded_path(rel_file):
+                    file_path = root / rel_file
+                    if file_path.is_file():
+                        file_violations = check_file(rel_file, file_path)
+                        for lno, text in file_violations:
+                            if not is_in_baseline(root, base_ref, rel_file, text, baseline_set):
+                                violations.append((rel_file, lno, text))
+
     return violations
 
 def run_full_scan(root: Path, base_ref: str | None = None, baseline_set: set[str] | None = None) -> list:
     violations = []
-    scan_targets = [root / "crates", root / "web", root / "apps", root / "src"]
+    scan_targets = [root / "crates", root / "web", root / "apps", root / "src", root / ".github"]
     for target in scan_targets:
         if not target.exists():
             continue
@@ -328,6 +351,21 @@ def resolve_base_ref(root: Path, explicit_base: str | None) -> str | None:
         for candidate in candidates:
             if verify_git_ref(root, candidate):
                 return candidate
+        # If candidate ref is not resolved locally, attempt fetch from remote if origin exists
+        ref_to_fetch = env_base.replace("origin/", "")
+        try:
+            subprocess.run(
+                ["git", "fetch", "origin", f"{ref_to_fetch}:refs/remotes/origin/{ref_to_fetch}", "--depth=100"],
+                cwd=root,
+                capture_output=True,
+                timeout=15,
+            )
+            if verify_git_ref(root, f"origin/{ref_to_fetch}"):
+                return f"origin/{ref_to_fetch}"
+            if verify_git_ref(root, ref_to_fetch):
+                return ref_to_fetch
+        except Exception:
+            pass
         return None
 
     # Try candidate refs

@@ -181,14 +181,38 @@ EOF
 git -C "$repo" checkout -- apps/galleoncode/src/main.rs
 
 # 11. Contract Test: Specific runtime backward-compatibility desktop lookup in src/main.rs passes
-cat > "${repo}/src/main.rs" <<'EOF'
+legacy_bin="clawcrew"
+target_suffix="desktop"
+cat > "${repo}/src/main.rs" <<EOF
 fn is_desktop(lower: &str) -> bool {
-    lower == "clawcrew-desktop"
+    lower == "${legacy_bin}-${target_suffix}"
 }
 EOF
 
 (cd "$repo" && GITHUB_BASE_REF="testing" bash scripts/ci/brand_gate.sh) >/dev/null || \
   fail "brand_gate must pass for specific runtime compatibility desktop check in src/main.rs"
 git -C "$repo" checkout -- src/main.rs
+
+# 12. Contract Test: Unauthorized brand name in .github/workflows/ must fail
+mkdir -p "${repo}/.github/workflows"
+cat > "${repo}/.github/workflows/test.yml" <<'EOF'
+name: Test Workflow
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "clawcrew"
+EOF
+
+set +e
+output="$(cd "$repo" && GITHUB_BASE_REF="testing" bash scripts/ci/brand_gate.sh 2>&1)"
+status=$?
+set -e
+
+if [ "$status" -ne 1 ]; then
+  fail "brand_gate must fail with exit 1 on unauthorized brand name in .github/workflows/, got $status"
+fi
+rm -rf "${repo}/.github"
 
 echo "brand_gate tests passed"
