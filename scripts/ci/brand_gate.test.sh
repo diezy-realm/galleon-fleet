@@ -1,4 +1,4 @@
-#!/usr/bin/env pipefail
+#!/usr/bin/env bash
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -68,5 +68,65 @@ pub const OLD: &str = "clawcrew";
 EOF
 (cd "$repo" && bash scripts/ci/brand_gate.sh) >/dev/null || \
   fail "brand_gate should pass when line contains BRAND-COMPAT marker"
+
+# Revert working tree for subsequent contract tests
+git -C "$repo" checkout -- src/lib.rs
+
+# 6. Contract Test: PR checkout environment where local branch doesn't exist
+# In GitHub Actions PR checkout, only refs/remotes/origin/testing exists and GITHUB_BASE_REF="testing"
+git -C "$repo" checkout -b feat/contract-pr --quiet
+git -C "$repo" branch -D testing --quiet
+
+# Verify local testing branch does not exist, but origin/testing exists
+if git -C "$repo" rev-parse --verify --quiet testing >/dev/null 2>&1; then
+  fail "local testing branch should not exist in PR checkout simulation"
+fi
+if ! git -C "$repo" rev-parse --verify --quiet origin/testing >/dev/null 2>&1; then
+  fail "origin/testing must exist in PR checkout simulation"
+fi
+
+# 6a. Clean PR checkout passes
+(cd "$repo" && GITHUB_BASE_REF="testing" bash scripts/ci/brand_gate.sh) >/dev/null || \
+  fail "brand_gate must pass in PR checkout environment resolving GITHUB_BASE_REF to origin/testing"
+
+# 6b. Unauthorized brand name in PR checkout fails
+cat >> "${repo}/src/lib.rs" <<'EOF'
+pub const PR_BAD: &str = "clawcrew";
+EOF
+
+set +e
+output="$(cd "$repo" && GITHUB_BASE_REF="testing" bash scripts/ci/brand_gate.sh 2>&1)"
+status=$?
+set -e
+
+if [ "$status" -ne 1 ]; then
+  fail "brand_gate must fail with exit 1 on unauthorized brand name in PR checkout environment, got $status"
+fi
+git -C "$repo" checkout -- src/lib.rs
+
+# 7. Contract Test: Unavailable / unresolvable base ref must fail with exit nonzero
+set +e
+output="$(cd "$repo" && GITHUB_BASE_REF="nonexistent-target" bash scripts/ci/brand_gate.sh 2>&1)"
+status=$?
+set -e
+if [ "$status" -eq 0 ]; then
+  fail "brand_gate must exit nonzero when GITHUB_BASE_REF cannot be resolved"
+fi
+
+set +e
+output="$(cd "$repo" && bash scripts/ci/brand_gate.sh --base nonexistent-target 2>&1)"
+status=$?
+set -e
+if [ "$status" -eq 0 ]; then
+  fail "brand_gate must exit nonzero when explicit --base cannot be resolved"
+fi
+
+set +e
+output="$(cd "$repo" && bash scripts/ci/brand_gate.sh --mode diff --base nonexistent-target 2>&1)"
+status=$?
+set -e
+if [ "$status" -eq 0 ]; then
+  fail "brand_gate must exit nonzero when diff mode has unavailable base ref"
+fi
 
 echo "brand_gate tests passed"

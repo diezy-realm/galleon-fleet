@@ -102,18 +102,31 @@ def check_file(file_path: Path) -> list:
     return violations
 
 def run_diff_mode(root: Path, base_ref: str, head_ref: str | None = None) -> list:
-    if head_ref and head_ref != "HEAD":
-        cmd = ["git", "diff", "-U0", f"{base_ref}...{head_ref}"]
-    else:
-        cmd = ["git", "diff", "-U0", base_ref]
-    try:
-        proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True, check=True)
-    except subprocess.CalledProcessError:
-        # Fallback to two-dot diff
-        cmd = ["git", "diff", "-U0", f"{base_ref}..{head_ref or 'HEAD'}"]
+    head = head_ref if head_ref and head_ref != "HEAD" else "HEAD"
+    mb_res = subprocess.run(["git", "merge-base", base_ref, head], cwd=root, capture_output=True, text=True)
+    proc = None
+    if mb_res.returncode == 0 and mb_res.stdout.strip():
+        mb = mb_res.stdout.strip()
+        if head_ref and head_ref != "HEAD":
+            cmd = ["git", "diff", "-U0", mb, head]
+        else:
+            cmd = ["git", "diff", "-U0", mb]
+        proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
+
+    if proc is None or proc.returncode != 0:
+        # Fallback to three-dot or two-dot diff
+        cmd = ["git", "diff", "-U0", f"{base_ref}...{head}"]
         proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
         if proc.returncode != 0:
-            return []
+            cmd = ["git", "diff", "-U0", f"{base_ref}..{head}"]
+            proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
+            if proc.returncode != 0 and head == "HEAD":
+                cmd = ["git", "diff", "-U0", base_ref]
+                proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
+
+    if proc.returncode != 0:
+        print(f"[FAIL] git diff failed against base ref '{base_ref}': {proc.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
 
     diff_lines = proc.stdout.splitlines()
     violations = []
@@ -164,16 +177,33 @@ def run_full_scan(root: Path) -> list:
                         violations.append((rel_path, lno, text))
     return violations
 
+def verify_git_ref(root: Path, ref: str) -> bool:
+    res = subprocess.run(["git", "rev-parse", "--verify", "--quiet", ref], cwd=root, capture_output=True)
+    return res.returncode == 0
+
 def resolve_base_ref(root: Path, explicit_base: str | None) -> str | None:
     if explicit_base:
-        return explicit_base
+        candidates = [explicit_base]
+        if not explicit_base.startswith("origin/"):
+            candidates.append(f"origin/{explicit_base}")
+        for candidate in candidates:
+            if verify_git_ref(root, candidate):
+                return candidate
+        return None
+
     env_base = os.environ.get("BASE_REF") or os.environ.get("GITHUB_BASE_REF")
     if env_base:
-        return env_base
+        candidates = [env_base]
+        if not env_base.startswith("origin/"):
+            candidates.append(f"origin/{env_base}")
+        for candidate in candidates:
+            if verify_git_ref(root, candidate):
+                return candidate
+        return None
+
     # Try candidate refs
     for candidate in ["origin/testing", "testing", "origin/master", "master", "HEAD~1"]:
-        res = subprocess.run(["git", "rev-parse", "--verify", candidate], cwd=root, capture_output=True)
-        if res.returncode == 0:
+        if verify_git_ref(root, candidate):
             return candidate
     return None
 
@@ -189,6 +219,20 @@ def main():
 
     mode = args.mode
     base_ref = resolve_base_ref(root, args.base)
+
+    if args.base and not base_ref:
+        print(f"[FAIL] Explicit base ref '{args.base}' could not be resolved.", file=sys.stderr)
+        sys.exit(1)
+
+    env_base = os.environ.get("BASE_REF") or os.environ.get("GITHUB_BASE_REF")
+    if env_base and not base_ref:
+        env_key = "BASE_REF" if "BASE_REF" in os.environ else "GITHUB_BASE_REF"
+        print(f"[FAIL] Environment base ref {env_key}='{env_base}' could not be resolved.", file=sys.stderr)
+        sys.exit(1)
+
+    if mode == "diff" and not base_ref:
+        print(f"[FAIL] Unable to resolve base ref for diff mode.", file=sys.stderr)
+        sys.exit(1)
 
     if mode == "auto":
         # Prefer diff mode when base ref is resolvable in git repository
