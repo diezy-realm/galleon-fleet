@@ -10,12 +10,11 @@ Permitted Exceptions (as defined in `naming-map.md` §7 and SPEC-016):
 - Immutable historical ADRs (standard-docs/decisions/**)
 - Frozen legacy interfaces (WIT v0 clawcrew:plugin@0.1.0)
 - Backward compatibility migration scripts & mapping documentation
-- Runtime compatibility names & fallback aliases explicitly preserved:
-  - src/main.rs, src/main_tests.rs (legacy binary discovery / alias fallback)
+- Specific runtime compatibility names & fallback aliases:
+  - src/main.rs, src/main_tests.rs (legacy binary discovery / desktop launcher)
   - dist/aur/PKGBUILD (backward-compat symlink)
-  - demo/* (standalone test containers)
   - apps/galleoncode & apps/galleonrelay (clawcrew.relay.v1 wire protocol)
-- Crates pending Sprint-8 mass rename (per RULE[user_global] §2.4, hard-dependent on T3-02/T3-05)
+- Pre-existing legacy brand references tracked in base ref (baseline)
 """
 
 import argparse
@@ -51,20 +50,13 @@ EXCLUDED_PATHS = [
     "scripts/ci/brand_gate.sh",
     "scripts/ci/brand_gate.test.sh",
     "scripts/ci/rename_brand.py",
-    # Runtime backward compatibility & legacy wire protocols (SPEC-016 / naming-map.md §7)
-    "src/main.rs",
-    "src/main_tests.rs",
-    "dist/aur/PKGBUILD",
-    "demo",
-    "apps/galleoncode",
-    "apps/galleonrelay",
-    # Crates pending Sprint 8 mass rename (hard-dependent on T3-02/T3-05 per RULE[user_global])
-    "crates",
 ]
 
 EXCLUDED_EXTENSIONS = [
     ".png", ".jpg", ".jpeg", ".ico", ".svg", ".lock", ".rlib", ".rmeta", ".exe", ".bin", ".tar", ".gz"
 ]
+
+_BASE_FILE_CACHE: dict[tuple[str, str], set[str]] = {}
 
 def is_excluded_path(file_path_str: str) -> bool:
     posix_path = file_path_str.replace("\\", "/")
@@ -75,33 +67,166 @@ def is_excluded_path(file_path_str: str) -> bool:
         return True
     return False
 
-def is_permitted_line(line: str) -> bool:
+def is_permitted_line(file_path_str: str, line: str) -> bool:
     line_lower = line.lower()
     # Skip comments attributing upstream authors, frozen v0 WIT, or compatibility markers
     if "clawcrew:plugin@0.1.0" in line:
         return True
     if "upstream" in line_lower or "mit license" in line_lower:
         return True
-    if "brand-compat" in line_lower or "compat:" in line_lower or "backward-compat" in line_lower:
+    if any(marker in line_lower for marker in ("brand-compat", "compat:", "backward-compat", "ratchet(")):
         return True
+
+    posix_path = file_path_str.replace("\\", "/")
+
+    # Specific backward compatibility wire protocols
+    if "clawcrew.relay.v1" in line:
+        return True
+
+    # AUR package build symlink for backward compatibility (dist/aur/PKGBUILD)
+    if posix_path.endswith("dist/aur/PKGBUILD") and "ln -sf" in line and "clawcrew" in line:
+        return True
+
+    # Standalone demo container backward compatibility (SPEC-016)
+    if posix_path.startswith("demo/"):
+        if any(pat in line for pat in (
+            "/tmp/clawcrew",
+            "/usr/local/bin/clawcrew",
+            "run-clawcrew.sh",
+            "clawcrew daemon",
+            "clawcrew agent",
+            "clawcrew.toml",
+            "clawcrew-demo",
+        )):
+            return True
+
+    # Runtime backward compatibility in main binary / launcher (src/main.rs, src/main_tests.rs)
+    if posix_path.endswith("src/main.rs") or posix_path.endswith("src/main_tests.rs"):
+        if any(pat in line for pat in (
+            "clawcrew-desktop",
+            "is_clawcrew_program",
+            "is_clawcrew_appimage_name",
+            "is_clawcrew_name",
+            "clawcrew_desktop_exec",
+            "parse_exec_program",
+            "which::which(\"clawcrew\")",
+            'which("clawcrew")',
+            'which("clawcrew-desktop")',
+            'which::which("clawcrew-desktop")',
+            "find_clawcrew_binary",
+            "is_clawcrew_binary",
+            'exe.with_file_name("clawcrew-desktop")',
+            'exe.with_file_name("clawcrew")',
+        )):
+            return True
+
     return False
 
-def check_file(file_path: Path) -> list:
+def get_base_file_lines(root: Path, base_ref: str, file_path_str: str) -> set[str]:
+    posix_path = file_path_str.replace("\\", "/")
+    key = (base_ref, posix_path)
+    if key in _BASE_FILE_CACHE:
+        return _BASE_FILE_CACHE[key]
+    lines_set = set()
+    try:
+        res = subprocess.run(
+            ["git", "show", f"{base_ref}:{posix_path}"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+        )
+        if res.returncode == 0:
+            for l in res.stdout.splitlines():
+                stripped = l.strip()
+                if stripped:
+                    lines_set.add(stripped)
+    except Exception:
+        pass
+    _BASE_FILE_CACHE[key] = lines_set
+    return lines_set
+
+def is_in_baseline(
+    root: Path,
+    base_ref: str | None,
+    file_path_str: str,
+    content: str,
+    baseline_set: set[str] | None = None,
+) -> bool:
+    stripped = content.strip()
+    if not stripped:
+        return True
+
+    posix_path = file_path_str.replace("\\", "/")
+
+    # Check static baseline set if provided
+    if baseline_set is not None:
+        if f"{posix_path}:{stripped}" in baseline_set:
+            return True
+        if stripped in baseline_set:
+            return True
+
+    if not base_ref:
+        return False
+
+    # Check if the line existed in base_ref for this file
+    base_lines = get_base_file_lines(root, base_ref, posix_path)
+    if stripped in base_lines:
+        return True
+
+    # Fallback: check if the exact line existed anywhere in base_ref (e.g. moved line)
+    try:
+        grep_proc = subprocess.run(
+            ["git", "grep", "-F", "-q", stripped, base_ref],
+            cwd=root,
+            capture_output=True,
+        )
+        if grep_proc.returncode == 0:
+            return True
+    except Exception:
+        pass
+
+    return False
+
+def load_baseline(root: Path, baseline_arg: str | None) -> set[str] | None:
+    path = None
+    if baseline_arg:
+        path = Path(baseline_arg)
+        if not path.is_absolute():
+            path = root / path
+    else:
+        default_baseline = root / "scripts" / "ci" / "brand_gate_baseline.txt"
+        if default_baseline.exists():
+            path = default_baseline
+
+    if path and path.exists():
+        entries = set()
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                s = line.strip()
+                if s and not s.startswith("#"):
+                    entries.add(s)
+        return entries
+    return None
+
+def check_file(rel_path: str, file_path: Path) -> list:
     violations = []
     try:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            for line_no, line in enumerate(f, start=1):
-                if is_permitted_line(line):
+            lines = f.readlines()
+            for idx, line in enumerate(lines, start=1):
+                prev_line = lines[idx - 2] if idx > 1 else ""
+                prev_guarded = any(m in prev_line.lower() for m in ("brand-compat", "compat:", "backward-compat", "ratchet("))
+                if is_permitted_line(rel_path, line) or prev_guarded:
                     continue
                 for pat in BANNED_PATTERNS:
                     if pat.search(line):
-                        violations.append((line_no, line.strip()))
+                        violations.append((idx, line.strip()))
                         break
     except Exception:
         pass
     return violations
 
-def run_diff_mode(root: Path, base_ref: str, head_ref: str | None = None) -> list:
+def run_diff_mode(root: Path, base_ref: str, head_ref: str | None = None, baseline_set: set[str] | None = None) -> list:
     head = head_ref if head_ref and head_ref != "HEAD" else "HEAD"
     mb_res = subprocess.run(["git", "merge-base", base_ref, head], cwd=root, capture_output=True, text=True)
     proc = None
@@ -147,19 +272,21 @@ def run_diff_mode(root: Path, base_ref: str, head_ref: str | None = None) -> lis
                 prev_guarded = False
                 if idx > 0 and diff_lines[idx - 1].startswith("+"):
                     prev_content = diff_lines[idx - 1][1:].lower()
-                    if "brand-compat" in prev_content or "compat:" in prev_content or "backward-compat" in prev_content:
+                    if any(m in prev_content for m in ("brand-compat", "compat:", "backward-compat", "ratchet(")):
                         prev_guarded = True
-                if not is_permitted_line(content) and not prev_guarded:
+                if not is_permitted_line(current_file, content) and not prev_guarded:
                     for pat in BANNED_PATTERNS:
                         if pat.search(content):
+                            if is_in_baseline(root, base_ref, current_file, content, baseline_set):
+                                continue
                             violations.append((current_file, line_no, content.strip()))
                             break
             line_no += 1
     return violations
 
-def run_full_scan(root: Path) -> list:
+def run_full_scan(root: Path, base_ref: str | None = None, baseline_set: set[str] | None = None) -> list:
     violations = []
-    scan_targets = [root / "crates", root / "web", root / "apps"]
+    scan_targets = [root / "crates", root / "web", root / "apps", root / "src"]
     for target in scan_targets:
         if not target.exists():
             continue
@@ -172,8 +299,10 @@ def run_full_scan(root: Path) -> list:
                 if is_excluded_path(rel_path):
                     continue
                 if fpath.suffix in [".rs", ".go", ".ts", ".tsx", ".js", ".json", ".toml", ".sh", ".py", ".yaml", ".yml"]:
-                    file_violations = check_file(fpath)
+                    file_violations = check_file(rel_path, fpath)
                     for lno, text in file_violations:
+                        if is_in_baseline(root, base_ref, rel_path, text, baseline_set):
+                            continue
                         violations.append((rel_path, lno, text))
     return violations
 
@@ -212,6 +341,7 @@ def main():
     parser.add_argument("--mode", choices=["auto", "diff", "full"], default="auto", help="Scan mode")
     parser.add_argument("--base", default=None, help="Base git ref for diff mode")
     parser.add_argument("--head", default="HEAD", help="Head git ref for diff mode")
+    parser.add_argument("--baseline", default=None, help="Path to baseline file containing legacy brand references")
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[2]
@@ -241,14 +371,16 @@ def main():
         else:
             mode = "full"
 
+    baseline_set = load_baseline(root, args.baseline)
+
     violations = []
     if mode == "diff":
         print(f"[*] Checking diff against base ref: {base_ref}...")
-        diff_violations = run_diff_mode(root, base_ref, args.head)
+        diff_violations = run_diff_mode(root, base_ref, args.head, baseline_set)
         violations.extend(diff_violations)
     else:
         print("[*] Running full directory scan...")
-        scan_violations = run_full_scan(root)
+        scan_violations = run_full_scan(root, base_ref, baseline_set)
         violations.extend(scan_violations)
 
     if violations:
