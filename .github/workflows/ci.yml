@@ -265,10 +265,32 @@ jobs:
       - name: Run cargo audit (RustSec advisory database)
         run: cargo audit
 
+  sonar:
+    name: Sonar
+    if: ${{ secrets.SONAR_TOKEN != '' }}
+    runs-on: [self-hosted, linux, galleon-heavy]
+    timeout-minutes: 30
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      RUSTC_WRAPPER: sccache
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Ensure web/dist placeholder exists
+        run: mkdir -p web/dist && touch web/dist/.gitkeep
+      - name: Generate LCOV code coverage
+        run: cargo llvm-cov nextest --lcov --output-path lcov.info
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@53c3e32072618d22c00a6c62807740518ab86220 # v4.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   gate:
     name: CI Required Gate
     if: always()
-    needs: [fmt, repo-structure, zerocode-rpc-boundary, lint, check, test, security]
+    needs: [fmt, repo-structure, zerocode-rpc-boundary, lint, check, test, security, sonar]
     runs-on: [self-hosted, linux, galleon-light]
     steps:
       - name: Check results
