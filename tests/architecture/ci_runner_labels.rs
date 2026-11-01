@@ -14,7 +14,7 @@ use regex::Regex;
 const HEAVY_LABEL: &str = "runs-on: [self-hosted, linux, galleon-heavy]";
 const LIGHT_LABEL: &str = "runs-on: [self-hosted, linux, galleon-light]";
 
-const HEAVY_JOBS: [&str; 3] = ["lint", "check", "test"];
+const HEAVY_JOBS: [&str; 5] = ["lint", "check", "test", "doctest", "sonar"];
 const LIGHT_JOBS: [&str; 5] = [
     "fmt",
     "repo-structure",
